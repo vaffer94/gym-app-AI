@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="#FF6B35" stroke="#2B2B3C" stroke-width="24"/>
+  <!-- manubrio cartoon -->
+  <g stroke="#2B2B3C" stroke-width="20">
+    <rect x="150" y="236" width="212" height="40" rx="20" fill="#FFD23F"/>
+    <rect x="96" y="176" width="64" height="160" rx="26" fill="#2EC4B6"/>
+    <rect x="352" y="176" width="64" height="160" rx="26" fill="#2EC4B6"/>
+    <rect x="44" y="208" width="44" height="96" rx="20" fill="#FFFFFF"/>
+    <rect x="424" y="208" width="44" height="96" rx="20" fill="#FFFFFF"/>
+  </g>
+</svg>
