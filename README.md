@@ -57,6 +57,23 @@ src/
   styles/        design system (vedi DESIGN.md)
 ```
 
+## Setup sviluppo app Watch (Wear OS) — per lo Step 5
+
+Tutto gratuito. Serve ~20 GB di disco.
+
+1. **Android Studio**: scarica da [developer.android.com/studio](https://developer.android.com/studio) (su Mac scegli la versione giusta: Apple Silicon per M1/M2/M3/M4, Intel altrimenti). Apri il .dmg e trascina in Applicazioni
+2. Al primo avvio il wizard **installa da solo** SDK e strumenti: accetta il setup "Standard" e le licenze. Il JDK è incluso, non serve installare Java
+3. In **Settings → Languages & Frameworks → Android SDK**:
+   - scheda *SDK Platforms*: spunta l'ultima piattaforma Android stabile
+   - scheda *SDK Tools*: verifica che ci siano **Android SDK Platform-Tools** (contiene `adb`) e **Android Emulator**
+4. **Emulatore Wear OS** (per sviluppare senza watch al polso): Device Manager → Create Device → categoria **Wear OS** → Wear OS Large Round → scarica l'immagine di sistema proposta → Fine
+5. **Collegare il Pixel Watch fisico** (via Wi-Fi, stesso Wi-Fi del computer):
+   - sul watch: Impostazioni → Sistema → Informazioni → tocca 7 volte "Numero build" → si sbloccano le **Opzioni sviluppatore**
+   - Opzioni sviluppatore → attiva **Debug ADB** e **Debug wireless** → tocca "Accoppia nuovo dispositivo": vedrai codice e indirizzo `IP:porta`
+   - sul computer: `adb pair IP:PORTA` (inserisci il codice), poi `adb connect IP:PORTA` (la porta di *connect* è quella mostrata nella schermata principale del Debug wireless, diversa da quella di pairing)
+   - `adb devices` deve elencare il watch. Da qui Android Studio lo vede come target di run
+6. Se `adb` non è nel PATH del terminale: `export PATH=$PATH:~/Library/Android/sdk/platform-tools` (aggiungilo a `~/.zshrc`)
+
 ## Documenti di progetto
 
 - `DESIGN.md` — linee guida grafiche (stile cartoon)

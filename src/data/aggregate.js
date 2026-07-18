@@ -79,6 +79,45 @@ export function last4Weeks(sessions) {
   })
 }
 
+/** Striscia più lunga di giorni consecutivi in un insieme di giorni (ts a mezzanotte) */
+function longestRun(daySet) {
+  const days = [...daySet].sort((a, b) => a - b)
+  let best = 0
+  let cur = 0
+  let prev = null
+  for (const d of days) {
+    cur = prev != null && d - prev === DAY ? cur + 1 : 1
+    if (cur > best) best = cur
+    prev = d
+  }
+  return best
+}
+
+const dayStart = (ts) => { const d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime() }
+
+/** Record assoluto: giorni consecutivi con almeno un allenamento loggato dall'app */
+export function longestAppDayStreak(sessions) {
+  return longestRun(new Set(sessions.filter((s) => s.startedAt).map((s) => dayStart(s.startedAt))))
+}
+
+/** Record del mese corrente: giorni consecutivi con attività, app + rilevati da Google */
+export function longestActivityStreakThisMonth(sessions, workoutDaysISO = []) {
+  const now = new Date()
+  const m = now.getMonth()
+  const y = now.getFullYear()
+  const set = new Set()
+  for (const s of sessions) {
+    if (!s.startedAt) continue
+    const d = new Date(s.startedAt)
+    if (d.getMonth() === m && d.getFullYear() === y) set.add(dayStart(s.startedAt))
+  }
+  for (const iso of workoutDaysISO) {
+    const [yy, mm, dd] = iso.split('-').map(Number)
+    if (yy === y && mm - 1 === m) set.add(new Date(yy, mm - 1, dd).getTime())
+  }
+  return longestRun(set)
+}
+
 /** Media allenamenti a settimana nelle ultime 4 settimane */
 export function avgPerWeek(sessions) {
   const start = mondayOf(Date.now()) - 21 * DAY

@@ -116,7 +116,7 @@ const civil = (d) => ({ date: { year: d.getFullYear(), month: d.getMonth() + 1, 
 export async function getHealthSummary() {
   try {
     const cached = JSON.parse(localStorage.getItem(LS.cache) || 'null')
-    if (cached && Date.now() - cached.at < 30 * 60 * 1000) {
+    if (cached && cached.data?.detectedWorkouts && Date.now() - cached.at < 30 * 60 * 1000) {
       return { ...cached.data, stepsGoal: getStepsGoal() }
     }
   } catch { /* cache corrotta */ }
@@ -139,30 +139,55 @@ export async function getHealthSummary() {
 
   // Allenamenti rilevati: sessioni "exercise"
   let workoutDays = []
+  let detectedWorkouts = []
   try {
     const exRes = await api('/users/me/dataTypes/exercise/dataPoints?pageSize=200')
     const startMs = start.getTime()
-    workoutDays = [
-      ...new Set(
-        (exRes.dataPoints || [])
-          .map((p) => p.exercise?.interval)
-          .filter(Boolean)
-          .map((iv) => {
-            // preferisci il tempo civile (già nel fuso dell'utente), fallback sul timestamp
-            const cd = iv.civilStartTime?.date
-            const d = cd ? new Date(cd.year, cd.month - 1, cd.day) : iv.startTime ? new Date(iv.startTime) : null
-            return d && d.getTime() >= startMs ? localISO(d) : null
-          })
-          .filter(Boolean)
-      ),
-    ]
+    detectedWorkouts = (exRes.dataPoints || [])
+      .map((p) => p.exercise)
+      .filter((ex) => ex?.interval?.startTime)
+      .map((ex) => ({
+        type: ex.exerciseType || 'UNKNOWN',
+        startMs: new Date(ex.interval.startTime).getTime(),
+        endMs: ex.interval.endTime ? new Date(ex.interval.endTime).getTime() : null,
+      }))
+      .filter((w) => w.startMs >= startMs)
+      .sort((a, b) => b.startMs - a.startMs)
+    workoutDays = [...new Set(detectedWorkouts.map((w) => localISO(new Date(w.startMs))))]
   } catch (e) {
     console.warn('Lettura allenamenti rilevati fallita (non bloccante):', e.message)
   }
 
-  const data = { stepsByDay, workoutDays }
+  const data = { stepsByDay, workoutDays, detectedWorkouts }
   localStorage.setItem(LS.cache, JSON.stringify({ at: Date.now(), data }))
   return { ...data, stepsGoal: getStepsGoal() }
+}
+
+/** Etichetta e icona Font Awesome per i tipi di allenamento rilevati */
+const EXERCISE_TYPES = {
+  WALKING: ['Camminata', 'fa-person-walking'],
+  RUNNING: ['Corsa', 'fa-person-running'],
+  TREADMILL_RUNNING: ['Corsa su tapis roulant', 'fa-person-running'],
+  WEIGHTLIFTING: ['Pesi', 'fa-dumbbell'],
+  STRENGTH_TRAINING: ['Allenamento forza', 'fa-dumbbell'],
+  CYCLING: ['Bici', 'fa-person-biking'],
+  BIKING: ['Bici', 'fa-person-biking'],
+  SPINNING: ['Spinning', 'fa-person-biking'],
+  SWIMMING: ['Nuoto', 'fa-person-swimming'],
+  HIKING: ['Escursione', 'fa-person-hiking'],
+  YOGA: ['Yoga', 'fa-spa'],
+  PILATES: ['Pilates', 'fa-spa'],
+  ELLIPTICAL: ['Ellittica', 'fa-person-running'],
+  HIIT: ['HIIT', 'fa-fire'],
+  AEROBICS: ['Aerobica', 'fa-heart-pulse'],
+  DANCING: ['Ballo', 'fa-music'],
+  SPORT: ['Sport', 'fa-futbol'],
+}
+
+export function exerciseTypeInfo(type) {
+  if (EXERCISE_TYPES[type]) return EXERCISE_TYPES[type]
+  const label = (type || 'Attività').toLowerCase().replaceAll('_', ' ')
+  return [label.charAt(0).toUpperCase() + label.slice(1), 'fa-heart-pulse']
 }
 
 export { localISO }

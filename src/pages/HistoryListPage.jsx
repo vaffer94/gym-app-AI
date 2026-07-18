@@ -2,13 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { getRepo } from '../data/repo'
-import { aggregateSessions, weekStreak, daysSinceLast, last4Weeks, avgPerWeek } from '../data/aggregate'
+import {
+  aggregateSessions, weekStreak, daysSinceLast, last4Weeks, avgPerWeek,
+  longestAppDayStreak, longestActivityStreakThisMonth,
+} from '../data/aggregate'
 import { computeStats } from '../workout/sessionEngine'
 import { formatClock } from '../workout/activeSession'
 import TrendChart from '../components/TrendChart'
 import {
   isHealthConfigured, isHealthConnected, connectHealth, disconnectHealth,
-  getHealthSummary, getStepsGoal, setStepsGoal, localISO,
+  getHealthSummary, getStepsGoal, setStepsGoal, localISO, exerciseTypeInfo,
 } from '../data/health'
 import Stepper from '../components/Stepper'
 
@@ -163,10 +166,37 @@ export default function HistoryListPage() {
 
       {tab === 'list' && sessions?.length > 0 && (
         <div className="stack">
-          {sessions.map((s) => {
-            const st = computeStats(s)
-            const date = new Date(s.startedAt)
-            return (
+          {[
+            ...sessions.map((s) => ({ kind: 'session', ts: s.startedAt, s })),
+            ...(fitbit?.detectedWorkouts || []).map((w) => ({ kind: 'detected', ts: w.startMs, w })),
+          ]
+            .sort((a, b) => b.ts - a.ts)
+            .map((item) => {
+              if (item.kind === 'detected') {
+                const w = item.w
+                const [label, icon] = exerciseTypeInfo(w.type)
+                const d = new Date(w.startMs)
+                const fmtTime = (ms) => new Date(ms).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+                return (
+                  <div key={`d-${w.startMs}`} className="tile tile--ghost">
+                    <div className="thumb" style={{ background: 'transparent', borderStyle: 'dashed' }}>
+                      <i className={`fa-solid ${icon}`} />
+                    </div>
+                    <div className="tile-body">
+                      <div className="tile-title">{label}</div>
+                      <p className="small muted">
+                        {d.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })}
+                        {' · '}{fmtTime(w.startMs)}{w.endMs ? ` → ${fmtTime(w.endMs)}` : ''}
+                      </p>
+                    </div>
+                    <span className="small muted"><i className="fa-solid fa-heart-pulse" /> Google</span>
+                  </div>
+                )
+              }
+              const s = item.s
+              const st = computeStats(s)
+              const date = new Date(s.startedAt)
+              return (
               <div
                 key={s.id}
                 className="card card--tap"
@@ -190,8 +220,8 @@ export default function HistoryListPage() {
                   {st.volumeKg > 0 ? ` · ${st.volumeKg} kg` : ''}
                 </p>
               </div>
-            )
-          })}
+              )
+            })}
         </div>
       )}
 
@@ -234,6 +264,17 @@ export default function HistoryListPage() {
                 })()}
               </div>
               <p className="small muted">serie completate</p>
+            </div>
+          </div>
+
+          <div className="row">
+            <div className="card card--flat center" style={{ flex: 1, padding: '14px 8px' }}>
+              <div className="kpi"><i className="fa-solid fa-medal" style={{ color: 'var(--primary)' }} /> {longestAppDayStreak(sessions)}</div>
+              <p className="small muted">record giorni di fila (app)</p>
+            </div>
+            <div className="card card--flat center" style={{ flex: 1, padding: '14px 8px' }}>
+              <div className="kpi"><i className="fa-solid fa-trophy" style={{ color: 'var(--teal)' }} /> {longestActivityStreakThisMonth(sessions, fitbit?.workoutDays)}</div>
+              <p className="small muted">record del mese{fitbit ? ' (app + Google)' : ''}</p>
             </div>
           </div>
 

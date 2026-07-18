@@ -297,6 +297,15 @@ p { margin: 0; }
 .tile--tap { cursor: pointer; }
 .tile--tap:active { transform: translate(2px, 2px); }
 
+/* Tile "fantasma": allenamenti rilevati da Google, non cliccabili */
+.tile--ghost {
+  background: #f3eee3;
+  border-style: dashed;
+  box-shadow: none;
+  color: var(--muted);
+}
+.tile--ghost .tile-title { color: var(--muted); }
+
 .btn--sm {
   padding: 6px 10px;
   font-size: 0.9rem;
