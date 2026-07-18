@@ -361,6 +361,56 @@ p { margin: 0; }
   line-height: 1;
 }
 
+/* ---------- Storico: KPI, streak, calendario ---------- */
+
+.kpi {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.6rem;
+  line-height: 1.1;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.cal-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+}
+.cal-cell--on {
+  background: var(--primary);
+  color: #fff;
+}
+.cal-cell--today { box-shadow: var(--shadow-sm); }
+.cal-cell--future { opacity: 0.35; border-style: dashed; }
+
+/* ---------- Barre andamento (storico) ---------- */
+
+.bar-track {
+  height: 18px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--card);
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+  min-width: 6px;
+  transition: width 0.3s ease;
+}
+
 /* ---------- Swatch colori scheda ---------- */
 
 .swatches { display: flex; flex-wrap: wrap; gap: 10px; }

@@ -70,6 +70,12 @@ function makeLocalRepo() {
     async listSessions() {
       return ls.read(K.sessions).sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0))
     },
+    async getSession(id) {
+      return ls.read(K.sessions).find((x) => x.id === id) || null
+    },
+    async deleteSession(id) {
+      ls.write(K.sessions, ls.read(K.sessions).filter((x) => x.id !== id))
+    },
   }
 }
 
@@ -136,6 +142,13 @@ function makeFirestoreRepo(uid) {
       return snap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
         .sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0))
+    },
+    async getSession(id) {
+      const snap = await getDoc(doc(sessionsCol(), id))
+      return snap.exists() ? { id: snap.id, ...snap.data() } : null
+    },
+    async deleteSession(id) {
+      await deleteDoc(doc(sessionsCol(), id))
     },
   }
 }

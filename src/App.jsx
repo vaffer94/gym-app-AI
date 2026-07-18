@@ -2,12 +2,13 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './auth/AuthContext'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
-import PlaceholderPage from './pages/PlaceholderPage'
 import SchedeListPage from './pages/SchedeListPage'
 import PlanEditorPage from './pages/PlanEditorPage'
 import PlanDetailPage from './pages/PlanDetailPage'
 import StartWorkoutPage from './pages/StartWorkoutPage'
 import WorkoutPage from './pages/WorkoutPage'
+import HistoryListPage from './pages/HistoryListPage'
+import SessionDetailPage from './pages/SessionDetailPage'
 
 function Protected({ children }) {
   const { user, loading } = useAuth()
@@ -31,10 +32,8 @@ export default function App() {
       <Route path="/schede/nuova" element={<Protected><PlanEditorPage /></Protected>} />
       <Route path="/schede/:id" element={<Protected><PlanDetailPage /></Protected>} />
       <Route path="/schede/:id/modifica" element={<Protected><PlanEditorPage /></Protected>} />
-      <Route
-        path="/storico"
-        element={<Protected><PlaceholderPage emoji="📊" title="Storico" text="Qui vedrai i tuoi allenamenti passati e le statistiche. Arriva nello Step 4!" /></Protected>}
-      />
+      <Route path="/storico" element={<Protected><HistoryListPage /></Protected>} />
+      <Route path="/storico/:id" element={<Protected><SessionDetailPage /></Protected>} />
       <Route path="/allenamento" element={<Protected><StartWorkoutPage /></Protected>} />
       <Route path="/allenamento/attivo" element={<Protected><WorkoutPage /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
