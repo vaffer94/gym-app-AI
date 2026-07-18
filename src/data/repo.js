@@ -22,7 +22,7 @@ const ls = {
 }
 
 function makeLocalRepo() {
-  const K = { plans: 'gym.plans', custom: 'gym.customExercises', labels: 'gym.labels' }
+  const K = { plans: 'gym.plans', custom: 'gym.customExercises', labels: 'gym.labels', sessions: 'gym.sessions' }
   return {
     async listPlans() {
       return ls.read(K.plans).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
@@ -61,6 +61,15 @@ function makeLocalRepo() {
       ls.write(K.labels, all)
       return all
     },
+    async saveSession(session) {
+      const all = ls.read(K.sessions).filter((x) => x.id !== session.id)
+      all.push(session)
+      ls.write(K.sessions, all)
+      return session
+    },
+    async listSessions() {
+      return ls.read(K.sessions).sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0))
+    },
   }
 }
 
@@ -70,6 +79,7 @@ function makeFirestoreRepo(uid) {
   const plansCol = () => collection(db, 'users', uid, 'workoutPlans')
   const customCol = () => collection(db, 'users', uid, 'customExercises')
   const labelsDoc = () => doc(db, 'users', uid, 'meta', 'labels')
+  const sessionsCol = () => collection(db, 'users', uid, 'sessions')
 
   return {
     async listPlans() {
@@ -115,6 +125,17 @@ function makeFirestoreRepo(uid) {
       const all = [...new Set([...current, ...labels])]
       await setDoc(labelsDoc(), { values: all })
       return all
+    },
+    async saveSession(session) {
+      const { id, ...data } = session
+      await setDoc(doc(sessionsCol(), id), data)
+      return session
+    },
+    async listSessions() {
+      const snap = await getDocs(sessionsCol())
+      return snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0))
     },
   }
 }

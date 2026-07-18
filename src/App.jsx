@@ -6,6 +6,8 @@ import PlaceholderPage from './pages/PlaceholderPage'
 import SchedeListPage from './pages/SchedeListPage'
 import PlanEditorPage from './pages/PlanEditorPage'
 import PlanDetailPage from './pages/PlanDetailPage'
+import StartWorkoutPage from './pages/StartWorkoutPage'
+import WorkoutPage from './pages/WorkoutPage'
 
 function Protected({ children }) {
   const { user, loading } = useAuth()
@@ -33,10 +35,8 @@ export default function App() {
         path="/storico"
         element={<Protected><PlaceholderPage emoji="📊" title="Storico" text="Qui vedrai i tuoi allenamenti passati e le statistiche. Arriva nello Step 4!" /></Protected>}
       />
-      <Route
-        path="/allenamento"
-        element={<Protected><PlaceholderPage emoji="🔥" title="Allenamento" text="Da qui avvierai il tuo allenamento. Arriva nello Step 3!" /></Protected>}
-      />
+      <Route path="/allenamento" element={<Protected><StartWorkoutPage /></Protected>} />
+      <Route path="/allenamento/attivo" element={<Protected><WorkoutPage /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

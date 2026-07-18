@@ -6,7 +6,7 @@ export default function PlaceholderPage({ emoji, title, text }) {
     <div className="page">
       <header className="appbar">
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
-          ←
+          <i className="fa-solid fa-arrow-left" />
         </button>
         <h2>{title}</h2>
       </header>

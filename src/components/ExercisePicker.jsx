@@ -3,6 +3,7 @@ import { CATEGORIES, categoryById, EQUIPMENT_LABELS, loadCatalog, searchCatalog 
 import { compressPhoto } from '../lib/image'
 import ExerciseThumb from './ExerciseThumb'
 import Stepper from './Stepper'
+import { AlertDialog } from './Dialog'
 
 /**
  * Popup "ricerca-o-crea":
@@ -47,7 +48,7 @@ export default function ExercisePicker({ repo, onAdd, onClose }) {
             <div className="row">
               <h2>Aggiungi esercizio</h2>
               <div className="spacer" />
-              <button className="btn btn--sm" onClick={onClose}>✕</button>
+              <button className="btn btn--sm" onClick={onClose}><i className="fa-solid fa-xmark" /></button>
             </div>
 
             <input
@@ -109,11 +110,12 @@ function ConfigStep({ exercise, onBack, onConfirm }) {
   const [hasWeight, setHasWeight] = useState(true)
   const [weightKg, setWeightKg] = useState(10)
   const [photoOverride, setPhotoOverride] = useState(null)
+  const [alertMsg, setAlertMsg] = useState(null)
 
   const handlePhoto = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    try { setPhotoOverride(await compressPhoto(file)) } catch { alert('Foto non valida, riprova') }
+    try { setPhotoOverride(await compressPhoto(file)) } catch { setAlertMsg('Foto non valida, riprova') }
   }
 
   const confirm = () =>
@@ -132,7 +134,7 @@ function ConfigStep({ exercise, onBack, onConfirm }) {
   return (
     <>
       <div className="row">
-        <button className="btn btn--sm" onClick={onBack}>←</button>
+        <button className="btn btn--sm" onClick={onBack}><i className="fa-solid fa-arrow-left" /></button>
         <h2 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exercise.name}</h2>
       </div>
 
@@ -154,6 +156,7 @@ function ConfigStep({ exercise, onBack, onConfirm }) {
       <button className="btn btn--primary btn--big" onClick={confirm}>
         Aggiungi alla scheda
       </button>
+      {alertMsg && <AlertDialog message={alertMsg} onClose={() => setAlertMsg(null)} />}
     </>
   )
 }
@@ -169,11 +172,12 @@ function CustomForm({ initialName, initialCategory, repo, onBack, onDone }) {
   const [hasWeight, setHasWeight] = useState(true)
   const [weightKg, setWeightKg] = useState(10)
   const [busy, setBusy] = useState(false)
+  const [alertMsg, setAlertMsg] = useState(null)
 
   const handlePhoto = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    try { setPhoto(await compressPhoto(file)) } catch { alert('Foto non valida, riprova') }
+    try { setPhoto(await compressPhoto(file)) } catch { setAlertMsg('Foto non valida, riprova') }
   }
 
   const save = async () => {
@@ -195,7 +199,7 @@ function CustomForm({ initialName, initialCategory, repo, onBack, onDone }) {
       })
     } catch (err) {
       console.error(err)
-      alert(`Salvataggio non riuscito: ${err.message}\n\nSe vedi "permission-denied", vanno pubblicate le regole Firestore (vedi README).`)
+      setAlertMsg(`Salvataggio non riuscito: ${err.message}`)
       setBusy(false)
     }
   }
@@ -203,7 +207,7 @@ function CustomForm({ initialName, initialCategory, repo, onBack, onDone }) {
   return (
     <>
       <div className="row">
-        <button className="btn btn--sm" onClick={onBack}>←</button>
+        <button className="btn btn--sm" onClick={onBack}><i className="fa-solid fa-arrow-left" /></button>
         <h2>Nuovo esercizio</h2>
       </div>
 
@@ -253,6 +257,7 @@ function CustomForm({ initialName, initialCategory, repo, onBack, onDone }) {
       <button className="btn btn--primary btn--big" disabled={!name.trim() || !category || busy} onClick={save}>
         Crea e aggiungi alla scheda
       </button>
+      {alertMsg && <AlertDialog message={alertMsg} onClose={() => setAlertMsg(null)} />}
     </>
   )
 }

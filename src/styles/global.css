@@ -16,7 +16,7 @@
   --teal-soft: #d5f4f1;
   --yellow: #ffd23f;
   --yellow-soft: #fff3c7;
-  --muted: #8a8a9a;
+  --muted: #63637a;   /* abbastanza scuro da restare leggibile */
   --danger: #e63946;
 
   /* Forme */
@@ -304,6 +304,62 @@ p { margin: 0; }
   box-shadow: 2px 2px 0 var(--ink);
 }
 .btn--sm:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ink); }
+
+/* ---------- Allenamento ---------- */
+
+.serie-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.serie {
+  width: 88px;
+  font-family: var(--font-display);
+  background: var(--card);
+  border: var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  padding: 10px 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.serie:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ink); }
+.serie .serie-num { font-size: 1.3rem; font-weight: 800; }
+.serie--done { background: var(--teal); color: #fff; }
+.serie--done .muted { color: rgba(255, 255, 255, 0.85); }
+.serie--active {
+  background: var(--yellow);
+  animation: serie-pulse 1.2s ease-in-out infinite;
+}
+@keyframes serie-pulse {
+  0%, 100% { box-shadow: var(--shadow-sm); }
+  50% { box-shadow: 6px 6px 0 var(--ink); transform: translate(-2px, -2px); }
+}
+
+/* Sezione espandibile "Come si fa" */
+.details summary::-webkit-details-marker { display: none; }
+.details summary { list-style: none; }
+.details-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  margin: 0;
+}
+.details-arrow { transition: transform 0.15s ease; font-size: 1.1rem; }
+.details[open] .details-arrow { transform: rotate(180deg); }
+
+.timer-hero {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 4rem;
+  line-height: 1;
+}
 
 /* ---------- Swatch colori scheda ---------- */
 

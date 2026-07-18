@@ -15,7 +15,7 @@ export default function Stepper({ value, onChange, min = 0, max = 999, step = 1,
 
   return (
     <div className="stepper">
-      <button type="button" className="btn btn--sm" onClick={() => onChange(clamp(value - step))}>−</button>
+      <button type="button" className="btn btn--sm" onClick={() => onChange(clamp(value - step))}><i className="fa-solid fa-minus" /></button>
       <span className="value">
         <input
           className="value-input"
@@ -28,7 +28,7 @@ export default function Stepper({ value, onChange, min = 0, max = 999, step = 1,
         />
         {suffix && <span className="small muted">{suffix}</span>}
       </span>
-      <button type="button" className="btn btn--sm" onClick={() => onChange(clamp(value + step))}>+</button>
+      <button type="button" className="btn btn--sm" onClick={() => onChange(clamp(value + step))}><i className="fa-solid fa-plus" /></button>
     </div>
   )
 }

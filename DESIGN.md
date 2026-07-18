@@ -12,7 +12,7 @@ Obiettivo: moderno, semplice, giocoso. Mai più di 3-4 elementi importanti per s
    - Primary arancio `#FF6B35` (azione principale, una sola per schermata)
    - Teal `#2EC4B6` · Giallo `#FFD23F` (secondari) + versioni soft
 5. **Font**: Baloo 2 (titoli e bottoni), Nunito (testo)
-6. **Emoji con parsimonia**: SOLO come icone di sezione/categoria (🔥 allenamento · 📋 schede · 📊 storico · 💪 profilo) e per le categorie muscolari. MAI su pulsanti di utilità (indietro, esci, conferma…): lì testo o frecce semplici (←, →). Massimo un'emoji "decorativa" per schermata. Niente librerie di icone
+6. **Icone**: Font Awesome Free (`@fortawesome/fontawesome-free`, importato in main.jsx) per TUTTI i pulsanti: navigazione (`fa-arrow-left`, `fa-xmark`, `fa-arrow-up/down`), azioni (`fa-clock-rotate-left` Posticipa · `fa-forward` Salta · `fa-pen-to-square` Nota · `fa-pause`/`fa-play` · `fa-plus`/`fa-minus`). Sui pulsanti con testo l'icona accompagna il testo. Le emoji restano SOLO per sezioni (🔥 📋 📊) e categorie muscolari (💪 🦵 …)
 7. **Layout**: colonna singola max 480px, spaziatura generosa (gap 12-20px), mobile-first
 
 ## Anti-pattern (vietati)

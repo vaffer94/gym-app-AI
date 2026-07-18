@@ -5,6 +5,7 @@ import { getRepo } from '../data/repo'
 import ExercisePicker, { SetsRepsWeight } from '../components/ExercisePicker'
 import ExerciseThumb from '../components/ExerciseThumb'
 import { PLAN_COLORS, pickDefaultColor } from '../data/planColors'
+import { AlertDialog } from '../components/Dialog'
 
 export default function PlanEditorPage() {
   const { user } = useAuth()
@@ -17,6 +18,7 @@ export default function PlanEditorPage() {
   const [picking, setPicking] = useState(false)
   const [editing, setEditing] = useState(null) // entry esercizio in modifica
   const [busy, setBusy] = useState(false)
+  const [alertMsg, setAlertMsg] = useState(null)
 
   useEffect(() => {
     repo.getLabels().then(setAllLabels)
@@ -64,7 +66,7 @@ export default function PlanEditorPage() {
       navigate('/schede')
     } catch (err) {
       console.error(err)
-      alert(`Salvataggio non riuscito: ${err.message}\n\nSe vedi "permission-denied", vanno pubblicate le regole Firestore (vedi README).`)
+      setAlertMsg(`Salvataggio non riuscito: ${err.message}`)
     } finally {
       setBusy(false)
     }
@@ -75,7 +77,7 @@ export default function PlanEditorPage() {
   return (
     <div className="page">
       <header className="appbar">
-        <button className="btn" onClick={() => navigate(-1)} aria-label="Indietro">←</button>
+        <button className="btn" onClick={() => navigate(-1)} aria-label="Indietro"><i className="fa-solid fa-arrow-left" /></button>
         <h2>{id ? 'Modifica scheda' : 'Nuova scheda'}</h2>
       </header>
 
@@ -131,10 +133,10 @@ export default function PlanEditorPage() {
                 </div>
               </div>
               <div className="stack" style={{ gap: 4 }}>
-                <button className="btn btn--sm" onClick={() => move(i, -1)} disabled={i === 0}>↑</button>
-                <button className="btn btn--sm" onClick={() => move(i, 1)} disabled={i === plan.exercises.length - 1}>↓</button>
+                <button className="btn btn--sm" onClick={() => move(i, -1)} disabled={i === 0}><i className="fa-solid fa-arrow-up" /></button>
+                <button className="btn btn--sm" onClick={() => move(i, 1)} disabled={i === plan.exercises.length - 1}><i className="fa-solid fa-arrow-down" /></button>
               </div>
-              <button className="btn btn--sm" onClick={() => removeExercise(e.key)} aria-label="Rimuovi">✕</button>
+              <button className="btn btn--sm" onClick={() => removeExercise(e.key)} aria-label="Rimuovi"><i className="fa-solid fa-xmark" /></button>
             </div>
           ))}
         </div>
@@ -154,6 +156,8 @@ export default function PlanEditorPage() {
           onAdd={(entry) => setPlan((p) => ({ ...p, exercises: [...p.exercises, entry] }))}
         />
       )}
+
+      {alertMsg && <AlertDialog message={alertMsg} onClose={() => setAlertMsg(null)} />}
 
       {editing && (
         <EditEntrySheet

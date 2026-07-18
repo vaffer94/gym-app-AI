@@ -44,7 +44,7 @@ export default function HomePage() {
         </div>
         <div className="spacer" />
         <button className="btn" onClick={signOut}>
-          Esci
+          <i className="fa-solid fa-right-from-bracket" /> Esci
         </button>
       </header>
 
@@ -58,7 +58,7 @@ export default function HomePage() {
                 <p className="small muted">{s.text}</p>
               </div>
               <div className="spacer" />
-              <span className="emoji-lg" aria-hidden="true">→</span>
+              <i className="fa-solid fa-arrow-right" aria-hidden="true" />
             </div>
           </div>
         ))}

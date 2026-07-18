@@ -17,7 +17,7 @@ export default function SchedeListPage() {
   return (
     <div className="page">
       <header className="appbar">
-        <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">←</button>
+        <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home"><i className="fa-solid fa-arrow-left" /></button>
         <h2>📋 Le tue schede</h2>
       </header>
 
