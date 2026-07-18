@@ -6,6 +6,11 @@ import { aggregateSessions, weekStreak, daysSinceLast, last4Weeks, avgPerWeek } 
 import { computeStats } from '../workout/sessionEngine'
 import { formatClock } from '../workout/activeSession'
 import TrendChart from '../components/TrendChart'
+import {
+  isHealthConfigured, isHealthConnected, connectHealth, disconnectHealth,
+  getHealthSummary, getStepsGoal, setStepsGoal, localISO,
+} from '../data/health'
+import Stepper from '../components/Stepper'
 
 const PERIODS = [
   { id: 'week', label: 'Settimana' },
@@ -19,12 +24,32 @@ export default function HistoryListPage() {
   const repo = getRepo(user)
 
   const [sessions, setSessions] = useState(null)
-  const [tab, setTab] = useState('trends') // trends (default) | list
+  const [tab, setTab] = useState('trends') // trends (default) | list | integrations
   const [period, setPeriod] = useState('week')
+  const [fitbit, setFitbit] = useState(null) // {stepsByDay, stepsGoal, workoutDays}
+  const [fitbitError, setFitbitError] = useState(null)
+  const [goal, setGoal] = useState(getStepsGoal())
 
   useEffect(() => {
     repo.listSessions().then(setSessions)
   }, [repo])
+
+  const loadHealth = () =>
+    getHealthSummary().then((d) => { setFitbit(d); setFitbitError(null) }).catch((e) => setFitbitError(e.message))
+
+  useEffect(() => {
+    if (isHealthConnected()) loadHealth()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const connect = async () => {
+    try {
+      await connectHealth()
+      await loadHealth()
+    } catch (e) {
+      setFitbitError(e.message)
+    }
+  }
 
   const trends = useMemo(
     () => (sessions ? aggregateSessions(sessions, period) : []),
@@ -63,15 +88,76 @@ export default function HistoryListPage() {
         <button className={`btn ${tab === 'list' ? 'btn--teal' : ''}`} style={{ flex: 1 }} onClick={() => setTab('list')}>
           Allenamenti
         </button>
+        <button className={`btn ${tab === 'integrations' ? 'btn--teal' : ''}`} style={{ flex: 1 }} onClick={() => setTab('integrations')}>
+          Integrations
+        </button>
       </div>
 
       {sessions === null && <p className="center muted">Carico…</p>}
 
-      {sessions?.length === 0 && (
+      {sessions?.length === 0 && tab !== 'integrations' && (
         <div className="card center stack" style={{ padding: '40px 20px' }}>
           <span className="emoji-xl">🏋️</span>
           <p className="muted">Nessun allenamento ancora. Il primo è il più importante!</p>
           <button className="btn btn--primary" onClick={() => navigate('/allenamento')}>Inizia ora</button>
+        </div>
+      )}
+
+      {tab === 'integrations' && (
+        <div className="stack">
+          <div className="card stack">
+            <div className="row">
+              <span className="emoji-lg">⌚</span>
+              <div style={{ flex: 1 }}>
+                <h3>Google Health</h3>
+                <p className="small muted">Passi e allenamenti rilevati dal tuo Pixel Watch (ecosistema Fitbit)</p>
+              </div>
+              {isHealthConnected() && <span className="chip"><i className="fa-solid fa-circle-check" /> collegato</span>}
+            </div>
+
+            {!isHealthConfigured && (
+              <p className="small">
+                Per attivare l'integrazione serve un Client ID OAuth di Google Cloud in{' '}
+                <code>.env.local</code> — i passaggi sono nel README (sezione "Integrazione Google Health").
+              </p>
+            )}
+
+            {isHealthConfigured && !isHealthConnected() && (
+              <button className="btn btn--primary btn--big" onClick={connect}>
+                Collega Google Health
+              </button>
+            )}
+
+            {isHealthConnected() && (
+              <>
+                <p className="small muted">
+                  I dati compaiono nel calendario dell'Andamento (icone sui giorni) e nel grafico dei passi.
+                  Aggiornati al massimo ogni 30 minuti.
+                </p>
+                <div className="row">
+                  <span className="label" style={{ margin: 0, flex: 1 }}>Obiettivo passi</span>
+                  <Stepper
+                    value={goal}
+                    onChange={(v) => { setGoal(v); setStepsGoal(v); setFitbit((f) => (f ? { ...f, stepsGoal: v } : f)) }}
+                    min={1000} max={50000} step={500}
+                  />
+                </div>
+                <button
+                  className="btn"
+                  style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
+                  onClick={() => { disconnectHealth(); setFitbit(null) }}
+                >
+                  Scollega
+                </button>
+              </>
+            )}
+
+            {fitbitError && <p className="small" style={{ color: 'var(--danger)' }}>{fitbitError}</p>}
+          </div>
+
+          <div className="card card--flat center" style={{ padding: '28px 20px' }}>
+            <p className="small muted">Altre integrazioni arriveranno qui 🔌</p>
+          </div>
         </div>
       )}
 
@@ -112,7 +198,27 @@ export default function HistoryListPage() {
       {/* STREAK + KPI + completamento */}
       {tab === 'trends' && sessions?.length > 0 && (
         <>
-          <StreakCard sessions={sessions} />
+          <StreakCard sessions={sessions} fitbit={fitbit} />
+
+          {fitbit && (
+            <div className="card card--flat stack">
+              <span className="label" style={{ margin: 0 }}>
+                Passi giornalieri <span className="small muted">(obiettivo {fitbit.stepsGoal.toLocaleString('it-IT')})</span>
+              </span>
+              <TrendChart
+                type="bar"
+                labels={Object.keys(fitbit.stepsByDay).map((d) => new Date(d).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }))}
+                datasets={[{
+                  label: 'Passi',
+                  data: Object.values(fitbit.stepsByDay),
+                  backgroundColor: Object.values(fitbit.stepsByDay).map((v) => (v >= fitbit.stepsGoal ? '#2ec4b6' : '#ffd23f')),
+                  borderColor: '#2b2b3c',
+                  borderWidth: 2,
+                  borderRadius: 6,
+                }]}
+              />
+            </div>
+          )}
 
           <div className="row">
             <div className="card card--flat center" style={{ flex: 1, padding: '14px 8px' }}>
@@ -204,8 +310,8 @@ export default function HistoryListPage() {
   )
 }
 
-/** Card streak: settimane di fila + calendario ultime 4 settimane */
-function StreakCard({ sessions }) {
+/** Card streak: settimane di fila + calendario ultime 4 settimane (+ badge Fitbit) */
+function StreakCard({ sessions, fitbit }) {
   const streak = weekStreak(sessions)
   const rest = daysSinceLast(sessions)
   const cal = last4Weeks(sessions)
@@ -227,15 +333,32 @@ function StreakCard({ sessions }) {
         {dayNames.map((d, i) => (
           <span key={`h${i}`} className="small muted center" style={{ fontWeight: 800 }}>{d}</span>
         ))}
-        {cal.map((c) => (
-          <div
-            key={c.ts}
-            className={`cal-cell ${c.trained ? 'cal-cell--on' : ''} ${c.isToday ? 'cal-cell--today' : ''} ${c.future ? 'cal-cell--future' : ''}`}
-          >
-            {c.trained ? <i className="fa-solid fa-dumbbell" /> : c.dayNum}
-          </div>
-        ))}
+        {cal.map((c) => {
+          const iso = localISO(new Date(c.ts))
+          const goalHit = fitbit && (fitbit.stepsByDay[iso] || 0) >= fitbit.stepsGoal
+          const detected = fitbit && fitbit.workoutDays.includes(iso)
+          return (
+            <div
+              key={c.ts}
+              className={`cal-cell ${c.trained ? 'cal-cell--on' : ''} ${c.isToday ? 'cal-cell--today' : ''} ${c.future ? 'cal-cell--future' : ''}`}
+            >
+              {c.trained ? <i className="fa-solid fa-dumbbell" /> : c.dayNum}
+              {(goalHit || detected) && (
+                <span className="cal-badges">
+                  {goalHit && <i className="fa-solid fa-shoe-prints" title="Obiettivo passi raggiunto" />}
+                  {detected && <i className="fa-solid fa-heart-pulse" title="Allenamento rilevato da Google Health" />}
+                </span>
+              )}
+            </div>
+          )
+        })}
       </div>
+
+      {fitbit && (
+        <p className="small muted">
+          <i className="fa-solid fa-shoe-prints" /> obiettivo passi · <i className="fa-solid fa-heart-pulse" /> allenamento rilevato da Google Health
+        </p>
+      )}
     </div>
   )
 }

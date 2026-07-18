@@ -61,6 +61,11 @@ function makeLocalRepo() {
       ls.write(K.labels, all)
       return all
     },
+    async removeLabel(label) {
+      const all = ls.read(K.labels).filter((l) => l !== label)
+      ls.write(K.labels, all)
+      return all
+    },
     async saveSession(session) {
       const all = ls.read(K.sessions).filter((x) => x.id !== session.id)
       all.push(session)
@@ -129,6 +134,11 @@ function makeFirestoreRepo(uid) {
     async addLabels(labels) {
       const current = await this.getLabels()
       const all = [...new Set([...current, ...labels])]
+      await setDoc(labelsDoc(), { values: all })
+      return all
+    },
+    async removeLabel(label) {
+      const all = (await this.getLabels()).filter((l) => l !== label)
       await setDoc(labelsDoc(), { values: all })
       return all
     },

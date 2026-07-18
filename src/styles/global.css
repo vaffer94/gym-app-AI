@@ -376,6 +376,7 @@ p { margin: 0; }
   gap: 6px;
 }
 .cal-cell {
+  position: relative;
   aspect-ratio: 1;
   display: flex;
   align-items: center;
@@ -386,6 +387,19 @@ p { margin: 0; }
   background: var(--card);
   border: 2px solid var(--ink);
   border-radius: 10px;
+}
+.cal-badges {
+  position: absolute;
+  top: -7px;
+  right: -5px;
+  display: flex;
+  gap: 2px;
+  font-size: 0.55rem;
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 1px 4px;
+  color: var(--ink);
 }
 .cal-cell--on {
   background: var(--primary);

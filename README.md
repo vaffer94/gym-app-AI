@@ -21,6 +21,20 @@ Senza configurazione Firebase l'app parte in **modalità demo** (login finto, da
 6. Riavvia `npm run dev` → ora il login Google è reale
 7. **Pubblica le regole di sicurezza** (senza questo passaggio ogni salvataggio fallisce con `permission-denied`): Console Firebase → **Firestore Database → Regole** → cancella il contenuto, incolla il testo del file `firestore.rules` del repo → **Pubblica**
 
+## Integrazione Google Health (facoltativa)
+
+I dati salute del Pixel Watch (passi, allenamenti rilevati) si leggono con la **Google Health API** (il successore della Fitbit Web API, che chiude a settembre 2026). Setup una tantum:
+
+Tutto da [console.cloud.google.com](https://console.cloud.google.com), col progetto giusto selezionato in alto (va bene lo stesso progetto di Firebase) e l'account Google giusto. *Non usare il wizard di developers.google.com/health/setup: rifiuta le origini http://localhost.*
+
+1. **API e servizi → Libreria** → cerca "Google Health API" → **Abilita**
+2. **API e servizi → Credenziali → + Crea credenziali → ID client OAuth** (se richiesto, configura prima la schermata di consenso: tipo Esterno, nome `Gym App`). Tipo: **Applicazione web**
+3. **Origini JavaScript autorizzate** → aggiungi `http://localhost:5173` (niente slash finale; in produzione aggiungerai `https://<tuo-dominio>`). URI di reindirizzamento: **vuoto** → Crea
+4. **Schermata consenso OAuth → Data Access (Ambiti)** → aggiungi `.../auth/googlehealth.activity_and_fitness.readonly`
+5. **Schermata consenso OAuth → Audience → Utenti di prova** → aggiungi la tua email (app non verificata = max 100 utenti)
+6. Copia il **Client ID** (`...apps.googleusercontent.com`) in `.env.local` come `VITE_GOOGLE_HEALTH_CLIENT_ID`
+7. Riavvia `npm run dev` → Storico → Integrations → **Collega Google Health**
+
 ## Deploy su Firebase Hosting
 
 ```bash

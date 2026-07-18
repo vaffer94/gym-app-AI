@@ -46,6 +46,17 @@ export default function PlanEditorPage() {
     setPlan((p) => (p.labels.includes(l) ? p : { ...p, labels: [...p.labels, l] }))
   }
 
+  const deleteLabel = async (l) => {
+    setAllLabels((a) => a.filter((x) => x !== l))
+    setPlan((p) => ({ ...p, labels: p.labels.filter((x) => x !== l) }))
+    try {
+      await repo.removeLabel(l)
+    } catch (err) {
+      console.error(err)
+      setAlertMsg(`Eliminazione non riuscita: ${err.message}`)
+    }
+  }
+
   const move = (index, dir) =>
     setPlan((p) => {
       const ex = [...p.exercises]
@@ -114,6 +125,7 @@ export default function PlanEditorPage() {
           selected={plan.labels}
           onToggle={toggleLabel}
           onAddNew={addNewLabel}
+          onDelete={deleteLabel}
         />
       </div>
 
@@ -213,7 +225,7 @@ function EditEntrySheet({ entry, onClose, onSave }) {
 }
 
 /** Dropdown con checklist delle finalità passate + inserimento di una nuova */
-function FinalitaDropdown({ allLabels, selected, onToggle, onAddNew }) {
+function FinalitaDropdown({ allLabels, selected, onToggle, onAddNew, onDelete }) {
   const [open, setOpen] = useState(false)
   const [text, setText] = useState('')
   const ref = useRef(null)
@@ -252,7 +264,15 @@ function FinalitaDropdown({ allLabels, selected, onToggle, onAddNew }) {
           {allLabels.map((l) => (
             <label key={l} className="dropdown-item">
               <input type="checkbox" checked={selected.includes(l)} onChange={() => onToggle(l)} />
-              {l}
+              <span style={{ flex: 1 }}>{l}</span>
+              <button
+                type="button"
+                className="btn btn--sm"
+                aria-label={`Elimina finalità ${l}`}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(l) }}
+              >
+                <i className="fa-solid fa-xmark" />
+              </button>
             </label>
           ))}
           <div className="row" style={{ marginTop: 6 }}>
