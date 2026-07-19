@@ -67,12 +67,29 @@ Tutto gratuito. Serve ~20 GB di disco.
    - scheda *SDK Platforms*: spunta l'ultima piattaforma Android stabile
    - scheda *SDK Tools*: verifica che ci siano **Android SDK Platform-Tools** (contiene `adb`) e **Android Emulator**
 4. **Emulatore Wear OS** (per sviluppare senza watch al polso): Device Manager → Create Device → categoria **Wear OS** → Wear OS Large Round → scarica l'immagine di sistema proposta → Fine
-5. **Collegare il Pixel Watch fisico** (via Wi-Fi, stesso Wi-Fi del computer):
-   - sul watch: Impostazioni → Sistema → Informazioni → tocca 7 volte "Numero build" → si sbloccano le **Opzioni sviluppatore**
-   - Opzioni sviluppatore → attiva **Debug ADB** e **Debug wireless** → tocca "Accoppia nuovo dispositivo": vedrai codice e indirizzo `IP:porta`
-   - sul computer: `adb pair IP:PORTA` (inserisci il codice), poi `adb connect IP:PORTA` (la porta di *connect* è quella mostrata nella schermata principale del Debug wireless, diversa da quella di pairing)
-   - `adb devices` deve elencare il watch. Da qui Android Studio lo vede come target di run
-6. Se `adb` non è nel PATH del terminale: `export PATH=$PATH:~/Library/Android/sdk/platform-tools` (aggiungilo a `~/.zshrc`)
+5. **Collegare il Pixel Watch fisico — LA PROCEDURA CHE FUNZIONA** (testata il 19/07/2026 dopo molte sofferenze):
+
+   *Prerequisiti una tantum sul watch:* Impostazioni → Sistema → Informazioni → tocca 7 volte "Numero build" → nelle **Opzioni sviluppatore** attiva **Debug ADB** e **Debug wireless**.
+
+   *Rito di collegamento (ogni sessione di sviluppo):*
+   1. Telefono: **hotspot ON** (banda 2.4GHz se c'è l'opzione — Pixel Watch 1 e 2 non vedono il 5GHz)
+   2. Mac connesso all'hotspot; **watch connesso all'hotspot e IN CARICA** (senza caricatore il watch molla il Wi-Fi per risparmiare batteria), schermo attivo
+   3. Watch: Debug wireless → **"Accoppia nuovo dispositivo"** → LASCIA LA SCHERMATA APERTA. Mostra IP, **porta A** e **codice a 6 cifre**
+   4. Sul Mac, tutto in UNA riga (il prompt interattivo del codice ha un bug che dà "protocol fault"):
+      ```
+      adb kill-server
+      adb pair IP:PORTA_A CODICE     # es: adb pair 192.168.43.15:42123 123456
+      ```
+   5. `adb devices` — spesso il watch si collega da solo dopo il pairing. Se l'elenco è vuoto: prendi la **porta B** dalla schermata PRINCIPALE del Debug wireless (È DIVERSA dalla porta A!) e fai `adb connect IP:PORTA_B`
+   6. `adb devices` deve elencare il watch → Android Studio lo vede come target di run
+
+   *Note che salvano ore:*
+   - Il **pairing è per sempre** (finché non revochi le autorizzazioni): le volte successive di solito basta `adb connect`, o parte da solo
+   - **Confondere porta A e porta B è la causa n°1 di "protocol fault"**
+   - Il debug **Bluetooth NON esiste** sul Pixel Watch, e il caricatore **non trasporta dati**: il Wi-Fi è l'unica strada
+   - Se la connessione cade durante lo sviluppo (il watch risparmia energia): ricontrolla che sia in carica e rifai `adb connect`
+   - Niente panico se `ping` verso il watch va in timeout: a schermo spento non risponde, non significa che la rete sia rotta
+6. Se `adb` non è nel PATH del terminale: `export PATH="$PATH:$HOME/Library/Android/sdk/platform-tools"` (aggiungilo a `~/.zshrc`)
 
 ## Documenti di progetto
 
