@@ -1,0 +1,31 @@
+{
+  "_comment": "Placeholder. Segui watch/README.md per registrare un'app Android nel progetto Firebase esistente (gym-app-2dd77) e scaricare il google-services.json vero, poi salvalo come watch/app/google-services.json (NON questo file .example, che resta nel repo solo come riferimento).",
+  "project_info": {
+    "project_number": "0000000000",
+    "project_id": "gym-app-2dd77",
+    "storage_bucket": "gym-app-2dd77.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:0000000000:android:0000000000000000000000",
+        "android_client_info": {
+          "package_name": "com.gymapp.watch"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "0000000000-placeholder.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        { "current_key": "INCOLLA_QUI_LA_TUA_API_KEY" }
+      ],
+      "services": {
+        "appinvite_service": { "other_platform_oauth_client": [] }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

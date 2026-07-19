@@ -91,6 +91,12 @@ Tutto gratuito. Serve ~20 GB di disco.
    - Niente panico se `ping` verso il watch va in timeout: a schermo spento non risponde, non significa che la rete sia rotta
 6. Se `adb` non è nel PATH del terminale: `export PATH="$PATH:$HOME/Library/Android/sdk/platform-tools"` (aggiungilo a `~/.zshrc`)
 
+## App Watch (Wear OS standalone)
+
+Progetto separato in `watch/` (Kotlin/Compose, Gradle proprio) — stesso backend
+Firebase/Firestore della web app. Setup, struttura e stato di avanzamento: vedi
+`watch/README.md`.
+
 ## Documenti di progetto
 
 - `DESIGN.md` — linee guida grafiche (stile cartoon)
@@ -102,7 +108,7 @@ Tutto gratuito. Serve ~20 GB di disco.
 2. ⬜ Catalogo esercizi (free-exercise-db) + creazione schede + esercizi custom
 3. ⬜ Esecuzione allenamento (timer, serie, posticipa, note)
 4. ⬜ Storico e statistiche
-5. ⬜ App Wear OS standalone
+5. 🔄 App Wear OS standalone — codice completo in `watch/`, installata sul Pixel Watch: login Google e download schede da Firestore verificati sul dispositivo (19/07/2026); manca solo il test di un allenamento completo in condizioni reali
 6. ⬜ Sensori + always-on (watch)
 7. ⬜ Coach post-sessione
 8. ⬜ Play Store + monetizzazione

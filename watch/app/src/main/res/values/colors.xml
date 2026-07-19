@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Stessa palette "cartoon" della web app (vedi DESIGN.md) -->
+    <color name="ink">#2B2B3C</color>
+    <color name="paper">#FDF6EC</color>
+    <color name="primary_orange">#FF6B35</color>
+    <color name="teal">#2EC4B6</color>
+    <color name="yellow">#FFD23F</color>
+
+    <color name="ic_launcher_background">#2B2B3C</color>
+</resources>
