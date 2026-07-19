@@ -71,6 +71,14 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("com.google.android.gms:play-services-wearable:18.2.0")
 
+    // Health Services: HR continuo durante l'allenamento (step 6)
+    implementation("androidx.health:health-services-client:1.0.0")
+    // ListenableFuture usato dalle API async di Health Services. Serve guava completo:
+    // Firestore porta il jar "vuoto" listenablefuture-9999.0 che vince sul singolo
+    // artefatto listenablefuture, proprio perche' si aspetta guava vero sul classpath.
+    implementation("androidx.concurrent:concurrent-futures-ktx:1.2.0")
+    implementation("com.google.guava:guava:33.3.1-android")
+
     // --- Firebase (stessi servizi della web app: Auth + Firestore) ---
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
     implementation("com.google.firebase:firebase-auth-ktx")

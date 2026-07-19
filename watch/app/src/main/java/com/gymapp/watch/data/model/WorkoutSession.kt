@@ -65,4 +65,24 @@ data class WorkoutSession(
     var completedFully: Boolean? = null,
     /** risposta rapida "come ti senti?" — campo previsto dallo step 7, non ancora usato */
     var feeling: String? = null,
+    /**
+     * Serie temporale HR della sessione (step 6): due array paralleli — offset in secondi
+     * dall'inizio sessione e bpm medio su finestre di ~5s. Array paralleli e non coppie
+     * perche' Firestore non supporta array annidati; ~1400 punti per 2h, ben sotto il
+     * limite di 1MB per documento.
+     */
+    var hrT: List<Int> = emptyList(),
+    var hrBpm: List<Int> = emptyList(),
+    /**
+     * Aggregati HR calcolati a fine sessione: sopravvivono anche quando (policy
+     * retention) le curve grezze hrT/hrBpm verranno rimosse dalle sessioni piu'
+     * vecchie di 30 allenamenti.
+     */
+    var hrAvg: Int? = null,
+    var hrMax: Int? = null,
+    /**
+     * true se la sessione e' stata chiusa dal watchdog anti-dimenticanza (>2h, nessuna
+     * serie da 45min, HR normale o assente), con endedAt retrodatato all'ultima attivita'.
+     */
+    var autoClosed: Boolean? = null,
 )

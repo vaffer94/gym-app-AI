@@ -74,6 +74,8 @@ fun RestScreen(
         }
         Spacer(modifier = Modifier.size(4.dp))
         Text(text = "+1 min          salta", style = MaterialTheme.typography.caption2)
+        Spacer(modifier = Modifier.size(4.dp))
+        LiveHeartRate(viewModel)
     }
     SecondsEdgeClock()
     }

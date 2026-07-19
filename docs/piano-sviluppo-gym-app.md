@@ -42,7 +42,9 @@ users/{uid}
                                   reps e peso EFFETTIVI (precompilati col target,
                                   modificabili con un tap), recupero effettivo vs
                                   target, skipped/postponed, RPE opzionale,
-                                  (fase 6) HR medio/max, intensità movimento
+                                  (fase 6) hrT[]/hrBpm[]: serie HR a finestre
+                                  di 5s, array paralleli (niente intensità
+                                  movimento: accelerometro scartato il 19/07)
   exerciseStats/{exerciseId}   ← serie temporale compatta aggiornata dal client
                                   a fine sessione: [data, e1RM, volume, aderenza
                                   recuperi] — è ciò che legge il coach
@@ -86,11 +88,33 @@ Regola anti-costi: pochi documenti grandi (1 doc per sessione, non 1 per serie).
 - **Rischi:** auth su watch (UX delicata), connettività via BT-proxy — test sul Pixel Watch fisico
 
 ### Step 6 — Watch: sensori e always-on
-- Health Services: HR continuo; accelerometro **aggregato sul watch** (intensità per finestra, mai raw)
-- Ambient mode (always-on) con timer visibile
-- Dati sensori nel dettaglio sessione web
-- **Demo:** display sempre attivo, HR e intensità nello storico
-- **Rischi:** batteria su sessioni 1-2h; permessi BODY_SENSORS
+- ✅ Health Services: HR continuo durante la sessione (fatto il 19/07/2026: MeasureClient,
+  media su finestre da 5s, salvato nella sessione come array paralleli `hrT`/`hrBpm`,
+  bpm live a schermo, permesso BODY_SENSORS chiesto al primo START)
+- ~~Accelerometro aggregato~~ **scartato** (decisione 19/07/2026): l'intensità la dà già
+  l'HR; la segmentazione temporale arriva gratis dai timestamp delle serie; al polso in
+  sala pesi l'accelerometro produce solo rumore e consuma batteria
+- Ambient mode (always-on) con timer visibile — nel frattempo lo schermo resta acceso
+  per tutta la sessione (keepScreenOn, equivalente del Wake Lock web)
+- Dettaglio sessione web: grafico HR nel tempo con bande colorate per esercizio
+  (stessa palette pastello per-esercizio usata sul watch) e banda neutra per recuperi/pause
+- ✅ **Watchdog anti-dimenticanza** (fatto il 19/07/2026): sessione attiva da >2h senza
+  serie completate da 45min e con HR recente da riposo (<100 bpm) o assente → chiusa
+  automaticamente con `endedAt` retrodatato all'ultima serie e flag `autoClosed: true`.
+  La sessione NON viene eliminata (dati di allenamento veri + falso positivo sarebbe
+  irreversibile). Il controllo gira sia in-app (ogni minuto) che alla riapertura
+- **Retention dati grezzi HR** (decisione 19/07/2026, da implementare lato web): curve
+  `hrT`/`hrBpm` mantenute solo nelle **ultime 30 sessioni**; per le piu' vecchie la web
+  app le rimuove dal documento. Motivazione: non lo spazio (1GB di quota) ma il costo
+  di lettura — Firestore non ha proiezioni, l'elenco storico scarica i documenti interi.
+  Gli aggregati sopravvivono sempre: `hrAvg`/`hrMax` gia' calcolati a fine sessione sul
+  watch, e le statistiche per esercizio andranno in `exerciseStats` (step 7), che e' la
+  base per i confronti tra ripetizioni della stessa scheda (battito medio, peso, durata,
+  andamenti nel tempo)
+- **Demo:** display sempre attivo; grafico HR etichettato nello storico
+- **Rischi:** batteria su sessioni 1-2h (HR + schermo acceso: misurare alla prima uscita
+  in palestra); affidabilità HR ottico durante prese isometriche (le etichette aiutano
+  a interpretare)
 
 ### Step 7 — Coach post-sessione e coach motivazionale
 

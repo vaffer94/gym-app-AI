@@ -6,6 +6,7 @@ import { computeStats } from '../workout/sessionEngine'
 import { formatClock } from '../workout/activeSession'
 import { categoryById } from '../data/catalog'
 import { ConfirmDialog } from '../components/Dialog'
+import HrChart from '../components/HrChart'
 
 export default function SessionDetailPage() {
   const { user } = useAuth()
@@ -52,7 +53,20 @@ export default function SessionDetailPage() {
         <Row label="Esercizi completi" value={`${st.doneExercises} / ${st.totalExercises}${st.skipped ? ` (${st.skipped} saltati)` : ''}`} />
         {st.volumeKg > 0 && <Row label="Volume" value={`${st.volumeKg} kg`} />}
         {st.avgRestSec != null && <Row label="Recupero medio" value={`${st.avgRestSec}s (target ${st.restTargetSec}s)`} />}
+        {session.hrAvg != null && <Row label="Battito medio / max" value={`${session.hrAvg} / ${session.hrMax} bpm`} />}
+        {session.autoClosed && (
+          <p className="small muted" style={{ margin: 0 }}>
+            ⏱ Chiusa automaticamente: rimasta aperta senza attività (la fine è retrodatata all'ultima serie)
+          </p>
+        )}
       </div>
+
+      {Array.isArray(session.hrT) && session.hrT.length >= 2 && (
+        <div className="card card--flat stack">
+          <span className="label" style={{ margin: 0 }}>❤️ Battito cardiaco</span>
+          <HrChart session={session} />
+        </div>
+      )}
 
       {Object.keys(st.byCategory).length > 0 && (
         <div className="card card--flat stack">

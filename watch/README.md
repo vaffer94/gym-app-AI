@@ -17,10 +17,19 @@ fatte dal watch appaiono nello storico della web app e viceversa.
   (`pending_sessions`), poi tenta l'upload su `users/{uid}/sessions`; se offline resta
   in coda e un WorkManager la ritenta appena torna la rete
 
-**Non ancora in questo taglio** (prossimi step del piano): Health Services (HR,
-always-on/ambient mode — step 6), immagini esercizi sul watch (per ora solo testo,
-da valutare con Coil vista la dimensione schermo), input vocale per le note libere
-(per ora solo tramite editor rapido reps/peso).
+**Aggiunto dopo il primo taglio** (19/07/2026):
+- **HR continuo** (step 6): Health Services MeasureClient, media su finestre da 5s,
+  salvato nella sessione come array paralleli `hrT`/`hrBpm` (Firestore non supporta
+  array annidati), bpm live durante l'allenamento. Permesso BODY_SENSORS chiesto al
+  primo START; se negato l'allenamento parte comunque senza HR. Persistenza periodica
+  (30s) nel DataStore per non perdere l'HR se l'app muore a metà sessione
+- Build **release ottimizzata** (R8, firma debug per sideload), colori per scheda e
+  per esercizio, icone sui pulsanti, anello dei secondi sul bordo, schermo sempre
+  acceso in allenamento, conferma anti-tocco su Termina
+
+**Non ancora in questo taglio**: ambient mode/always-on a basso consumo (step 6),
+grafico HR nel dettaglio sessione web (prossimo pezzo dello step 6), immagini esercizi
+sul watch, input vocale per le note libere.
 
 ## Struttura
 

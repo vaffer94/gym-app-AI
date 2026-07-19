@@ -217,12 +217,13 @@ object SessionEngine {
             session.copy(pauseStartedAt = now())
         }
 
-    fun finishSession(session: WorkoutSession): WorkoutSession {
+    /** [at] permette di retrodatare la chiusura (watchdog anti-dimenticanza) */
+    fun finishSession(session: WorkoutSession, at: Long = now()): WorkoutSession {
         var s = session
         if (s.pauseStartedAt != null) {
-            s = s.copy(pausedMs = s.pausedMs + (now() - s.pauseStartedAt!!), pauseStartedAt = null)
+            s = s.copy(pausedMs = s.pausedMs + (at - s.pauseStartedAt!!).coerceAtLeast(0L), pauseStartedAt = null)
         }
-        s = s.copy(endedAt = now())
+        s = s.copy(endedAt = at)
         val allDone = s.exercises.all { it.skipped || it.series.all { serie -> serie.done } }
         val anyDone = s.exercises.any { it.series.any { serie -> serie.done } }
         s = s.copy(

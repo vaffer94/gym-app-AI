@@ -10,6 +10,13 @@ export const PLAN_COLORS = [
   '#F3E3C9', // sabbia
 ]
 
+/**
+ * Colore caratterizzante di un esercizio per posizione nella scheda — stessa palette
+ * e stesso ordine dell'app watch (watch/.../ui/theme/PlanColor.kt): l'esercizio
+ * "pesca" al polso e' la banda "pesca" nel grafico HR dello storico.
+ */
+export const exerciseColor = (i) => PLAN_COLORS[((i % PLAN_COLORS.length) + PLAN_COLORS.length) % PLAN_COLORS.length]
+
 /** Colore di default: casuale tra quelli non ancora usati dalle altre schede */
 export function pickDefaultColor(usedColors = []) {
   const free = PLAN_COLORS.filter((c) => !usedColors.includes(c))

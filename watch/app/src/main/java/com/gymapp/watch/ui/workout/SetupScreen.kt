@@ -1,5 +1,9 @@
 package com.gymapp.watch.ui.workout
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -29,6 +34,7 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
+import androidx.core.content.ContextCompat
 import com.gymapp.watch.data.model.WorkoutPlan
 import com.gymapp.watch.ui.theme.Ink
 import com.gymapp.watch.ui.theme.planColor
@@ -44,10 +50,23 @@ fun SetupScreen(
 ) {
     var restSec by remember { mutableIntStateOf(60) }
     val accent = planColor(plan.color)
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         restSec = viewModel.getRestDefaultSec()
     }
+
+    fun begin() {
+        viewModel.setRestDefaultSec(restSec)
+        viewModel.startSession(plan, restSec)
+        onStarted()
+    }
+
+    // HR continuo: al primo START chiede BODY_SENSORS; se negato l'allenamento
+    // parte comunque, semplicemente senza battito
+    val sensorPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { begin() }
 
     // Layout ancorato in alto con top padding calcolato per i quadranti rotondi:
     // a 22dp dal bordo la corda del cerchio e' larga ~137dp, quindi il titolo
@@ -101,9 +120,9 @@ fun SetupScreen(
 
         Chip(
             onClick = {
-                viewModel.setRestDefaultSec(restSec)
-                viewModel.startSession(plan, restSec)
-                onStarted()
+                val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.BODY_SENSORS) ==
+                    PackageManager.PERMISSION_GRANTED
+                if (granted) begin() else sensorPermissionLauncher.launch(Manifest.permission.BODY_SENSORS)
             },
             icon = { Icon(imageVector = Icons.Rounded.PlayArrow, contentDescription = null, tint = Ink) },
             label = { Text("START") },

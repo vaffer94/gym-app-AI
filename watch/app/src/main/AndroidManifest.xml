@@ -10,8 +10,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <!-- Step 6: sensori (Health Services) -->
-    <!-- <uses-permission android:name="android.permission.BODY_SENSORS" /> -->
+    <!-- HR continuo durante l'allenamento (Health Services, step 6) -->
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
 
     <application
         android:name=".GymWatchApp"

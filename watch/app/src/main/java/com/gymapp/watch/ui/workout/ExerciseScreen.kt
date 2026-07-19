@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Remove
@@ -81,10 +82,13 @@ fun ExerciseScreen(
     val exercise = session?.let { SessionEngine.currentExercise(it) }
 
     LaunchedEffect(session) {
-        if (session != null && exercise == null) onFinished() // coda vuota -> allenamento finito
+        val s = session ?: return@LaunchedEffect
+        // Coda vuota (tutto fatto) o sessione non piu' attiva (Termina / watchdog
+        // anti-dimenticanza): si passa al riepilogo
+        if (exercise == null || s.status != "active") onFinished()
     }
 
-    if (session == null || exercise == null) return
+    if (session == null || exercise == null || session?.status != "active") return
 
     val ex: SessionExercise = exercise
     val nextIdx = SessionEngine.nextUndoneSerie(ex)
@@ -141,6 +145,9 @@ fun ExerciseScreen(
                         style = MaterialTheme.typography.caption1,
                     )
                 }
+                item {
+                    LiveHeartRate(viewModel)
+                }
 
                 if (nextIdx >= 0) {
                     if (ex.mode == "duration") {
@@ -196,12 +203,31 @@ fun ExerciseScreen(
                     )
                 }
                 item {
-                    TerminaChip(onConfirm = onFinished)
+                    // finish() cambia lo status -> la navigazione al riepilogo passa
+                    // dall'effetto qui sopra (unica via, condivisa col watchdog)
+                    TerminaChip(onConfirm = { viewModel.finish() })
                 }
             }
         }
         // Il tempo scorre anche mentre fai la serie: orologio dei secondi sul bordo
         SecondsEdgeClock()
+    }
+}
+
+/** Battito live (HR continuo, step 6): visibile solo quando il sensore ha un valore */
+@Composable
+fun LiveHeartRate(viewModel: WorkoutViewModel) {
+    val bpm by viewModel.currentBpm.collectAsState()
+    if (bpm == null) return
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+        Icon(
+            imageVector = Icons.Rounded.Favorite,
+            contentDescription = "Battito cardiaco",
+            tint = Color(0xFFE25858),
+            modifier = Modifier.size(14.dp),
+        )
+        Spacer(modifier = Modifier.size(4.dp))
+        Text(text = "$bpm bpm", style = MaterialTheme.typography.caption1)
     }
 }
 
