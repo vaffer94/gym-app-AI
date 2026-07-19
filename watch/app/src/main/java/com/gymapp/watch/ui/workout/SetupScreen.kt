@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
@@ -48,35 +49,55 @@ fun SetupScreen(
         restSec = viewModel.getRestDefaultSec()
     }
 
+    // Layout ancorato in alto con top padding calcolato per i quadranti rotondi:
+    // a 22dp dal bordo la corda del cerchio e' larga ~137dp, quindi il titolo
+    // (larghezza 192-32-32 = 128dp) non viene piu' tagliato agli angoli.
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
+            .padding(top = 22.dp, start = 16.dp, end = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             text = plan.name,
             style = MaterialTheme.typography.title3,
             color = accent,
             textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 16.dp),
         )
-        Spacer(modifier = Modifier.size(8.dp))
-        Text(text = "Recupero", style = MaterialTheme.typography.caption1)
+        Spacer(modifier = Modifier.size(6.dp))
+        Text(
+            text = "Imposta recupero tra serie:",
+            style = MaterialTheme.typography.caption2,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.size(6.dp))
 
+        // Pulsanti piccoli: sui 192dp di un quadrante rotondo la colonna intera deve stare
+        // senza scroll (titolo 2 righe + recupero + START)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Button(onClick = { restSec = (restSec - 15).coerceAtLeast(15) }, colors = ButtonDefaults.secondaryButtonColors()) {
+            Button(
+                onClick = { restSec = (restSec - 15).coerceAtLeast(15) },
+                colors = ButtonDefaults.secondaryButtonColors(),
+                modifier = Modifier.size(ButtonDefaults.SmallButtonSize),
+            ) {
                 Icon(imageVector = Icons.Rounded.Remove, contentDescription = "Meno recupero")
             }
             Spacer(modifier = Modifier.size(12.dp))
             Text(text = "${restSec / 60}:${(restSec % 60).toString().padStart(2, '0')}", style = MaterialTheme.typography.title2)
             Spacer(modifier = Modifier.size(12.dp))
-            Button(onClick = { restSec += 15 }, colors = ButtonDefaults.secondaryButtonColors()) {
+            Button(
+                onClick = { restSec += 15 },
+                colors = ButtonDefaults.secondaryButtonColors(),
+                modifier = Modifier.size(ButtonDefaults.SmallButtonSize),
+            ) {
                 Icon(imageVector = Icons.Rounded.Add, contentDescription = "Piu' recupero")
             }
         }
 
-        Spacer(modifier = Modifier.size(12.dp))
+        Spacer(modifier = Modifier.size(10.dp))
 
         Chip(
             onClick = {

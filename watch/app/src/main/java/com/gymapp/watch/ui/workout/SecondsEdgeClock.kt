@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import com.gymapp.watch.ui.theme.Paper
+import com.gymapp.watch.ui.theme.Yellow
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlinx.coroutines.delay
@@ -34,7 +35,7 @@ import kotlinx.coroutines.delay
  * web app durante l'allenamento): l'ambient mode a basso consumo arrivera' con lo step 6.
  */
 @Composable
-fun SecondsEdgeClock(accent: Color, modifier: Modifier = Modifier) {
+fun SecondsEdgeClock(modifier: Modifier = Modifier, activeColor: Color = Yellow) {
     val view = LocalView.current
     DisposableEffect(Unit) {
         view.keepScreenOn = true
@@ -61,7 +62,8 @@ fun SecondsEdgeClock(accent: Color, modifier: Modifier = Modifier) {
         for (i in 0 until 60) {
             val isNow = i == second
             val len = (if (i % 5 == 0) tickLong else tickShort) * (if (isNow) 1.6f else 1f)
-            val color = if (isNow) accent else base
+            // Giallo paglierino della web app: non si confonde coi colori pastello dei pulsanti
+            val color = if (isNow) activeColor else base
             val stroke = (if (isNow) 3.dp else 1.5.dp).toPx()
 
             if (isRound) {

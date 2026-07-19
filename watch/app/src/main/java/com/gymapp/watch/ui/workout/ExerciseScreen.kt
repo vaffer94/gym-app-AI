@@ -1,5 +1,13 @@
 package com.gymapp.watch.ui.workout
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
@@ -18,17 +27,23 @@ import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.Stop
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
@@ -44,11 +59,15 @@ import androidx.wear.compose.material.Text
 import com.gymapp.watch.data.model.SessionExercise
 import com.gymapp.watch.engine.SessionEngine
 import com.gymapp.watch.ui.theme.Ink
-import com.gymapp.watch.ui.theme.planColor
+import com.gymapp.watch.ui.theme.PrimaryOrange
+import com.gymapp.watch.ui.theme.exerciseColor
+import kotlinx.coroutines.delay
 
 /**
- * F2.2 — Esecuzione: esercizio corrente, serie con reps/peso precompilati col target
- * (modificabili con +/-), Done -> parte il recupero. Posticipa/Salta secondo F2.3.
+ * F2.2 — Esecuzione: in alto la coppia "serie in corso" (timer che pulsa, selezionato)
+ * / "fatta" (spunta, da premere a serie finita — senza scroll). Sotto: nome esercizio,
+ * conteggio serie, reps/peso precompilati col target e modificabili con +/-.
+ * Posticipa/Salta secondo F2.3; Termina con conferma anti-tocco involontario.
  */
 @Composable
 fun ExerciseScreen(
@@ -69,74 +88,212 @@ fun ExerciseScreen(
 
     val ex: SessionExercise = exercise
     val nextIdx = SessionEngine.nextUndoneSerie(ex)
-    val accent = planColor(session?.planColor)
+    // Colore caratterizzante dell'esercizio (per posizione nella scheda): fa percepire
+    // subito il passaggio all'esercizio successivo
+    val accent = exerciseColor(session?.exercises?.indexOfFirst { it.key == ex.key } ?: 0)
+
+    // Stato dell'editor reps/peso, in alto perche' "Fatta" ora sta in cima alla schermata
+    val serie = if (nextIdx >= 0) ex.series[nextIdx] else null
+    var reps by remember(ex.key, nextIdx) { mutableIntStateOf(serie?.actualReps ?: ex.reps ?: 0) }
+    var weight by remember(ex.key, nextIdx) { mutableDoubleStateOf(serie?.actualWeightKg ?: ex.weightKg ?: 0.0) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(positionIndicator = { PositionIndicator(scalingLazyListState = listState) }) {
             ScalingLazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-        ) {
-            item {
-                Text(text = ex.name, style = MaterialTheme.typography.title3, color = accent)
-            }
-            item {
-                Text(
-                    text = "Serie ${ex.series.count { it.done } + if (nextIdx >= 0) 1 else 0}/${ex.sets}",
-                    style = MaterialTheme.typography.caption1,
-                )
-            }
-
-            if (nextIdx >= 0) {
+                state = listState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+            ) {
                 item {
-                    SerieEditor(
-                        exercise = ex,
-                        serieIdx = nextIdx,
+                    SerieStatusRow(
                         accent = accent,
-                        onDone = { reps, weight, weightProvided ->
-                            viewModel.completeSerie(ex.key, nextIdx, reps, weight, weightProvided)
+                        enabled = nextIdx >= 0,
+                        onDone = {
+                            viewModel.completeSerie(
+                                ex.key,
+                                nextIdx,
+                                if (ex.mode == "duration") null else reps,
+                                if (ex.hasWeight) weight else null,
+                                ex.hasWeight,
+                            )
                             onResting()
                         },
                     )
                 }
-            }
+                item {
+                    // Sui quadranti rotondi il bordo mangia i lati in alto: padding largo + ellissi
+                    Text(
+                        text = ex.name,
+                        style = MaterialTheme.typography.title3,
+                        color = accent,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                    )
+                }
+                item {
+                    Text(
+                        text = "Serie ${ex.series.count { it.done } + if (nextIdx >= 0) 1 else 0}/${ex.sets}",
+                        style = MaterialTheme.typography.caption1,
+                    )
+                }
 
-            item {
-                ActionChip(
-                    icon = Icons.Rounded.Schedule,
-                    text = "Posticipa",
-                    onClick = { viewModel.postpone() },
-                )
-            }
-            item {
-                ActionChip(
-                    icon = Icons.Rounded.SkipNext,
-                    text = "Salta esercizio",
-                    onClick = { viewModel.skipExercise() },
-                )
-            }
-            item {
-                val paused = session?.pauseStartedAt != null
-                ActionChip(
-                    icon = if (paused) Icons.Rounded.PlayArrow else Icons.Rounded.Pause,
-                    text = if (paused) "Riprendi" else "Pausa",
-                    onClick = { viewModel.togglePause() },
-                )
-            }
-            item {
-                // F2.4: pulsante Termina sempre disponibile -> sessione salvata come parziale
-                ActionChip(
-                    icon = Icons.Rounded.Stop,
-                    text = "Termina allenamento",
-                    onClick = onFinished,
-                )
-            }
+                if (nextIdx >= 0) {
+                    if (ex.mode == "duration") {
+                        item {
+                            Text(text = "A tempo: ${(ex.durationSec ?: 0) / 60} min", style = MaterialTheme.typography.body1)
+                        }
+                    } else {
+                        item {
+                            StepperRow(
+                                value = "$reps rip",
+                                borderColor = accent,
+                                onMinus = { reps = (reps - 1).coerceAtLeast(0) },
+                                onPlus = { reps += 1 },
+                                minusDescription = "Meno ripetizioni",
+                                plusDescription = "Piu' ripetizioni",
+                            )
+                        }
+                        if (ex.hasWeight) {
+                            item {
+                                StepperRow(
+                                    value = "$weight kg",
+                                    borderColor = accent,
+                                    onMinus = { weight = (weight - 1.0).coerceAtLeast(0.0) },
+                                    onPlus = { weight += 1.0 },
+                                    minusDescription = "Meno peso",
+                                    plusDescription = "Piu' peso",
+                                )
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    ActionChip(
+                        icon = Icons.Rounded.Schedule,
+                        text = "Posticipa",
+                        onClick = { viewModel.postpone() },
+                    )
+                }
+                item {
+                    ActionChip(
+                        icon = Icons.Rounded.SkipNext,
+                        text = "Salta esercizio",
+                        onClick = { viewModel.skipExercise() },
+                    )
+                }
+                item {
+                    val paused = session?.pauseStartedAt != null
+                    ActionChip(
+                        icon = if (paused) Icons.Rounded.PlayArrow else Icons.Rounded.Pause,
+                        text = if (paused) "Riprendi" else "Pausa",
+                        onClick = { viewModel.togglePause() },
+                    )
+                }
+                item {
+                    TerminaChip(onConfirm = onFinished)
+                }
             }
         }
         // Il tempo scorre anche mentre fai la serie: orologio dei secondi sul bordo
-        SecondsEdgeClock(accent = accent)
+        SecondsEdgeClock()
+    }
+}
+
+/**
+ * Coppia di stato della serie: a sinistra "in corso" (timer col bordo che pulsa,
+ * stile selezionato col colore della scheda), a destra la spunta "fatta"
+ * (deselezionata): premendola la serie viene registrata e parte il recupero.
+ */
+@Composable
+private fun SerieStatusRow(
+    accent: Color,
+    enabled: Boolean,
+    onDone: () -> Unit,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        PulsingTimerBadge(accent = accent)
+        Button(
+            onClick = onDone,
+            enabled = enabled,
+            colors = ButtonDefaults.secondaryButtonColors(),
+            modifier = Modifier.border(2.dp, accent, CircleShape),
+        ) {
+            Icon(imageVector = Icons.Rounded.Check, contentDescription = "Serie fatta")
+        }
+    }
+}
+
+/** Timer "in corso": icona ferma, solo l'anello esterno pulsa */
+@Composable
+private fun PulsingTimerBadge(accent: Color) {
+    val transition = rememberInfiniteTransition(label = "serie-in-corso")
+    val progress by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(durationMillis = 1400), RepeatMode.Restart),
+        label = "pulse",
+    )
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(48.dp)) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawCircle(
+                color = accent.copy(alpha = (1f - progress) * 0.8f),
+                radius = (size.minDimension / 2f) * (0.68f + 0.32f * progress),
+                style = Stroke(width = 2.5.dp.toPx()),
+            )
+        }
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(34.dp)
+                .clip(CircleShape)
+                .background(accent),
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Timer,
+                contentDescription = "Serie in corso",
+                tint = Ink,
+                modifier = Modifier.size(22.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun StepperRow(
+    value: String,
+    borderColor: Color,
+    onMinus: () -> Unit,
+    onPlus: () -> Unit,
+    minusDescription: String,
+    plusDescription: String,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+        Button(
+            onClick = onMinus,
+            colors = ButtonDefaults.secondaryButtonColors(),
+            modifier = Modifier.border(2.dp, borderColor, CircleShape),
+        ) {
+            Icon(imageVector = Icons.Rounded.Remove, contentDescription = minusDescription)
+        }
+        Spacer(modifier = Modifier.size(8.dp))
+        Text(text = value, style = MaterialTheme.typography.body1)
+        Spacer(modifier = Modifier.size(8.dp))
+        Button(
+            onClick = onPlus,
+            colors = ButtonDefaults.secondaryButtonColors(),
+            modifier = Modifier.border(2.dp, borderColor, CircleShape),
+        ) {
+            Icon(imageVector = Icons.Rounded.Add, contentDescription = plusDescription)
+        }
     }
 }
 
@@ -155,53 +312,28 @@ private fun ActionChip(
     )
 }
 
+/**
+ * F2.4 — Termina sempre disponibile, ma con conferma anti-tocco involontario:
+ * il primo tap arma il pulsante ("Confermi?"), che si disarma da solo dopo 3 secondi.
+ */
 @Composable
-private fun SerieEditor(
-    exercise: SessionExercise,
-    serieIdx: Int,
-    accent: Color,
-    onDone: (reps: Int?, weight: Double?, weightProvided: Boolean) -> Unit,
-) {
-    val serie = exercise.series[serieIdx]
-    var reps by remember(serieIdx) { mutableIntStateOf(serie.actualReps ?: exercise.reps ?: 0) }
-    var weight by remember(serieIdx) { mutableDoubleStateOf(serie.actualWeightKg ?: exercise.weightKg ?: 0.0) }
-
-    Column {
-        if (exercise.mode == "duration") {
-            Text(text = "A tempo: ${(exercise.durationSec ?: 0) / 60} min", style = MaterialTheme.typography.body1)
-        } else {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                Button(onClick = { reps = (reps - 1).coerceAtLeast(0) }, colors = ButtonDefaults.secondaryButtonColors()) {
-                    Icon(imageVector = Icons.Rounded.Remove, contentDescription = "Meno ripetizioni")
-                }
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(text = "$reps rip", style = MaterialTheme.typography.body1)
-                Spacer(modifier = Modifier.size(8.dp))
-                Button(onClick = { reps += 1 }, colors = ButtonDefaults.secondaryButtonColors()) {
-                    Icon(imageVector = Icons.Rounded.Add, contentDescription = "Piu' ripetizioni")
-                }
-            }
-            if (exercise.hasWeight) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                    Button(onClick = { weight = (weight - 1.0).coerceAtLeast(0.0) }, colors = ButtonDefaults.secondaryButtonColors()) {
-                        Icon(imageVector = Icons.Rounded.Remove, contentDescription = "Meno peso")
-                    }
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(text = "$weight kg", style = MaterialTheme.typography.body1)
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Button(onClick = { weight += 1.0 }, colors = ButtonDefaults.secondaryButtonColors()) {
-                        Icon(imageVector = Icons.Rounded.Add, contentDescription = "Piu' peso")
-                    }
-                }
-            }
+private fun TerminaChip(onConfirm: () -> Unit) {
+    var armed by remember { mutableStateOf(false) }
+    LaunchedEffect(armed) {
+        if (armed) {
+            delay(3000)
+            armed = false
         }
-        Spacer(modifier = Modifier.size(8.dp))
-        Chip(
-            onClick = { onDone(reps, if (exercise.hasWeight) weight else null, exercise.hasWeight) },
-            icon = { Icon(imageVector = Icons.Rounded.Check, contentDescription = null, tint = Ink) },
-            label = { Text("Fatta") },
-            colors = ChipDefaults.chipColors(backgroundColor = accent, contentColor = Ink, iconColor = Ink),
-            modifier = Modifier.fillMaxWidth(),
-        )
     }
+    Chip(
+        onClick = { if (armed) onConfirm() else armed = true },
+        icon = { Icon(imageVector = Icons.Rounded.Stop, contentDescription = null) },
+        label = { Text(if (armed) "Confermi?" else "Termina allenamento") },
+        colors = if (armed) {
+            ChipDefaults.chipColors(backgroundColor = PrimaryOrange, contentColor = Ink, iconColor = Ink)
+        } else {
+            ChipDefaults.secondaryChipColors()
+        },
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
