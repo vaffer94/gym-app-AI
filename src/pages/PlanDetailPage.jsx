@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext'
 import { getRepo } from '../data/repo'
 import ExerciseThumb from '../components/ExerciseThumb'
 import { categoryById } from '../data/catalog'
+import { formatEntryTarget } from '../data/format'
 import { ConfirmDialog, PromptDialog } from '../components/Dialog'
 
 export default function PlanDetailPage() {
@@ -55,8 +56,7 @@ export default function PlanDetailPage() {
             <div className="tile-body">
               <div className="tile-title">{e.name}</div>
               <p className="small muted">
-                {categoryById(e.category).label} · {e.sets}×{e.reps}
-                {e.hasWeight ? ` · ${e.weightKg} kg` : ''}
+                {categoryById(e.category).label} · {formatEntryTarget(e)}
               </p>
             </div>
           </div>

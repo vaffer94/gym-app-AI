@@ -109,6 +109,8 @@ function ConfigStep({ exercise, onBack, onConfirm }) {
   const [reps, setReps] = useState(12)
   const [hasWeight, setHasWeight] = useState(true)
   const [weightKg, setWeightKg] = useState(10)
+  const [isDuration, setIsDuration] = useState(false)
+  const [durationMin, setDurationMin] = useState(20)
   const [photoOverride, setPhotoOverride] = useState(null)
   const [alertMsg, setAlertMsg] = useState(null)
 
@@ -127,8 +129,12 @@ function ConfigStep({ exercise, onBack, onConfirm }) {
       category: exercise.category,
       image: photoOverride || exercise.image || exercise.photo || null,
       description: exercise.description || exercise.instructions || '',
-      sets, reps, hasWeight,
-      weightKg: hasWeight ? weightKg : null,
+      mode: isDuration ? 'duration' : 'reps',
+      durationSec: isDuration ? durationMin * 60 : null,
+      sets: isDuration ? 1 : sets,
+      reps: isDuration ? null : reps,
+      hasWeight: isDuration ? false : hasWeight,
+      weightKg: !isDuration && hasWeight ? weightKg : null,
     })
 
   return (
@@ -146,18 +152,42 @@ function ConfigStep({ exercise, onBack, onConfirm }) {
         </label>
       </div>
 
-      <SetsRepsWeight
-        sets={sets} setSets={setSets}
-        reps={reps} setReps={setReps}
-        hasWeight={hasWeight} setHasWeight={setHasWeight}
-        weightKg={weightKg} setWeightKg={setWeightKg}
-      />
+      <DurationToggle isDuration={isDuration} setIsDuration={setIsDuration} durationMin={durationMin} setDurationMin={setDurationMin} />
+
+      {!isDuration && (
+        <SetsRepsWeight
+          sets={sets} setSets={setSets}
+          reps={reps} setReps={setReps}
+          hasWeight={hasWeight} setHasWeight={setHasWeight}
+          weightKg={weightKg} setWeightKg={setWeightKg}
+        />
+      )}
 
       <button className="btn btn--primary btn--big" onClick={confirm}>
         Aggiungi alla scheda
       </button>
       {alertMsg && <AlertDialog message={alertMsg} onClose={() => setAlertMsg(null)} />}
     </>
+  )
+}
+
+/** Toggle "esercizio a tempo": solo durata, niente serie/reps/peso (es. tapis roulant) */
+export function DurationToggle({ isDuration, setIsDuration, durationMin, setDurationMin }) {
+  return (
+    <div className="card card--flat stack">
+      <label className="toggle">
+        <input type="checkbox" checked={isDuration} onChange={(e) => setIsDuration(e.target.checked)} />
+        <span className="label" style={{ margin: 0 }}>
+          <i className="fa-solid fa-stopwatch" /> A tempo (solo durata)
+        </span>
+      </label>
+      {isDuration && (
+        <div className="row">
+          <span className="label" style={{ margin: 0, flex: 1 }}>Durata</span>
+          <Stepper value={durationMin} onChange={setDurationMin} min={1} max={240} step={1} suffix=" min" />
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -171,6 +201,8 @@ function CustomForm({ initialName, initialCategory, repo, onBack, onDone }) {
   const [reps, setReps] = useState(12)
   const [hasWeight, setHasWeight] = useState(true)
   const [weightKg, setWeightKg] = useState(10)
+  const [isDuration, setIsDuration] = useState(false)
+  const [durationMin, setDurationMin] = useState(20)
   const [busy, setBusy] = useState(false)
   const [alertMsg, setAlertMsg] = useState(null)
 
@@ -194,8 +226,12 @@ function CustomForm({ initialName, initialCategory, repo, onBack, onDone }) {
         category: ex.category,
         image: ex.photo || null,
         description: ex.description || '',
-        sets, reps, hasWeight,
-        weightKg: hasWeight ? weightKg : null,
+        mode: isDuration ? 'duration' : 'reps',
+        durationSec: isDuration ? durationMin * 60 : null,
+        sets: isDuration ? 1 : sets,
+        reps: isDuration ? null : reps,
+        hasWeight: isDuration ? false : hasWeight,
+        weightKg: !isDuration && hasWeight ? weightKg : null,
       })
     } catch (err) {
       console.error(err)
@@ -231,12 +267,16 @@ function CustomForm({ initialName, initialCategory, repo, onBack, onDone }) {
         </div>
       </div>
 
-      <SetsRepsWeight
-        sets={sets} setSets={setSets}
-        reps={reps} setReps={setReps}
-        hasWeight={hasWeight} setHasWeight={setHasWeight}
-        weightKg={weightKg} setWeightKg={setWeightKg}
-      />
+      <DurationToggle isDuration={isDuration} setIsDuration={setIsDuration} durationMin={durationMin} setDurationMin={setDurationMin} />
+
+      {!isDuration && (
+        <SetsRepsWeight
+          sets={sets} setSets={setSets}
+          reps={reps} setReps={setReps}
+          hasWeight={hasWeight} setHasWeight={setHasWeight}
+          weightKg={weightKg} setWeightKg={setWeightKg}
+        />
+      )}
 
       <div className="field">
         <label className="label">Descrizione (facoltativa)</label>

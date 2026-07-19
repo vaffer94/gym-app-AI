@@ -30,6 +30,11 @@ export function disconnectHealth() {
   localStorage.removeItem(LS.cache)
 }
 
+/** Forza il refresh ignorando la cache dei 30 minuti */
+export function clearHealthCache() {
+  localStorage.removeItem(LS.cache)
+}
+
 /* ---------- Google Identity Services (caricato al bisogno) ---------- */
 let gisPromise = null
 function loadGis() {
@@ -129,12 +134,31 @@ export async function getHealthSummary() {
     method: 'POST',
     body: JSON.stringify({ range: { start: civil(start), end: civil(end) }, windowSizeDays: 1 }),
   })
-  const stepsByDay = {}
+  const readStepsValue = (p) => {
+    const v = p.steps || p.stepsRollupValue || {}
+    for (const k of ['countSum', 'count', 'sum', 'total', 'value']) {
+      if (typeof v[k] === 'number') return v[k]
+      if (typeof v[k] === 'string' && v[k] !== '') return Number(v[k])
+    }
+    return 0
+  }
+
+  const fromApi = {}
   for (const p of stepsRes.rollupDataPoints || []) {
-    const s = p.interval?.start?.date
+    // il rollup usa civilStartTime; teniamo interval.start come fallback
+    const s = p.civilStartTime?.date || p.interval?.start?.date
     if (!s) continue
     const key = `${s.year}-${String(s.month).padStart(2, '0')}-${String(s.day).padStart(2, '0')}`
-    stepsByDay[key] = p.steps?.countSum ?? 0
+    fromApi[key] = readStepsValue(p)
+  }
+  // tutti i 28 giorni in ordine cronologico, 0 dove l'API non ha (ancora) dati:
+  // così oggi compare sempre nel grafico anche prima della sincronizzazione
+  const stepsByDay = {}
+  for (let i = 0; i < 28; i++) {
+    const d = new Date(start)
+    d.setDate(start.getDate() + i)
+    const key = localISO(d)
+    stepsByDay[key] = fromApi[key] ?? 0
   }
 
   // Allenamenti rilevati: sessioni "exercise"

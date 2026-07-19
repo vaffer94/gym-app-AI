@@ -3,7 +3,12 @@ import { useEffect, useState } from 'react'
 /** Campo numerico: +/- oppure inserimento diretto da tastiera */
 export default function Stepper({ value, onChange, min = 0, max = 999, step = 1, suffix = '' }) {
   const [text, setText] = useState(String(value))
-  useEffect(() => setText(String(value)), [value])
+  const [focused, setFocused] = useState(false)
+  // sincronizza col valore esterno SOLO quando non stai scrivendo,
+  // altrimenti un re-render ti cambia il numero sotto le dita
+  useEffect(() => {
+    if (!focused) setText(String(value))
+  }, [value, focused])
 
   const clamp = (v) => Math.min(max, Math.max(min, Math.round(v * 100) / 100))
 
@@ -22,9 +27,9 @@ export default function Stepper({ value, onChange, min = 0, max = 999, step = 1,
           inputMode="decimal"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          onBlur={commit}
+          onBlur={() => { setFocused(false); commit() }}
           onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
-          onFocus={(e) => e.target.select()}
+          onFocus={(e) => { setFocused(true); e.target.select() }}
         />
         {suffix && <span className="small muted">{suffix}</span>}
       </span>

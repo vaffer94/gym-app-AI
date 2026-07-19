@@ -11,7 +11,7 @@ import { formatClock } from '../workout/activeSession'
 import TrendChart from '../components/TrendChart'
 import {
   isHealthConfigured, isHealthConnected, connectHealth, disconnectHealth,
-  getHealthSummary, getStepsGoal, setStepsGoal, localISO, exerciseTypeInfo,
+  getHealthSummary, clearHealthCache, getStepsGoal, setStepsGoal, localISO, exerciseTypeInfo,
 } from '../data/health'
 import Stepper from '../components/Stepper'
 
@@ -145,6 +145,9 @@ export default function HistoryListPage() {
                     min={1000} max={50000} step={500}
                   />
                 </div>
+                <button className="btn" onClick={() => { clearHealthCache(); loadHealth() }}>
+                  <i className="fa-solid fa-rotate" /> Aggiorna dati adesso
+                </button>
                 <button
                   className="btn"
                   style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
@@ -232,21 +235,40 @@ export default function HistoryListPage() {
 
           {fitbit && (
             <div className="card card--flat stack">
-              <span className="label" style={{ margin: 0 }}>
-                Passi giornalieri <span className="small muted">(obiettivo {fitbit.stepsGoal.toLocaleString('it-IT')})</span>
-              </span>
+              <div className="row">
+                <span className="label" style={{ margin: 0, flex: 1 }}>
+                  Passi giornalieri <span className="small muted">(obiettivo {fitbit.stepsGoal.toLocaleString('it-IT')})</span>
+                </span>
+                <span className="chip">
+                  oggi: {(fitbit.stepsByDay[localISO(new Date())] ?? 0).toLocaleString('it-IT')}
+                </span>
+              </div>
               <TrendChart
-                type="bar"
+                type="line"
                 labels={Object.keys(fitbit.stepsByDay).map((d) => new Date(d).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }))}
-                datasets={[{
-                  label: 'Passi',
-                  data: Object.values(fitbit.stepsByDay),
-                  backgroundColor: Object.values(fitbit.stepsByDay).map((v) => (v >= fitbit.stepsGoal ? '#2ec4b6' : '#ffd23f')),
-                  borderColor: '#2b2b3c',
-                  borderWidth: 2,
-                  borderRadius: 6,
-                }]}
+                datasets={[(() => {
+                  const values = Object.values(fitbit.stepsByDay)
+                  return {
+                    label: 'Passi',
+                    data: values,
+                    borderColor: '#ff6b35',
+                    backgroundColor: '#ff6b35',
+                    borderWidth: 3,
+                    tension: 0.35,
+                    // giorni a zero: crocetta scura ben visibile invece del pallino
+                    pointStyle: values.map((v) => (v === 0 ? 'crossRot' : 'circle')),
+                    pointRadius: values.map((v) => (v === 0 ? 7 : 4)),
+                    pointBackgroundColor: values.map((v) =>
+                      v === 0 ? '#2b2b3c' : v >= fitbit.stepsGoal ? '#2ec4b6' : '#ffd23f'
+                    ),
+                    pointBorderColor: '#2b2b3c',
+                    pointBorderWidth: 2,
+                  }
+                })()]}
               />
+              <p className="small muted">
+                Pallino teal = obiettivo raggiunto · giallo = sotto obiettivo · ✕ = nessun passo registrato
+              </p>
             </div>
           )}
 

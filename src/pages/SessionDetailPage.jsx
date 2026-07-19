@@ -73,11 +73,15 @@ export default function SessionDetailPage() {
             />
             {!e.skipped && (
               <p className="small muted">
-                {e.series
-                  .filter((x) => x.done)
-                  .map((x) => `${x.actualReps}${x.actualWeightKg != null ? `×${x.actualWeightKg}kg` : ''}`)
-                  .join(' · ')}
-                {e.startedAt && e.endedAt ? ` — ${formatClock(Math.round((e.endedAt - e.startedAt) / 1000))}` : ''}
+                {e.mode === 'duration'
+                  ? e.series[0]?.done && e.series[0].startedAt && e.series[0].doneAt
+                    ? `durata ${formatClock(Math.round((e.series[0].doneAt - e.series[0].startedAt) / 1000))}`
+                    : ''
+                  : e.series
+                      .filter((x) => x.done)
+                      .map((x) => `${x.actualReps}${x.actualWeightKg != null ? `×${x.actualWeightKg}kg` : ''}`)
+                      .join(' · ')}
+                {e.mode !== 'duration' && e.startedAt && e.endedAt ? ` — ${formatClock(Math.round((e.endedAt - e.startedAt) / 1000))}` : ''}
               </p>
             )}
             {e.note && <p className="small">📝 {e.note}</p>}

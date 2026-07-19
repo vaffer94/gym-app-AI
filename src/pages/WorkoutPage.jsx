@@ -14,6 +14,7 @@ import { loadActive, saveActive, clearActive, formatClock } from '../workout/act
 import { useWakeLock } from '../workout/useWakeLock'
 import ExerciseThumb from '../components/ExerciseThumb'
 import Stepper from '../components/Stepper'
+import { formatEntryTarget } from '../data/format'
 
 const vibrate = (pattern = [300, 150, 300]) => navigator.vibrate?.(pattern)
 
@@ -70,6 +71,19 @@ export default function WorkoutPage() {
   // allenamento completato automaticamente quando la coda è vuota
   useEffect(() => {
     if (session && !rest && !finished && session.queue.length === 0) beginFinish()
+  })
+
+  // esercizi a tempo: completamento automatico allo scadere della durata
+  useEffect(() => {
+    if (!session || rest || paused || finished) return
+    const ex = currentExercise(session)
+    if (!ex || ex.mode !== 'duration') return
+    const serie = ex.series[0]
+    if (!serie?.startedAt || serie.done) return
+    if (Date.now() - serie.startedAt >= ex.durationSec * 1000) {
+      vibrate()
+      doneSerie(0)
+    }
   })
 
   if (!session) {
@@ -208,11 +222,16 @@ export default function WorkoutPage() {
                 <h2>{curr.name}</h2>
                 <p className="small muted">
                   {categoryById(curr.category).emoji} {categoryById(curr.category).label}
-                  {curr.hasWeight ? ` · target ${curr.weightKg} kg` : ''} · {curr.reps} ripetizioni
+                  {curr.mode === 'duration'
+                    ? ` · ${Math.round(curr.durationSec / 60)} min`
+                    : `${curr.hasWeight ? ` · target ${curr.weightKg} kg` : ''} · ${curr.reps} ripetizioni`}
                 </p>
               </div>
             </div>
 
+            {curr.mode === 'duration' ? (
+              <DurationRunner exercise={curr} onStart={() => handleStartSerie(0)} onFinish={() => doneSerie(0)} />
+            ) : (
             <div className="serie-grid" style={{ marginTop: 12 }}>
               {curr.series.map((s, i) => {
                 const active = s.startedAt && !s.done
@@ -239,9 +258,12 @@ export default function WorkoutPage() {
                 )
               })}
             </div>
-            <p className="small muted center" style={{ marginTop: 8 }}>
-              START quando inizi la serie · FINE SERIE quando la completi · tocca una ✓ per correggerla
-            </p>
+            )}
+            {curr.mode !== 'duration' && (
+              <p className="small muted center" style={{ marginTop: 8 }}>
+                START quando inizi la serie · FINE SERIE quando la completi · tocca una ✓ per correggerla
+              </p>
+            )}
           </div>
 
           <div className="row">
@@ -280,7 +302,7 @@ export default function WorkoutPage() {
                       <ExerciseThumb image={e.image} category={e.category} />
                       <div className="tile-body">
                         <div className="tile-title">{e.name}</div>
-                        <p className="small muted">{e.sets}×{e.reps}{e.postponeCount > 0 ? ' · posticipato' : ''}</p>
+                        <p className="small muted">{formatEntryTarget(e)}{e.postponeCount > 0 ? ' · posticipato' : ''}</p>
                       </div>
                     </div>
                   )
@@ -351,6 +373,45 @@ export default function WorkoutPage() {
   )
 }
 
+/* ---------- Esercizio a tempo ---------- */
+
+function DurationRunner({ exercise, onStart, onFinish }) {
+  const serie = exercise.series[0]
+  const active = serie.startedAt && !serie.done
+
+  if (serie.done) {
+    const actualSec = serie.doneAt && serie.startedAt ? Math.round((serie.doneAt - serie.startedAt) / 1000) : exercise.durationSec
+    return (
+      <div className="center stack" style={{ marginTop: 12 }}>
+        <p className="kpi" style={{ color: 'var(--teal)' }}>
+          <i className="fa-solid fa-circle-check" /> Fatto — {formatClock(actualSec)}
+        </p>
+      </div>
+    )
+  }
+
+  if (active) {
+    const remaining = Math.max(0, exercise.durationSec - (Date.now() - serie.startedAt) / 1000)
+    return (
+      <div className="center stack" style={{ marginTop: 12 }}>
+        <div className="timer-hero">{formatClock(remaining)}</div>
+        <button className="btn btn--primary btn--big" onClick={onFinish}>
+          Termina in anticipo
+        </button>
+        <p className="small muted">Allo scadere si conclude da solo (con vibrazione)</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="center stack" style={{ marginTop: 12 }}>
+      <button className="btn btn--primary btn--big" onClick={onStart}>
+        <i className="fa-solid fa-stopwatch" /> START — {Math.round(exercise.durationSec / 60)} min
+      </button>
+    </div>
+  )
+}
+
 /* ---------- Recupero ---------- */
 
 function RestView({ rest, session, onPlusMinute, onSkip, onEditActuals }) {
@@ -382,14 +443,13 @@ function RestView({ rest, session, onPlusMinute, onSkip, onEditActuals }) {
               <div className="tile-title">
                 {exerciseDone ? next.name : `${ex.name} — serie ${rest.serieIdx + 2} di ${ex.sets}`}
               </div>
-              {exerciseDone && (
-                <p className="small muted">{next.sets}×{next.reps}{next.hasWeight ? ` · ${next.weightKg} kg` : ''}</p>
-              )}
+              {exerciseDone && <p className="small muted">{formatEntryTarget(next)}</p>}
             </div>
           </div>
         )}
       </div>
 
+      {ex.mode !== 'duration' && (
       <div className="card card--flat stack">
         <p className="label" style={{ margin: 0 }}>Serie appena fatta — correggi se hai deviato</p>
         <div className="row">
@@ -403,6 +463,7 @@ function RestView({ rest, session, onPlusMinute, onSkip, onEditActuals }) {
           </div>
         )}
       </div>
+      )}
     </>
   )
 }

@@ -92,9 +92,16 @@ Regola anti-costi: pochi documenti grandi (1 doc per sessione, non 1 per serie).
 - **Demo:** display sempre attivo, HR e intensità nello storico
 - **Rischi:** batteria su sessioni 1-2h; permessi BODY_SENSORS
 
-### Step 7 — Coach post-sessione
+### Step 7 — Coach post-sessione e coach motivazionale
 
 **Principio architetturale: i calcoli li fa il codice, l'LLM fa solo il linguaggio.**
+
+**Coach motivazionale (richiesta del 18/07/2026):** card nella Home che motiva in base a: giorni dall'ultimo allenamento, streak in corso, preferenze (categorie più frequenti), note, target delle schede, e la risposta alla domanda "come ti senti?" chiesta a fine allenamento (1 tap, da aggiungere al flusso di chiusura sessione + campo `feeling` nella sessione).
+*Architettura a backend intercambiabili per la generazione delle frasi (decisione 18/07/2026):*
+1. **v1 template**: frasi variate scritte da noi + fatti calcolati (gratis, offline, subito, funziona anche su telefoni vecchi)
+2. **v2 Gemini API free tier (cloud), SOLO opt-in**: disattivato di default; l'utente lo abilita esplicitamente e la UI mostra in modo chiaro COSA viene inviato (il riassunto di fatti, mai i dati grezzi) e DOVE (server Google)
+3. **v3 Gemini Nano locale** via Chrome Prompt API quando disponibile sul dispositivo (Pixel/fascia alta) — sostituisce automaticamente il cloud dove c'è
+L'app rileva a runtime il backend migliore disponibile.
 
 Pipeline: dati grezzi sessione → metriche derivate (deterministiche, client-side) → flag da motore di regole → (v2) LLM per consigli in linguaggio naturale.
 
@@ -128,6 +135,11 @@ Pipeline: dati grezzi sessione → metriche derivate (deterministiche, client-si
 
 ## 4. Definition of Done (ogni step)
 Funziona offline dove pertinente · testato su dispositivo reale (browser telefono; Pixel Watch dagli step 5-6) · nessuna regressione · demo in condizioni reali.
+
+## Idee future registrate
+
+- **Monitoraggio peso corporeo** (Google Health API ha già il tipo `weight`)
+- **Foto del pasto + classificazione salutare/non salutare** (idea 18/07/2026): l'utente fotografa il pasto, un LLM multimodale locale lo classifica (es. pollo vs hamburger+patatine), dà un feedback motivazionale, e viene salvata SOLO la sequenza sano/non-sano (mai la foto). L'utente può correggere la classificazione. Dipende dalla maturità dei modelli visione locali (Gemini Nano multimodale)
 
 ## 5. Rischi trasversali
 1. **Licenze contenuti**: usare solo free-exercise-db (pubblico dominio); mai media da dataset "educational only" in un prodotto che verrà monetizzato

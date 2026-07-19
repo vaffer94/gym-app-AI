@@ -5,7 +5,9 @@ import { getRepo } from '../data/repo'
 import ExercisePicker, { SetsRepsWeight } from '../components/ExercisePicker'
 import ExerciseThumb from '../components/ExerciseThumb'
 import { PLAN_COLORS, pickDefaultColor } from '../data/planColors'
+import { formatEntryTarget } from '../data/format'
 import { AlertDialog } from '../components/Dialog'
+import Stepper from '../components/Stepper'
 
 export default function PlanEditorPage() {
   const { user } = useAuth()
@@ -138,10 +140,7 @@ export default function PlanEditorPage() {
                 <ExerciseThumb image={e.image} category={e.category} />
                 <div className="tile-body">
                   <div className="tile-title">{e.name}</div>
-                  <p className="small muted">
-                    {e.sets}×{e.reps}
-                    {e.hasWeight ? ` · ${e.weightKg} kg` : ''}
-                  </p>
+                  <p className="small muted">{formatEntryTarget(e)}</p>
                 </div>
               </div>
               <div className="stack" style={{ gap: 4 }}>
@@ -188,12 +187,21 @@ export default function PlanEditorPage() {
   )
 }
 
-/** Popup di modifica serie/ripetizioni/peso di un esercizio già nella scheda */
+/** Popup di modifica di un esercizio già nella scheda (serie/reps/peso oppure durata) */
 function EditEntrySheet({ entry, onClose, onSave }) {
+  const isDuration = entry.mode === 'duration'
   const [sets, setSets] = useState(entry.sets)
-  const [reps, setReps] = useState(entry.reps)
+  const [reps, setReps] = useState(entry.reps ?? 12)
   const [hasWeight, setHasWeight] = useState(entry.hasWeight)
   const [weightKg, setWeightKg] = useState(entry.weightKg ?? 10)
+  const [durationMin, setDurationMin] = useState(Math.round((entry.durationSec || 1200) / 60))
+
+  const save = () =>
+    onSave(
+      isDuration
+        ? { ...entry, durationSec: durationMin * 60 }
+        : { ...entry, sets, reps, hasWeight, weightKg: hasWeight ? weightKg : null }
+    )
 
   return (
     <div className="sheet-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -203,20 +211,26 @@ function EditEntrySheet({ entry, onClose, onSave }) {
           <h2 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
             {entry.name}
           </h2>
-          <button className="btn btn--sm" onClick={onClose}>✕</button>
+          <button className="btn btn--sm" onClick={onClose}><i className="fa-solid fa-xmark" /></button>
         </div>
 
-        <SetsRepsWeight
-          sets={sets} setSets={setSets}
-          reps={reps} setReps={setReps}
-          hasWeight={hasWeight} setHasWeight={setHasWeight}
-          weightKg={weightKg} setWeightKg={setWeightKg}
-        />
+        {isDuration ? (
+          <div className="card card--flat row">
+            <span className="label" style={{ margin: 0, flex: 1 }}>
+              <i className="fa-solid fa-stopwatch" /> Durata
+            </span>
+            <Stepper value={durationMin} onChange={setDurationMin} min={1} max={240} step={1} suffix=" min" />
+          </div>
+        ) : (
+          <SetsRepsWeight
+            sets={sets} setSets={setSets}
+            reps={reps} setReps={setReps}
+            hasWeight={hasWeight} setHasWeight={setHasWeight}
+            weightKg={weightKg} setWeightKg={setWeightKg}
+          />
+        )}
 
-        <button
-          className="btn btn--primary btn--big"
-          onClick={() => onSave({ ...entry, sets, reps, hasWeight, weightKg: hasWeight ? weightKg : null })}
-        >
+        <button className="btn btn--primary btn--big" onClick={save}>
           Salva
         </button>
       </div>
