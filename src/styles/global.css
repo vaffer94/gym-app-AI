@@ -69,7 +69,9 @@ p { margin: 0; }
 }
 
 .stack { display: flex; flex-direction: column; gap: 12px; }
-.row { display: flex; align-items: center; gap: 12px; }
+/* flex-wrap e' la rete di sicurezza: se i figli non entrano vanno a capo invece
+   di sfondare lo schermo (su telefono la riga dei tab sforava di 110px) */
+.row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .spacer { flex: 1; }
 .center { text-align: center; }
 .muted { color: var(--muted); }
@@ -112,7 +114,10 @@ p { margin: 0; }
   box-shadow: var(--shadow-sm);
   background: var(--card);
   color: var(--ink);
-  padding: 12px 22px;
+  /* min-width:0 annulla il min-width:auto implicito dei figli flex, senza il quale
+     "flex: 1" non basta a farli restringere; il padding scala con lo schermo */
+  min-width: 0;
+  padding: 12px clamp(10px, 3.5vw, 22px);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -126,6 +131,12 @@ p { margin: 0; }
   box-shadow: 0 0 0 var(--ink);
 }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Pavimento di leggibilita' per i pulsanti in riga: sotto i 96px la parola non
+   entra piu' nel bordo (una parola sola non va a capo, sborda e basta). Con
+   .row in flex-wrap i pulsanti passano alla riga successiva invece di
+   schiacciarsi. Esclusi i .btn--sm, che sono i quadratini con la sola icona. */
+.row > .btn:not(.btn--sm) { min-width: 96px; }
 
 .btn--primary { background: var(--primary); color: #fff; }
 .btn--teal { background: var(--teal); color: #fff; }
