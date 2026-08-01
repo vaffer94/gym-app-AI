@@ -31,18 +31,37 @@ function fmtClock(sec) {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
-/** Bande esercizio: [prima serie fatta → ultima], colore per posizione nella scheda */
+/** Bande esercizio, colore per posizione nella scheda */
 function buildSegments(session) {
   const t0 = session.startedAt
-  return (session.exercises || [])
+  const raw = (session.exercises || [])
     .map((e, i) => {
       const dones = (e.series || []).filter((s) => s.done && s.doneAt)
-      const start = e.startedAt ?? (dones.length ? Math.min(...dones.map((s) => s.doneAt)) : null)
+      const firstDone = dones.length ? Math.min(...dones.map((s) => s.doneAt)) : null
+      const start = e.startedAt ?? firstDone
       const end = e.endedAt ?? (dones.length ? Math.max(...dones.map((s) => s.doneAt)) : null)
-      if (start == null || end == null || end - start < 1000) return null
-      return { name: e.name, color: exerciseColor(i), startSec: (start - t0) / 1000, endSec: (end - t0) / 1000 }
+      if (start == null || end == null) return null
+      return {
+        name: e.name,
+        color: exerciseColor(i),
+        startSec: (start - t0) / 1000,
+        endSec: (end - t0) / 1000,
+        // Sessioni watch pre-fix (o esercizi da 1 serie): startedAt coincideva con la
+        // prima "Fatta", quindi la banda partirebbe a fine serie (o sarebbe larga zero)
+        degenerate: e.startedAt == null || firstDone == null || Math.abs(e.startedAt - firstDone) < 1500,
+      }
     })
     .filter(Boolean)
+    .sort((a, b) => a.endSec - b.endSec)
+
+  // Fallback per le bande degeneri: l'esercizio parte dalla fine del precedente
+  // (o dall'inizio sessione); le bande non si sovrappongono mai
+  let prevEnd = 0
+  for (const s of raw) {
+    s.startSec = s.degenerate ? prevEnd : Math.max(s.startSec, prevEnd)
+    prevEnd = s.endSec
+  }
+  return raw.filter((s) => s.endSec - s.startSec >= 2)
 }
 
 export default function HrChart({ session }) {
