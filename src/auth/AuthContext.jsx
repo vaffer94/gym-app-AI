@@ -5,7 +5,9 @@ import {
   signOut as fbSignOut,
   browserPopupRedirectResolver,
 } from 'firebase/auth'
-import { auth, googleProvider, isFirebaseConfigured } from '../lib/firebase'
+import { clearIndexedDbPersistence, terminate } from 'firebase/firestore'
+import { auth, db, googleProvider, isFirebaseConfigured } from '../lib/firebase'
+import { disconnectHealth } from '../data/health'
 
 const AuthContext = createContext(null)
 
@@ -41,6 +43,15 @@ export function AuthProvider({ children }) {
       return
     }
     await fbSignOut(auth)
+    // Su un computer condiviso il logout deve rimuovere anche i dati locali residui:
+    // token+cache Google Health (localStorage) e cache offline Firestore (IndexedDB).
+    disconnectHealth()
+    try {
+      await terminate(db)
+      await clearIndexedDbPersistence(db)
+    } catch { /* cache gia' pulita o db in uso in un altro tab */ }
+    // Firestore e' stato terminato: ricarico l'app per ripartire pulita sul login
+    window.location.replace('/')
   }
 
   const value = { user, loading, signInWithGoogle, signInDemo, signOut, isFirebaseConfigured }
