@@ -64,6 +64,23 @@ function buildSegments(session) {
   return raw.filter((s) => s.endSec - s.startSec >= 2)
 }
 
+/**
+ * Recuperi tra le serie: ritagli neutri da sovrapporre alle bande. Senza questi il
+ * recupero tra due serie dello stesso esercizio resta coperto dal colore dell'esercizio
+ * (la banda va dall'inizio alla fine), e il ritmo serie-recupero-serie non si legge.
+ * Il recupero dopo l'ultima serie cade gia' nel neutro tra una banda e l'altra.
+ */
+function buildRests(session) {
+  const t0 = session.startedAt
+  return (session.exercises || [])
+    .flatMap((e) => e.series || [])
+    .filter((s) => s.doneAt && s.restSec > 0)
+    .map((s) => ({
+      startSec: (s.doneAt - t0) / 1000,
+      endSec: (s.doneAt - t0) / 1000 + s.restSec,
+    }))
+}
+
 export default function HrChart({ session }) {
   const wrapRef = useRef(null)
   const [hover, setHover] = useState(null) // indice del campione
@@ -88,6 +105,7 @@ export default function HrChart({ session }) {
     if (points.length < 2) return null
 
     const segments = buildSegments(session)
+    const rests = buildRests(session)
     const sessionEndSec = session.endedAt ? (session.endedAt - session.startedAt) / 1000 : points[points.length - 1].sec
     const tMax = Math.max(sessionEndSec, points[points.length - 1].sec, 60)
 
@@ -107,12 +125,12 @@ export default function HrChart({ session }) {
     const xTicks = []
     for (let sec = 0; sec <= tMax; sec += xStepMin * 60) xTicks.push(sec)
 
-    return { points, segments, tMax, x, y, yTicks, xTicks }
+    return { points, segments, rests, tMax, x, y, yTicks, xTicks }
   }, [session, W])
 
   if (!model) return <p className="small muted">Battito non registrato per questa sessione.</p>
 
-  const { points, segments, x, y, yTicks, xTicks } = model
+  const { points, segments, rests, x, y, yTicks, xTicks } = model
   const hoverPoint = hover != null ? points[hover] : null
   const hoverSegment = hoverPoint ? segments.find((s) => hoverPoint.sec >= s.startSec && hoverPoint.sec <= s.endSec) : null
 
@@ -143,19 +161,39 @@ export default function HrChart({ session }) {
           aria-label="Andamento del battito cardiaco durante la sessione"
         >
           {/* Bande esercizio (2px di stacco tra bande adiacenti) */}
+          {segments.map((s, i) => (
+            <rect
+              key={i}
+              x={x(s.startSec)}
+              y={M.top}
+              width={Math.max(2, x(s.endSec) - x(s.startSec) - 2)}
+              height={PH}
+              fill={s.color}
+              rx={4}
+            />
+          ))}
+
+          {/* Recuperi: ritagliati sopra le bande, stesso colore dello sfondo del grafico.
+              Larghezza minima 2px: un recupero da 15" sarebbe altrimenti invisibile, e
+              una riga sottile basta a far capire che li' c'e' stata una pausa. */}
+          {rests.map((r, i) => {
+            const rx = x(r.startSec)
+            const rw = Math.max(2, Math.min(x(r.endSec), W - M.right) - rx)
+            return <rect key={i} x={rx} y={M.top} width={rw} height={PH} fill="var(--card)" />
+          })}
+
+          {/* Nomi degli esercizi: dopo i ritagli, se no un recupero puo' tagliare a meta'
+              la scritta. I pastelli non bastano a distinguere le bande (ΔE ~4.5), quindi
+              l'etichetta e' l'identita' vera e non deve mai risultare mangiata. */}
           {segments.map((s, i) => {
             const bx = x(s.startSec)
             const bw = Math.max(2, x(s.endSec) - bx - 2)
+            if (bw <= 34) return null
             const label = s.name.length > bw / 7 ? `${s.name.slice(0, Math.max(0, Math.floor(bw / 7) - 1))}…` : s.name
             return (
-              <g key={i}>
-                <rect x={bx} y={M.top} width={bw} height={PH} fill={s.color} rx={4} />
-                {bw > 34 && (
-                  <text x={bx + 5} y={M.top + 13} fontSize="11" fontWeight="800" fill={INK}>
-                    {label}
-                  </text>
-                )}
-              </g>
+              <text key={i} x={bx + 5} y={M.top + 13} fontSize="11" fontWeight="800" fill={INK}>
+                {label}
+              </text>
             )
           })}
 
@@ -249,7 +287,8 @@ export default function HrChart({ session }) {
         {segments.map((s, i) => (
           <LegendChip key={i} color={s.color} label={s.name} />
         ))}
-        <LegendChip color="var(--paper)" label="recupero / pausa" />
+        {/* Stesso colore dei ritagli qui sopra, se no la legenda mente */}
+        <LegendChip color="var(--card)" label="recupero / pausa" />
         {session.hrAvg != null && <LegendChip dashed label={`media ${session.hrAvg} bpm`} />}
       </div>
     </div>
