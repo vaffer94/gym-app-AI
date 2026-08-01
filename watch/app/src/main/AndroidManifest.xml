@@ -13,9 +13,11 @@
     <!-- HR continuo durante l'allenamento (Health Services, step 6) -->
     <uses-permission android:name="android.permission.BODY_SENSORS" />
 
+    <!-- allowBackup=false: la sessione attiva (HR compreso) e i token di auth non devono
+         finire nei backup cloud del dispositivo — i dati veri stanno gia' su Firestore -->
     <application
         android:name=".GymWatchApp"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
