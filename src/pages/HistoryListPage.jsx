@@ -92,7 +92,7 @@ export default function HistoryListPage() {
           Allenamenti
         </button>
         <button className={`btn ${tab === 'integrations' ? 'btn--teal' : ''}`} style={{ flex: 1 }} onClick={() => setTab('integrations')}>
-          Integrations
+          Integrazioni
         </button>
       </div>
 
