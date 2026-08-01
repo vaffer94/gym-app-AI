@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -17,16 +17,28 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import com.gymapp.watch.ui.theme.Paper
+import com.gymapp.watch.ui.theme.PrimaryOrange
+import com.gymapp.watch.ui.theme.Teal
 import com.gymapp.watch.ui.theme.Yellow
+import java.time.Instant
+import java.time.ZoneId
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlinx.coroutines.delay
 
 /**
- * Orologio dei secondi sul bordo dello schermo, da sovrapporre alle schermate di
- * allenamento: 60 tacche come i minuti di un quadrante, quella del secondo corrente
- * si accende col colore della scheda e avanza ogni secondo. Serve a comunicare che
- * il tempo scorre anche quando non c'e' un timer a schermo (es. durante una serie).
+ * Quadrante sul bordo dello schermo, da sovrapporre alle schermate di allenamento.
+ * Sulle 60 tacche (i minuti di un orologio) mostra tre indicatori:
+ *
+ *  - secondi: tacca gialla corta che avanza ogni secondo — comunica che il tempo
+ *    scorre anche quando non c'e' un timer a schermo (es. durante una serie)
+ *  - minuti: tacca turchese, piu' lunga e spessa
+ *  - ore: tacca arancione, la piu' lunga e spessa, in posizione da orologio
+ *    analogico a 12 ore (avanza dentro l'ora come una lancetta vera)
+ *
+ * I tre non si distinguono solo per colore ma anche per lunghezza e spessore: se
+ * due cadono sulla stessa tacca restano leggibili lo stesso, perche' la piu' corta
+ * si disegna sopra e ne copre solo la punta esterna.
  *
  * Gestisce sia schermi rotondi (tacche radiali) sia rettangolari (tacche lungo il
  * perimetro, partendo dal centro del lato alto in senso orario).
@@ -35,37 +47,38 @@ import kotlinx.coroutines.delay
  * web app durante l'allenamento): l'ambient mode a basso consumo arrivera' con lo step 6.
  */
 @Composable
-fun SecondsEdgeClock(modifier: Modifier = Modifier, activeColor: Color = Yellow) {
+fun EdgeClock(modifier: Modifier = Modifier, activeColor: Color = Yellow) {
     val view = LocalView.current
     DisposableEffect(Unit) {
         view.keepScreenOn = true
         onDispose { view.keepScreenOn = false }
     }
 
-    var second by remember { mutableIntStateOf(((System.currentTimeMillis() / 1000) % 60).toInt()) }
+    var nowMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
         while (true) {
             val now = System.currentTimeMillis()
-            second = ((now / 1000) % 60).toInt()
+            nowMs = now
             delay(1000 - now % 1000)
         }
     }
+
+    // I secondi si ricaverebbero dall'epoch, ore e minuti no: dipendono dal fuso
+    // orario, quindi si passa comunque dal calendario di sistema.
+    val time = remember(nowMs) { Instant.ofEpochMilli(nowMs).atZone(ZoneId.systemDefault()) }
+    val second = time.second
+    val minute = time.minute
+    // Posizione da lancetta: dentro l'ora la tacca avanza di un passo ogni 12 minuti
+    val hourTickIdx = (time.hour % 12) * 5 + minute / 12
 
     val isRound = LocalConfiguration.current.isScreenRound
     val base = Paper.copy(alpha = 0.25f)
 
     Canvas(modifier = modifier.fillMaxSize()) {
-        val tickShort = 4.dp.toPx()
-        val tickLong = 7.dp.toPx()
         val edgeInset = 2.dp.toPx()
 
-        for (i in 0 until 60) {
-            val isNow = i == second
-            val len = (if (i % 5 == 0) tickLong else tickShort) * (if (isNow) 1.6f else 1f)
-            // Giallo paglierino della web app: non si confonde coi colori pastello dei pulsanti
-            val color = if (isNow) activeColor else base
-            val stroke = (if (isNow) 3.dp else 1.5.dp).toPx()
-
+        /** Disegna la tacca [i] (0..59) lunga [len] verso l'interno del bordo */
+        fun tick(i: Int, len: Float, color: Color, stroke: Float) {
             if (isRound) {
                 val c = center
                 val rOuter = size.minDimension / 2f - edgeInset
@@ -105,5 +118,20 @@ fun SecondsEdgeClock(modifier: Modifier = Modifier, activeColor: Color = Yellow)
                 )
             }
         }
+
+        val tickShort = 4.dp.toPx()
+        val tickLong = 7.dp.toPx()
+
+        // Quadrante di fondo
+        for (i in 0 until 60) {
+            tick(i, if (i % 5 == 0) tickLong else tickShort, base, 1.5.dp.toPx())
+        }
+
+        // Dal piu' lungo al piu' corto: chi si disegna dopo copre solo la punta esterna
+        // dell'altro, cosi' due indicatori sovrapposti restano entrambi riconoscibili.
+        tick(hourTickIdx, 14.dp.toPx(), PrimaryOrange, 5.dp.toPx())
+        tick(minute, 10.dp.toPx(), Teal, 3.5.dp.toPx())
+        // Giallo paglierino della web app: non si confonde coi colori pastello dei pulsanti
+        tick(second, (if (second % 5 == 0) tickLong else tickShort) * 1.6f, activeColor, 3.dp.toPx())
     }
 }

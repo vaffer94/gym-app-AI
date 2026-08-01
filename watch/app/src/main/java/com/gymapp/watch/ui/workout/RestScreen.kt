@@ -77,6 +77,6 @@ fun RestScreen(
         Spacer(modifier = Modifier.size(4.dp))
         LiveHeartRate(viewModel)
     }
-    SecondsEdgeClock()
+    EdgeClock()
     }
 }

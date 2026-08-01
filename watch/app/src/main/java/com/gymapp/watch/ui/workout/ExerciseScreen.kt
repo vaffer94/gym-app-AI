@@ -215,7 +215,7 @@ fun ExerciseScreen(
             }
         }
         // Il tempo scorre anche mentre fai la serie: orologio dei secondi sul bordo
-        SecondsEdgeClock()
+        EdgeClock()
     }
 }
 
