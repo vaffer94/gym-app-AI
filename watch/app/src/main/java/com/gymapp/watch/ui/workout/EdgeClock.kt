@@ -47,7 +47,12 @@ import kotlinx.coroutines.delay
  * web app durante l'allenamento): l'ambient mode a basso consumo arrivera' con lo step 6.
  */
 @Composable
-fun EdgeClock(modifier: Modifier = Modifier, activeColor: Color = Yellow) {
+fun EdgeClock(
+    modifier: Modifier = Modifier,
+    activeColor: Color = Yellow,
+    /** Margine dal bordo: si allarga per lasciare fuori l'anello del tempo rimanente */
+    edgeInsetDp: Int = 2,
+) {
     val view = LocalView.current
     DisposableEffect(Unit) {
         view.keepScreenOn = true
@@ -75,7 +80,7 @@ fun EdgeClock(modifier: Modifier = Modifier, activeColor: Color = Yellow) {
     val base = Paper.copy(alpha = 0.25f)
 
     Canvas(modifier = modifier.fillMaxSize()) {
-        val edgeInset = 2.dp.toPx()
+        val edgeInset = edgeInsetDp.dp.toPx()
 
         /** Disegna la tacca [i] (0..59) lunga [len] verso l'interno del bordo */
         fun tick(i: Int, len: Float, color: Color, stroke: Float) {

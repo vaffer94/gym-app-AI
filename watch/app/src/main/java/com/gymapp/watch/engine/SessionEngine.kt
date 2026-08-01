@@ -111,6 +111,25 @@ object SessionEngine {
             if (ex.startedAt == null) ex.copy(startedAt = now()) else ex
         }
 
+    /**
+     * Avvio idempotente della serie corrente: come [markExerciseStarted] ma a livello di
+     * serie. Serve agli esercizi a tempo, dove startedAt e' l'origine del conto alla
+     * rovescia e non puo' essere riscritto ad ogni ricomposizione della schermata.
+     */
+    fun markSerieStarted(session: WorkoutSession, key: String, serieIdx: Int): WorkoutSession =
+        session.updateExercise(key) { ex ->
+            ex.updateSerie(serieIdx) { if (it.startedAt == null) it.copy(startedAt = now()) else it }
+        }
+
+    /**
+     * Allunga la durata target di un esercizio a tempo (pulsante "+5 min"), solo per
+     * questa sessione: e' lo snapshot dentro la sessione, la scheda non viene toccata.
+     */
+    fun extendDuration(session: WorkoutSession, key: String, addSec: Long): WorkoutSession =
+        session.updateExercise(key) { ex ->
+            if (ex.mode == "duration") ex.copy(durationSec = (ex.durationSec ?: 0L) + addSec) else ex
+        }
+
     /** Avvia una serie (stato "in corso") */
     fun startSerie(session: WorkoutSession, key: String, serieIdx: Int): WorkoutSession =
         session.updateExercise(key) { ex ->
@@ -221,13 +240,28 @@ object SessionEngine {
 
     fun togglePause(session: WorkoutSession): WorkoutSession =
         if (session.pauseStartedAt != null) {
+            val pauseMs = now() - session.pauseStartedAt!!
             session.copy(
-                pausedMs = session.pausedMs + (now() - session.pauseStartedAt!!),
+                pausedMs = session.pausedMs + pauseMs,
                 pauseStartedAt = null,
-            )
+            ).shiftRunningDurationSerie(pauseMs)
         } else {
             session.copy(pauseStartedAt = now())
         }
+
+    /**
+     * Sposta in avanti l'origine del conto alla rovescia della serie a tempo in corso,
+     * cosi' la pausa non consuma il tempo dell'esercizio. Il countdown si legge sempre
+     * come durationSec - (adesso - startedAt), quindi la correzione va fatta qui.
+     */
+    private fun WorkoutSession.shiftRunningDurationSerie(pauseMs: Long): WorkoutSession {
+        val ex = currentExercise(this)?.takeIf { it.mode == "duration" } ?: return this
+        val idx = nextUndoneSerie(ex).takeIf { it >= 0 } ?: return this
+        if (ex.series[idx].startedAt == null) return this
+        return updateExercise(ex.key) { e ->
+            e.updateSerie(idx) { it.copy(startedAt = it.startedAt!! + pauseMs) }
+        }
+    }
 
     /** [at] permette di retrodatare la chiusura (watchdog anti-dimenticanza) */
     fun finishSession(session: WorkoutSession, at: Long = now()): WorkoutSession {

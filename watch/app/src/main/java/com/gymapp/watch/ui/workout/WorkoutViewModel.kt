@@ -179,6 +179,23 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    /**
+     * Avvia il cronometro della serie a tempo corrente: e' l'origine del conto alla
+     * rovescia, e siccome sul watch non c'e' un pulsante START parte da sola quando la
+     * serie compare a schermo. Idempotente: le ricomposizioni non la fanno ripartire.
+     */
+    fun markSerieStarted(key: String, serieIdx: Int) {
+        val s = _session.value ?: return
+        if (SessionEngine.getExercise(s, key)?.series?.getOrNull(serieIdx)?.startedAt == null) {
+            persist(SessionEngine.markSerieStarted(s, key, serieIdx))
+        }
+    }
+
+    /** Pulsante "+5 min" sugli esercizi a tempo */
+    fun extendCurrentDuration(key: String, addSec: Long = 5 * 60L) {
+        _session.value?.let { persist(SessionEngine.extendDuration(it, key, addSec)) }
+    }
+
     fun completeSerie(key: String, serieIdx: Int, actualReps: Int?, actualWeightKg: Double?, weightProvided: Boolean) {
         val s = _session.value ?: return
         val updated = SessionEngine.markSerieDone(s, key, serieIdx, actualReps, actualWeightKg, weightProvided)

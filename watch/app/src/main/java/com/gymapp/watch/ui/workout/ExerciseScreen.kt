@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -62,6 +64,7 @@ import com.gymapp.watch.engine.SessionEngine
 import com.gymapp.watch.ui.theme.Ink
 import com.gymapp.watch.ui.theme.PrimaryOrange
 import com.gymapp.watch.ui.theme.exerciseColor
+import com.gymapp.watch.util.vibrate
 import kotlinx.coroutines.delay
 
 /**
@@ -106,7 +109,37 @@ fun ExerciseScreen(
     var reps by remember(ex.key, nextIdx) { mutableIntStateOf(serie?.actualReps ?: ex.reps ?: 0) }
     var weight by remember(ex.key, nextIdx) { mutableDoubleStateOf(serie?.actualWeightKg ?: ex.weightKg ?: 0.0) }
 
+    // --- Esercizi a tempo: conto alla rovescia ---
+    val isDuration = ex.mode == "duration" && nextIdx >= 0
+    val durationSec = ex.durationSec ?: 0L
+    // Niente START sul watch: il cronometro parte da solo quando la serie compare
+    LaunchedEffect(ex.key, nextIdx, isDuration) {
+        if (isDuration) viewModel.markSerieStarted(ex.key, nextIdx)
+    }
+    val remaining = if (isDuration) {
+        rememberRemainingSec(serie?.startedAt, durationSec, session?.pauseStartedAt)
+    } else {
+        null
+    }
+
+    // Allo scadere vibra e chiude la serie da sola, come nella web app. In pausa no:
+    // il tempo e' fermo, sarebbe una chiusura a tradimento.
+    val context = LocalContext.current
+    val expired = remaining != null && remaining <= 0 && session?.pauseStartedAt == null
+    LaunchedEffect(expired, ex.key, nextIdx) {
+        if (expired) {
+            vibrate(context)
+            viewModel.completeSerie(ex.key, nextIdx, null, if (ex.hasWeight) weight else null, ex.hasWeight)
+            onResting()
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
+        // Primo figlio del Box = sotto a tutto: l'anello fa da sfondo e i pulsanti gli
+        // passano sopra, se no sembra che li tranci
+        if (remaining != null) {
+            DurationRing(remainingSec = remaining, totalSec = durationSec, color = accent)
+        }
         Scaffold(positionIndicator = { PositionIndicator(scalingLazyListState = listState) }) {
             ScalingLazyColumn(
                 state = listState,
@@ -118,6 +151,11 @@ fun ExerciseScreen(
                     SerieStatusRow(
                         accent = accent,
                         enabled = nextIdx >= 0,
+                        onAddFiveMin = if (isDuration) {
+                            { viewModel.extendCurrentDuration(ex.key) }
+                        } else {
+                            null
+                        },
                         onDone = {
                             viewModel.completeSerie(
                                 ex.key,
@@ -144,22 +182,40 @@ fun ExerciseScreen(
                             .padding(horizontal = 20.dp),
                     )
                 }
-                item {
-                    Text(
-                        text = "Serie ${ex.series.count { it.done } + if (nextIdx >= 0) 1 else 0}/${ex.sets}",
-                        style = MaterialTheme.typography.caption1,
-                    )
+                // Il conto alla rovescia sta qui e non piu' in basso con reps/peso: e' il
+                // dato che si guarda di continuo e deve stare nella schermata senza scroll
+                if (remaining != null) {
+                    item {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = if (remaining < 0) "Tempo scaduto" else "Tempo rimanente",
+                                style = MaterialTheme.typography.caption2,
+                            )
+                            Text(
+                                text = formatCountdown(remaining),
+                                style = MaterialTheme.typography.title1,
+                                color = accent,
+                            )
+                        }
+                    }
+                }
+                // "Serie 1/1" non dice niente: si mostra solo quando le serie sono piu' di una
+                if (ex.sets > 1) {
+                    item {
+                        Text(
+                            text = "Serie ${ex.series.count { it.done } + if (nextIdx >= 0) 1 else 0}/${ex.sets}",
+                            style = MaterialTheme.typography.caption1,
+                        )
+                    }
                 }
                 item {
                     LiveHeartRate(viewModel)
                 }
 
                 if (nextIdx >= 0) {
-                    if (ex.mode == "duration") {
-                        item {
-                            Text(text = "A tempo: ${(ex.durationSec ?: 0) / 60} min", style = MaterialTheme.typography.body1)
-                        }
-                    } else {
+                    // Gli esercizi a tempo non hanno reps/peso da correggere: il "+5" e'
+                    // gia' il badge in cima alla schermata
+                    if (ex.mode != "duration") {
                         item {
                             StepperRow(
                                 value = "$reps rip",
@@ -214,8 +270,9 @@ fun ExerciseScreen(
                 }
             }
         }
-        // Il tempo scorre anche mentre fai la serie: orologio dei secondi sul bordo
-        EdgeClock()
+        // Il tempo scorre anche mentre fai la serie: orologio dei secondi sul bordo.
+        // Con l'anello del tempo rimanente rientra, per restargli concentrico dentro.
+        EdgeClock(edgeInsetDp = if (remaining != null) 10 else 2)
     }
 }
 
@@ -246,12 +303,14 @@ private fun SerieStatusRow(
     accent: Color,
     enabled: Boolean,
     onDone: () -> Unit,
+    /** Se valorizzato (esercizi a tempo) il badge diventa il pulsante "+5" */
+    onAddFiveMin: (() -> Unit)? = null,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PulsingTimerBadge(accent = accent)
+        PulsingBadge(accent = accent, onClick = onAddFiveMin)
         Button(
             onClick = onDone,
             enabled = enabled,
@@ -263,9 +322,13 @@ private fun SerieStatusRow(
     }
 }
 
-/** Timer "in corso": icona ferma, solo l'anello esterno pulsa */
+/**
+ * Badge "serie in corso": contenuto fermo, solo l'anello esterno pulsa.
+ * Sugli esercizi a tempo ([onClick] valorizzato) al posto del cronometro mostra "+5" ed
+ * e' il pulsante che allunga la durata — stessa animazione e stesso sfondo.
+ */
 @Composable
-private fun PulsingTimerBadge(accent: Color) {
+private fun PulsingBadge(accent: Color, onClick: (() -> Unit)? = null) {
     val transition = rememberInfiniteTransition(label = "serie-in-corso")
     val progress by transition.animateFloat(
         initialValue = 0f,
@@ -286,14 +349,23 @@ private fun PulsingTimerBadge(accent: Color) {
             modifier = Modifier
                 .size(34.dp)
                 .clip(CircleShape)
-                .background(accent),
+                .background(accent)
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         ) {
-            Icon(
-                imageVector = Icons.Rounded.Timer,
-                contentDescription = "Serie in corso",
-                tint = Ink,
-                modifier = Modifier.size(22.dp),
-            )
+            if (onClick != null) {
+                Text(
+                    text = "+5",
+                    style = MaterialTheme.typography.button,
+                    color = Ink,
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Rounded.Timer,
+                    contentDescription = "Serie in corso",
+                    tint = Ink,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
         }
     }
 }
