@@ -12,6 +12,13 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- HR continuo durante l'allenamento (Health Services, step 6) -->
     <uses-permission android:name="android.permission.BODY_SENSORS" />
+    <!-- Servizio in primo piano per la durata dell'allenamento: senza, con lo schermo
+         spento il processo viene sospeso e i campioni del battito si perdono -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <!-- Serve solo a mostrare la notifica "allenamento in corso": se negata il servizio
+         funziona lo stesso, semplicemente la notifica non compare -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- allowBackup=false: la sessione attiva (HR compreso) e i token di auth non devono
          finire nei backup cloud del dispositivo — i dati veri stanno gia' su Firestore -->
@@ -43,6 +50,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".sensors.WorkoutForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="health" />
 
     </application>
 </manifest>

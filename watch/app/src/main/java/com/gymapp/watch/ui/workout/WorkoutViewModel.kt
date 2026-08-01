@@ -9,7 +9,9 @@ import com.gymapp.watch.data.model.WorkoutPlan
 import com.gymapp.watch.data.model.WorkoutSession
 import com.gymapp.watch.data.remote.FirebaseModule
 import com.gymapp.watch.engine.SessionEngine
-import com.gymapp.watch.sensors.HeartRateRecorder
+import androidx.health.services.client.data.ExerciseTrackedStatus
+import com.gymapp.watch.sensors.ExerciseRecorder
+import com.gymapp.watch.sensors.WorkoutForegroundService
 import com.gymapp.watch.sync.SessionSyncWorker
 import com.gymapp.watch.util.vibrate
 import kotlin.math.roundToInt
@@ -53,9 +55,19 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     private var restStartedAtMs: Long = 0L
 
     // --- HR continuo (step 6) ---
-    private val hrRecorder = HeartRateRecorder(application)
+    // Singleton di processo + servizio in primo piano: la raccolta deve continuare anche
+    // con l'app in background, cosa che il vecchio MeasureClient non faceva
+    private val hrRecorder = ExerciseRecorder
     val currentBpm = hrRecorder.currentBpm
     private var hrPersistJob: Job? = null
+
+    /**
+     * true se un'altra app (es. Fitbit) sta gia' registrando un allenamento: Health
+     * Services ne ammette uno solo per dispositivo, quindi partire lo interromperebbe.
+     * La schermata di avvio lo chiede prima di far partire l'allenamento.
+     */
+    suspend fun isOtherAppTrackingExercise(): Boolean =
+        ExerciseRecorder.trackedStatus(getApplication()) == ExerciseTrackedStatus.OTHER_APP_IN_PROGRESS
 
     /**
      * Da chiamare all'avvio app: se c'era un allenamento a meta', lo ripristina —
@@ -79,7 +91,11 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     private fun startHeartRate() {
         val s = _session.value ?: return
-        hrRecorder.start(s.startedAt)
+        val app = getApplication<Application>()
+        // Il servizio va avviato comunque: tiene vivo il processo anche se l'HR non
+        // parte (permesso negato, sensore assente)
+        WorkoutForegroundService.start(app)
+        viewModelScope.launch { hrRecorder.start(app, s.startedAt) }
         // Persistenza periodica: se l'app muore a meta' allenamento, l'HR raccolto
         // fin li' sopravvive nel DataStore insieme alla sessione
         hrPersistJob?.cancel()
@@ -158,11 +174,15 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             hrMax = s.hrBpm.maxOrNull(),
             autoClosed = true,
         )
+        val app = getApplication<Application>()
+        // La sessione dimenticata puo' aver lasciato aperti anche allenamento e servizio
+        WorkoutForegroundService.stop(app)
         viewModelScope.launch {
+            hrRecorder.stop(app)
             activeStore.clear()
             val uid = FirebaseModule.currentUid() ?: return@launch
-            val ok = SessionsRepository(getApplication<Application>(), uid).finishAndUpload(closed)
-            if (!ok) SessionSyncWorker.enqueue(getApplication<Application>())
+            val ok = SessionsRepository(app, uid).finishAndUpload(closed)
+            if (!ok) SessionSyncWorker.enqueue(app)
         }
     }
 
@@ -287,7 +307,12 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         _restState.value = RestState.None
         hrPersistJob?.cancel()
         staleJob?.cancel()
-        val (hrT, hrBpm) = hrRecorder.stop()
+        val app = getApplication<Application>()
+        val (hrT, hrBpm) = hrRecorder.flushAndSnapshot()
+        // L'allenamento su Health Services si chiude in background: i dati li abbiamo
+        // gia' presi qui sopra, non c'e' motivo di far aspettare la schermata
+        viewModelScope.launch { hrRecorder.stop(app) }
+        WorkoutForegroundService.stop(app)
         val finished = SessionEngine.finishSession(s, at = endAt ?: System.currentTimeMillis()).copy(
             hrT = hrT,
             hrBpm = hrBpm,
@@ -319,10 +344,9 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         hrRecorder.reset()
     }
 
-    override fun onCleared() {
-        hrRecorder.stop()
-        super.onCleared()
-    }
+    // Niente stop dell'HR in onCleared: la Activity viene distrutta ogni volta che si
+    // spegne lo schermo, e fermare li' la registrazione e' esattamente il bug che
+    // lasciava gli allenamenti veri senza battito. Si chiude solo in doFinish().
 
     companion object {
         private const val AUTO_CLOSE_MIN_DURATION_MS = 2L * 60 * 60 * 1000
