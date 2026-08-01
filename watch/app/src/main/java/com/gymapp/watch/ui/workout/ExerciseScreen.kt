@@ -81,6 +81,11 @@ fun ExerciseScreen(
 
     val exercise = session?.let { SessionEngine.currentExercise(it) }
 
+    // Registra l'inizio dell'esercizio appena compare (serve al grafico HR nello storico)
+    LaunchedEffect(exercise?.key) {
+        exercise?.key?.let { viewModel.markExerciseShown(it) }
+    }
+
     LaunchedEffect(session) {
         val s = session ?: return@LaunchedEffect
         // Coda vuota (tutto fatto) o sessione non piu' attiva (Termina / watchdog

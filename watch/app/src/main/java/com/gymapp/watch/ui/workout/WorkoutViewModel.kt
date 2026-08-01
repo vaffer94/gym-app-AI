@@ -171,6 +171,14 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch { activeStore.save(updated) }
     }
 
+    /** Chiamata quando un esercizio diventa quello corrente a schermo (vedi engine) */
+    fun markExerciseShown(key: String) {
+        val s = _session.value ?: return
+        if (SessionEngine.getExercise(s, key)?.startedAt == null) {
+            persist(SessionEngine.markExerciseStarted(s, key))
+        }
+    }
+
     fun completeSerie(key: String, serieIdx: Int, actualReps: Int?, actualWeightKg: Double?, weightProvided: Boolean) {
         val s = _session.value ?: return
         val updated = SessionEngine.markSerieDone(s, key, serieIdx, actualReps, actualWeightKg, weightProvided)

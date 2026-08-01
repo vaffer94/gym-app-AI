@@ -99,6 +99,18 @@ object SessionEngine {
     private fun SessionExercise.updateSerie(idx: Int, transform: (SerieEntry) -> SerieEntry): SessionExercise =
         copy(series = series.mapIndexed { i, s -> if (i == idx) transform(s) else s })
 
+    /**
+     * Segna l'inizio dell'esercizio quando diventa quello corrente a schermo.
+     * Aggiunta rispetto al motore web (che ha i pulsanti start/stop per serie): sul
+     * watch la serie non ha uno start esplicito, e senza questo lo startedAt veniva
+     * impostato solo alla prima "Fatta" — banda a larghezza zero nel grafico HR per
+     * gli esercizi da 1 serie, e tempo della prima serie attribuito al recupero.
+     */
+    fun markExerciseStarted(session: WorkoutSession, key: String): WorkoutSession =
+        session.updateExercise(key) { ex ->
+            if (ex.startedAt == null) ex.copy(startedAt = now()) else ex
+        }
+
     /** Avvia una serie (stato "in corso") */
     fun startSerie(session: WorkoutSession, key: String, serieIdx: Int): WorkoutSession =
         session.updateExercise(key) { ex ->
