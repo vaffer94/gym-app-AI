@@ -96,25 +96,30 @@
 | Recupero | Unica soglia globale configurata a inizio sessione, applicata dopo ogni serie e tra esercizi; +1 min a pressione. Override per esercizio: rimandato |
 | Auto-avvio esercizio dopo pausa | Accettato come trade-off v1; nota rapida "attrezzo occupato" per marcare tempi falsati |
 
-## In coda — concordate il 09/08/2026, da fare
+## F5 — Calendario, zone del cuore, statistiche per esercizio (09/08/2026)
 
-### C1 — Il calendario apre l'allenamento
-Nel calendario di Andamento, toccare un giorno con l'icona del manubrio apre **direttamente il dettaglio dell'allenamento** di quel giorno, invece di lasciare la cella inerte. Se il giorno ha piu' di una sessione: elenco breve e poi il dettaglio.
+### F5.1 Il calendario apre l'allenamento
+Nel calendario di Andamento, toccare un giorno con l'icona del manubrio apre **direttamente il dettaglio dell'allenamento**. Con piu' sessioni nello stesso giorno si apre la prima: e' l'unico caso ambiguo e l'elenco completo resta a un tocco.
 
-### C2 — Zone del cuore
-1. **Soglie**: Google Health espone `daily-heart-rate-zones` (record giornaliero, operazione `list`) con **min/max bpm reali per zona**, personalizzati con l'algoritmo di Karvonen su eta' e battito a riposo — molto meglio del "220 meno l'eta'". Zone dell'enum: `FAT_BURN`, `CARDIO`, `PEAK` (piu' il fuori-zona sotto la prima)
-   - ⚠️ **richiede un secondo scope**, `health_metrics_and_measurements.readonly`, quindi va aggiunto alla schermata di consenso in Google Cloud e ri-autorizzato dall'utente
-   - Ripiego senza collegamento: soglie dall'eta' del profilo, dichiarate come stima
-2. **Linee nel grafico HR** che segnano i confini di zona, cosi' si legge a colpo d'occhio quando si e' stati dove
-3. **Istogrammi della percentuale di tempo per zona**, con dentro il **contributo dei singoli esercizi** distinto graficamente
-   - Nota tecnica: il tempo per zona lo calcoliamo **noi** dai nostri campioni `hrT`/`hrBpm`, non da `time-in-heart-rate-zone` di Google, perche' quello e' un totale e non si puo' spezzare per esercizio. Da Google prendiamo solo le soglie
+### F5.2 Zone del cuore
+Modello a **tre zone piu' il fuori-zona** (`FAT_BURN`, `CARDIO`, `PEAK`), cioe' quello di Fitbit/Google e non uno dei tanti schemi a cinque zone: cosi' le soglie calcolate da noi e quelle che arrivano da Google hanno la stessa forma e restano confrontabili.
 
-### C3 — Statistiche per esercizio
-Una sezione dedicata a ogni esercizio della scheda (es. "Cyclette"), con:
-- tempo totale nell'esercizio
-- kcal consumate li' dentro (se ricavabili: da valutare, `active-energy-burned` su piu' intervalli brevi e' meno affidabile che su uno lungo)
-- tempo per zona del cuore, a istogrammi
-- **confronto** con la stessa sezione dell'allenamento precedente e con la media dell'ultimo mese, nello stesso grafico e con grafica diversa
+1. **Soglie**, in ordine di fiducia:
+   - `daily-heart-rate-zones` di Google → min/max bpm **reali**, personalizzati con Karvonen su eta' e battito a riposo
+   - ripiego: 220 meno l'eta' con le percentuali Fitbit (50-69% / 70-84% / 85-100%), dichiarato in interfaccia come stima con errore tipico ±10-12 bpm
+   - Lo scope `health_metrics_and_measurements.readonly` si chiede **separatamente**, con un pulsante dedicato in Integrazioni: allargare il consenso iniziale significherebbe che un rifiuto fa saltare anche passi e allenamenti, che gia' funzionano. Va comunque aggiunto alla schermata di consenso in Google Cloud
+2. **Linee nel grafico HR** ai confini di zona, con sigla e valore in bpm. Testo scuro con alone bianco e non colorato: il giallo di "brucia grassi" sopra la banda gialla di un esercizio era illeggibile
+3. **Istogrammi della percentuale per zona**, con dentro il **contributo dei singoli esercizi**, negli stessi colori delle bande del grafico
+   - Il tempo per zona lo calcoliamo **noi** dai campioni `hrT`/`hrBpm`, non da `time-in-heart-rate-zone` di Google: quello e' un totale d'intervallo e non e' scomponibile per esercizio, che e' proprio la cosa da vedere. Da Google solo le soglie
+   - Ogni campione vale l'intervallo fino al successivo, con **tetto di 30s**: senza, un orologio tolto per dieci minuti regalerebbe dieci minuti a una zona
+   - I contributi sotto i 15s spariscono dall'elenco scritto (restano nella barra): sono il campione a cavallo fra due esercizi, e riempivano la riga di "Cyclette 5″"
+
+### F5.3 Statistiche per esercizio
+Scheda **Esercizi** nello Storico: elenco degli esercizi con quante volte e il tempo totale, e per ognuno una pagina con tempo totale, durata, battito medio, kcal, volume e zone del cuore.
+
+- Gli esercizi si identificano per **nome normalizzato**, non per `key`: la chiave e' univoca dentro una scheda, e duplicando la scheda la stessa "Cyclette" ne prenderebbe una nuova, spezzando in due lo storico proprio mentre se ne guarda l'andamento
+- Le **kcal per esercizio sono per forza una stima** dal battito: `active-energy-burned` su finestre di pochi minuti e' molto meno affidabile che su una sessione intera, e spezzare il totale in proporzione al tempo darebbe lo stesso numero a dieci minuti di cyclette e a dieci di stretching
+- **Confronto** fra ultima volta, volta prima e media dell'ultimo mese (esclusa l'ultima, se no si confronterebbe con se stessa) nello stesso grafico: pieno / a righe / contorno tratteggiato, tutti nel colore dell'esercizio. Tre trattamenti grafici e non tre colori — si distinguono anche senza distinguere le tinte, e non competono con la codifica per colore usata altrove
 
 ## Fuori scope v1 (idee registrate)
 

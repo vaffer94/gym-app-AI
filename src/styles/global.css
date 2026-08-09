@@ -195,6 +195,10 @@ p { margin: 0; }
 }
 .food-chip:active { transform: translateY(1px); }
 
+/* Barra delle schede dello storico. Quattro voci in fila su 375px darebbero ~85px
+   l'una, sotto il minimo leggibile: si dispongono 2x2 chiedendo meta' riga a testa. */
+.tabs > .btn { flex: 1 1 calc(50% - 6px); }
+
 /* ---------- Emoji icona grande ---------- */
 
 .emoji-xl { font-size: 2.4rem; line-height: 1; }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { getRepo } from '../data/repo'
@@ -8,6 +8,10 @@ import { categoryById } from '../data/catalog'
 import { ConfirmDialog } from '../components/Dialog'
 import HrChart from '../components/HrChart'
 import KcalRow from '../components/KcalRow'
+import ZoneBars from '../components/ZoneBars'
+import { zoneThresholds, timeInZones } from '../workout/hrAnalysis'
+import { getProfile } from '../data/kcal'
+import { getHeartRateZones } from '../data/health'
 
 export default function SessionDetailPage() {
   const { user } = useAuth()
@@ -17,10 +21,29 @@ export default function SessionDetailPage() {
 
   const [session, setSession] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [googleZones, setGoogleZones] = useState(null)
 
   useEffect(() => {
     repo.getSession(id).then(setSession)
   }, [repo, id])
+
+  // Le soglie vere di Google, se lo scope e' stato concesso. Non blocca il resto:
+  // finche' non arrivano (o se non arrivano mai) si usano quelle stimate dall'eta'.
+  useEffect(() => {
+    if (!session?.startedAt) return
+    let alive = true
+    getHeartRateZones(session.startedAt).then((z) => alive && setGoogleZones(z))
+    return () => { alive = false }
+  }, [session?.startedAt])
+
+  const zoneInfo = useMemo(
+    () => (session ? zoneThresholds(getProfile(), googleZones) : null),
+    [session, googleZones]
+  )
+  const zoneData = useMemo(
+    () => (session && zoneInfo ? timeInZones(session, zoneInfo.zones) : null),
+    [session, zoneInfo]
+  )
 
   if (!session) return <div className="page center muted">Carico…</div>
 
@@ -66,7 +89,14 @@ export default function SessionDetailPage() {
       {Array.isArray(session.hrT) && session.hrT.length >= 2 && (
         <div className="card card--flat stack">
           <span className="label" style={{ margin: 0 }}>❤️ Battito cardiaco</span>
-          <HrChart session={session} />
+          <HrChart session={session} zones={zoneInfo?.zones} />
+        </div>
+      )}
+
+      {zoneData && (
+        <div className="card card--flat stack">
+          <span className="label" style={{ margin: 0 }}>🎯 Zone del cuore</span>
+          <ZoneBars data={zoneData} thresholdSource={zoneInfo.source} />
         </div>
       )}
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { exerciseColor } from '../data/planColors'
+import { buildSegments, buildRests } from '../workout/hrAnalysis'
 
 /**
  * Grafico HR della sessione (step 6): linea del battito nel tempo sopra le bande
@@ -31,57 +31,7 @@ function fmtClock(sec) {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
-/** Bande esercizio, colore per posizione nella scheda */
-function buildSegments(session) {
-  const t0 = session.startedAt
-  const raw = (session.exercises || [])
-    .map((e, i) => {
-      const dones = (e.series || []).filter((s) => s.done && s.doneAt)
-      const firstDone = dones.length ? Math.min(...dones.map((s) => s.doneAt)) : null
-      const start = e.startedAt ?? firstDone
-      const end = e.endedAt ?? (dones.length ? Math.max(...dones.map((s) => s.doneAt)) : null)
-      if (start == null || end == null) return null
-      return {
-        name: e.name,
-        color: exerciseColor(i),
-        startSec: (start - t0) / 1000,
-        endSec: (end - t0) / 1000,
-        // Sessioni watch pre-fix (o esercizi da 1 serie): startedAt coincideva con la
-        // prima "Fatta", quindi la banda partirebbe a fine serie (o sarebbe larga zero)
-        degenerate: e.startedAt == null || firstDone == null || Math.abs(e.startedAt - firstDone) < 1500,
-      }
-    })
-    .filter(Boolean)
-    .sort((a, b) => a.endSec - b.endSec)
-
-  // Fallback per le bande degeneri: l'esercizio parte dalla fine del precedente
-  // (o dall'inizio sessione); le bande non si sovrappongono mai
-  let prevEnd = 0
-  for (const s of raw) {
-    s.startSec = s.degenerate ? prevEnd : Math.max(s.startSec, prevEnd)
-    prevEnd = s.endSec
-  }
-  return raw.filter((s) => s.endSec - s.startSec >= 2)
-}
-
-/**
- * Recuperi tra le serie: ritagli neutri da sovrapporre alle bande. Senza questi il
- * recupero tra due serie dello stesso esercizio resta coperto dal colore dell'esercizio
- * (la banda va dall'inizio alla fine), e il ritmo serie-recupero-serie non si legge.
- * Il recupero dopo l'ultima serie cade gia' nel neutro tra una banda e l'altra.
- */
-function buildRests(session) {
-  const t0 = session.startedAt
-  return (session.exercises || [])
-    .flatMap((e) => e.series || [])
-    .filter((s) => s.doneAt && s.restSec > 0)
-    .map((s) => ({
-      startSec: (s.doneAt - t0) / 1000,
-      endSec: (s.doneAt - t0) / 1000 + s.restSec,
-    }))
-}
-
-export default function HrChart({ session }) {
+export default function HrChart({ session, zones }) {
   const wrapRef = useRef(null)
   const [hover, setHover] = useState(null) // indice del campione
   const [W, setW] = useState(640)
@@ -125,12 +75,19 @@ export default function HrChart({ session }) {
     const xTicks = []
     for (let sec = 0; sec <= tMax; sec += xStepMin * 60) xTicks.push(sec)
 
-    return { points, segments, rests, tMax, x, y, yTicks, xTicks }
-  }, [session, W])
+    // Confini di zona: solo quelli che cadono davvero dentro il grafico. Disegnare una
+    // linea "Picco" a 160 bpm su una sessione arrivata a 131 riempirebbe il bordo di
+    // etichette che non dicono niente.
+    const zoneLines = (zones || [])
+      .filter((z) => z.id !== 'sotto' && z.min > yMin && z.min < yMax)
+      .map((z) => ({ id: z.id, label: z.label, color: z.color, bpm: z.min }))
+
+    return { points, segments, rests, tMax, x, y, yTicks, xTicks, zoneLines }
+  }, [session, W, zones])
 
   if (!model) return <p className="small muted">Battito non registrato per questa sessione.</p>
 
-  const { points, segments, rests, x, y, yTicks, xTicks } = model
+  const { points, segments, rests, x, y, yTicks, xTicks, zoneLines } = model
   const hoverPoint = hover != null ? points[hover] : null
   const hoverSegment = hoverPoint ? segments.find((s) => hoverPoint.sec >= s.startSec && hoverPoint.sec <= s.endSec) : null
 
@@ -210,6 +167,31 @@ export default function HrChart({ session }) {
             <text key={sec} x={x(sec)} y={H - 8} fontSize="11" fill={MUTED} textAnchor="middle">
               {fmtMin(sec)}
             </text>
+          ))}
+
+          {/* Confini delle zone cardiache: linea piena nel colore della zona che inizia
+              li' sopra, con la sigla a sinistra. Non tratteggiata, per non confondersi
+              con la media (che e' tratteggiata e grigia). */}
+          {zoneLines.map((z) => (
+            <g key={z.id}>
+              <line x1={M.left} y1={y(z.bpm)} x2={W - M.right} y2={y(z.bpm)} stroke={z.color} strokeWidth="2" opacity="0.9" />
+              {/* Testo scuro con alone bianco, non colorato: il giallo di "brucia grassi"
+                  sopra la banda gialla di un esercizio era illeggibile. Il colore resta
+                  sulla linea, dove ha sfondo neutro sotto di se'. */}
+              <text
+                x={W - M.right - 3}
+                y={y(z.bpm) - 4}
+                fontSize="10"
+                fontWeight="800"
+                fill={INK}
+                stroke="#fff"
+                strokeWidth="3"
+                paintOrder="stroke"
+                textAnchor="end"
+              >
+                {z.label.toUpperCase()} {z.bpm}
+              </text>
+            </g>
           ))}
 
           {/* Media di sessione come riferimento */}
