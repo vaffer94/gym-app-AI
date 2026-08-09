@@ -56,7 +56,7 @@
 - **Ripresa automatica**: se il browser si chiude a metà, la sessione riprende da dove era
 
 ### F2.3 Regole di ordinamento e posticipa
-1. Gli esercizi vengono proposti **raggruppati per categoria**; l'ordine delle categorie è quello di prima apparizione nella scheda; dentro la categoria, l'ordine della scheda
+1. Gli esercizi vengono proposti **nell'ordine della scheda**. Fino al 01/08/2026 erano raggruppati per categoria: la regola tirava avanti tutti gli esercizi della prima categoria (es. tre cyclette di fila) rompendo l'alternanza voluta da chi aveva creato la scheda
 2. **Posticipa** (1ª volta) → l'esercizio va in coda alla propria categoria
 3. **Posticipa** (2ª volta) → va in fondo all'intero allenamento
 4. Se rifiutato anche lì → marcato saltato per questa sessione

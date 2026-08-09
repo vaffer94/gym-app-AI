@@ -12,13 +12,11 @@ const now = () => Date.now()
 
 /** Ordine iniziale: raggruppa per categoria mantenendo l'ordine della scheda */
 export function buildOrder(exercises) {
-  const catOrder = []
-  for (const e of exercises) if (!catOrder.includes(e.category)) catOrder.push(e.category)
-  const order = []
-  for (const cat of catOrder) {
-    for (const e of exercises) if (e.category === cat) order.push(e.key)
-  }
-  return order
+  // Esattamente l'ordine della scheda. Prima si raggruppava per categoria (tutto il
+  // cardio insieme, ecc.): comodo per non rimbalzare tra gli attrezzi, ma sovrascriveva
+  // in silenzio l'alternanza decisa da chi ha creato la scheda — tre cyclette sparate
+  // di fila all'inizio invece che alternate come erano state inserite.
+  return exercises.map((e) => e.key)
 }
 
 /** Crea la sessione (snapshot della scheda + stato runtime) */

@@ -21,16 +21,13 @@ object SessionEngine {
 
     private fun now(): Long = System.currentTimeMillis()
 
-    /** Ordine iniziale: raggruppa per categoria mantenendo l'ordine di prima apparizione nella scheda */
-    fun buildOrder(exercises: List<PlanExerciseEntry>): List<String> {
-        val catOrder = mutableListOf<String>()
-        for (e in exercises) if (e.category !in catOrder) catOrder.add(e.category)
-        val order = mutableListOf<String>()
-        for (cat in catOrder) {
-            for (e in exercises) if (e.category == cat) order.add(e.key)
-        }
-        return order
-    }
+    /**
+     * Ordine iniziale: esattamente quello della scheda. Prima si raggruppava per
+     * categoria (tutto il cardio insieme, ecc.): comodo per non rimbalzare tra gli
+     * attrezzi, ma sovrascriveva in silenzio l'alternanza decisa da chi ha creato la
+     * scheda — tre cyclette sparate di fila all'inizio invece che alternate.
+     */
+    fun buildOrder(exercises: List<PlanExerciseEntry>): List<String> = exercises.map { it.key }
 
     /** Crea la sessione: snapshot della scheda + stato di esecuzione iniziale */
     fun createSession(plan: WorkoutPlan, restDefaultSec: Int): WorkoutSession {
