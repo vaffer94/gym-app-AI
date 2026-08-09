@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import ParamsCard from '../components/ParamsCard'
 
 const SECTIONS = [
   {
@@ -63,6 +64,8 @@ export default function HomePage() {
           </div>
         ))}
       </div>
+
+      <ParamsCard />
 
       {user.isDemo && (
         <p className="center small muted">Modalità demo — i dati non vengono salvati</p>

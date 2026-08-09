@@ -66,6 +66,19 @@
 - **Automatica** quando tutte le serie sono done, oppure **pulsante Termina** sempre disponibile → sessione salvata come parziale
 - Richiesta note mancanti
 - **Riepilogo statistiche di sessione**: durata, data/ora inizio e fine, esercizi e serie completati vs scheda, note, tempi per esercizio, tempi di pausa, confronto con l'allenamento precedente della stessa scheda e differenze, percentuale esercizi per categoria
+- **Energia (kcal) + equivalente alimentare** (dal 09/08/2026): vedi F4
+
+## F4 — Energia e equivalente alimentare
+
+1. **Fonte del dato, in ordine di fiducia:**
+   - **Google Health**, tipo `active-energy-burned`, `rollUp` su una sola finestra grande quanto l'intervallo della sessione → kcal *attive* (al netto del basale) misurate dall'orologio. Scope `activity_and_fitness.readonly`, gia' concesso. Funziona sia per gli allenamenti registrati da Google sia per i nostri, perche' la domanda e' su un intervallo di tempo e non su una sessione
+   - **Stima da battito** (Keytel et al. 2005) quando Google non e' collegato o non ha dati per quell'ora. Richiede eta', peso e sesso biologico, impostati nella card **Parametri in home** e tenuti in `localStorage` (non su Firestore)
+   - ⚠️ **Le due fonti vanno rese omogenee**: Keytel predice il dispendio *totale* (basale compreso), `active-energy-burned` la sola quota *attiva*. Dalla stima si sottrae quindi il basale, stimato come 1 MET = 0,0175 kcal/min per kg — dipende dal solo peso, cosi' non serve chiedere anche l'altezza
+   - Anche cosi' la stima resta piu' alta del misurato (Keytel e' documentato come tendente a sovrastimare): sulla sessione del 03/08/2026 Google dava 105 kcal, la stima 251, la banda plausibile 3-4 MET 122-183. Nessun coefficiente correttivo inventato: si dichiara che la stima legge alto
+2. La fonte e' **sempre dichiarata** in interfaccia: la stima porta la scritta "(stima)". Un ±15-20% presentato come misura sarebbe una bugia
+3. Le kcal di Google vengono messe in cache per sessione (non cambiano piu'); le stime **no**, cosi' seguono subito le correzioni al profilo
+4. **Equivalente alimentare**: accanto alle kcal l'emoji dell'alimento piu' calorico che sta *sotto* al valore bruciato. Toccandola si apre la lista completa (21 voci, kcal crescenti) con la riga corrispondente evidenziata e gia' portata in vista. Sotto la voce piu' piccola (88 kcal) si mostra comunque quella, preceduta da "Quasi:"
+5. La lista sta in `src/data/foods.js` con le fonti in testa. I valori sono **ordini di grandezza**, non misure: la porzione fa parte del nome perche' e' lei a fare la differenza
 
 ## F3 — Storico e statistiche
 
@@ -82,6 +95,31 @@
 | Interruzioni | Pausa sessione + Salta pausa + ripresa automatica |
 | Recupero | Unica soglia globale configurata a inizio sessione, applicata dopo ogni serie e tra esercizi; +1 min a pressione. Override per esercizio: rimandato |
 | Auto-avvio esercizio dopo pausa | Accettato come trade-off v1; nota rapida "attrezzo occupato" per marcare tempi falsati |
+
+## F5 — Calendario, zone del cuore, statistiche per esercizio (09/08/2026)
+
+### F5.1 Il calendario apre l'allenamento
+Nel calendario di Andamento, toccare un giorno con l'icona del manubrio apre **direttamente il dettaglio dell'allenamento**. Con piu' sessioni nello stesso giorno si apre la prima: e' l'unico caso ambiguo e l'elenco completo resta a un tocco.
+
+### F5.2 Zone del cuore
+Modello a **tre zone piu' il fuori-zona** (`FAT_BURN`, `CARDIO`, `PEAK`), cioe' quello di Fitbit/Google e non uno dei tanti schemi a cinque zone: cosi' le soglie calcolate da noi e quelle che arrivano da Google hanno la stessa forma e restano confrontabili.
+
+1. **Soglie**, in ordine di fiducia:
+   - `daily-heart-rate-zones` di Google → min/max bpm **reali**, personalizzati con Karvonen su eta' e battito a riposo
+   - ripiego: 220 meno l'eta' con le percentuali Fitbit (50-69% / 70-84% / 85-100%), dichiarato in interfaccia come stima con errore tipico ±10-12 bpm
+   - Lo scope `health_metrics_and_measurements.readonly` si chiede **separatamente**, con un pulsante dedicato in Integrazioni: allargare il consenso iniziale significherebbe che un rifiuto fa saltare anche passi e allenamenti, che gia' funzionano. Va comunque aggiunto alla schermata di consenso in Google Cloud
+2. **Linee nel grafico HR** ai confini di zona, con sigla e valore in bpm. Testo scuro con alone bianco e non colorato: il giallo di "brucia grassi" sopra la banda gialla di un esercizio era illeggibile
+3. **Istogrammi della percentuale per zona**, con dentro il **contributo dei singoli esercizi**, negli stessi colori delle bande del grafico
+   - Il tempo per zona lo calcoliamo **noi** dai campioni `hrT`/`hrBpm`, non da `time-in-heart-rate-zone` di Google: quello e' un totale d'intervallo e non e' scomponibile per esercizio, che e' proprio la cosa da vedere. Da Google solo le soglie
+   - Ogni campione vale l'intervallo fino al successivo, con **tetto di 30s**: senza, un orologio tolto per dieci minuti regalerebbe dieci minuti a una zona
+   - I contributi sotto i 15s spariscono dall'elenco scritto (restano nella barra): sono il campione a cavallo fra due esercizi, e riempivano la riga di "Cyclette 5″"
+
+### F5.3 Statistiche per esercizio
+Scheda **Esercizi** nello Storico: elenco degli esercizi con quante volte e il tempo totale, e per ognuno una pagina con tempo totale, durata, battito medio, kcal, volume e zone del cuore.
+
+- Gli esercizi si identificano per **nome normalizzato**, non per `key`: la chiave e' univoca dentro una scheda, e duplicando la scheda la stessa "Cyclette" ne prenderebbe una nuova, spezzando in due lo storico proprio mentre se ne guarda l'andamento
+- Le **kcal per esercizio sono per forza una stima** dal battito: `active-energy-burned` su finestre di pochi minuti e' molto meno affidabile che su una sessione intera, e spezzare il totale in proporzione al tempo darebbe lo stesso numero a dieci minuti di cyclette e a dieci di stretching
+- **Confronto** fra ultima volta, volta prima e media dell'ultimo mese (esclusa l'ultima, se no si confronterebbe con se stessa) nello stesso grafico: pieno / a righe / contorno tratteggiato, tutti nel colore dell'esercizio. Tre trattamenti grafici e non tre colori — si distinguono anche senza distinguere le tinte, e non competono con la codifica per colore usata altrove
 
 ## Fuori scope v1 (idee registrate)
 

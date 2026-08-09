@@ -9,6 +9,14 @@ const CLIENT_ID = import.meta.env.VITE_GOOGLE_HEALTH_CLIENT_ID
 export const isHealthConfigured = Boolean(CLIENT_ID)
 
 const SCOPE = 'https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly'
+/**
+ * Scope aggiuntivo, chiesto solo su richiesta esplicita: serve unicamente per
+ * `daily-heart-rate-zones`, cioe' le soglie di zona personalizzate. Tenerlo separato
+ * evita di allargare il consenso a tutti per una funzione che molti non useranno — e
+ * soprattutto evita che un consenso piu' ampio, se rifiutato, faccia saltare anche
+ * passi e allenamenti, che invece funzionano gia'.
+ */
+const SCOPE_METRICS = 'https://www.googleapis.com/auth/googlehealth.health_metrics_and_measurements.readonly'
 const LS = { token: 'gym.health.token', cache: 'gym.health.cache', goal: 'gym.health.stepsGoal' }
 
 /* ---------- obiettivo passi (impostazione locale dell'app) ---------- */
@@ -51,18 +59,22 @@ function loadGis() {
   return gisPromise
 }
 
-function requestToken({ silent } = {}) {
+function requestToken({ silent, scope = SCOPE } = {}) {
   return new Promise((resolve, reject) => {
     loadGis()
       .then(() => {
         const client = window.google.accounts.oauth2.initTokenClient({
           client_id: CLIENT_ID,
-          scope: SCOPE,
+          scope,
           callback: (resp) => {
             if (resp.error) return reject(new Error(resp.error))
             const tok = {
               access_token: resp.access_token,
               expiresAt: Date.now() + (Number(resp.expires_in) - 60) * 1000,
+              // Si segna cosa e' stato davvero concesso: Google puo' restituire meno di
+              // quanto chiesto, e chiedere le zone con un token che non le copre
+              // significherebbe solo prendersi un 403 a ogni apertura del dettaglio.
+              scope: resp.scope || scope,
             }
             localStorage.setItem(LS.token, JSON.stringify(tok))
             resolve(tok)
@@ -78,13 +90,19 @@ function requestToken({ silent } = {}) {
 /** Avvia il collegamento (mostra il consenso Google) */
 export const connectHealth = () => requestToken({ silent: false })
 
+/** Consenso allargato alle metriche di salute: sblocca le soglie di zona vere */
+export const connectHealthZones = () =>
+  requestToken({ silent: false, scope: `${SCOPE} ${SCOPE_METRICS}` })
+
+export const hasZonesScope = () => Boolean(getToken()?.scope?.includes(SCOPE_METRICS))
+
 async function ensureToken() {
   const tok = getToken()
   if (tok && Date.now() < tok.expiresAt) return tok
   if (!tok) return null
-  // token scaduto: tentativo silenzioso (funziona se la sessione Google è attiva)
+  // token scaduto: tentativo silenzioso, conservando gli scope gia' concessi
   try {
-    return await requestToken({ silent: true })
+    return await requestToken({ silent: true, scope: tok.scope || SCOPE })
   } catch {
     return null
   }
@@ -185,6 +203,91 @@ export async function getHealthSummary() {
   const data = { stepsByDay, workoutDays, detectedWorkouts }
   localStorage.setItem(LS.cache, JSON.stringify({ at: Date.now(), data }))
   return { ...data, stepsGoal: getStepsGoal() }
+}
+
+/**
+ * kcal attive bruciate in un intervallo qualsiasi (rollUp con una sola finestra
+ * grande quanto l'intervallo stesso, cosi' la risposta e' un unico totale).
+ *
+ * "Attive" = al netto del metabolismo basale, che e' esattamente cio' che si vuole
+ * attribuire all'allenamento: il basale lo bruci anche dormendo.
+ *
+ * Funziona sia per gli allenamenti registrati da Google sia per i nostri, perche'
+ * la domanda e' su un intervallo di tempo e non su una sessione: la piattaforma
+ * calcola l'energia di continuo, indipendentemente da quale app possieda
+ * l'esercizio su Health Services.
+ *
+ * @returns {Promise<number|null>} kcal arrotondate, null se Google non ha dati
+ */
+export async function getActiveEnergy(startMs, endMs) {
+  const seconds = Math.round((endMs - startMs) / 1000)
+  if (!(seconds > 0)) return null
+
+  const res = await api('/users/me/dataTypes/active-energy-burned/dataPoints:rollUp', {
+    method: 'POST',
+    body: JSON.stringify({
+      range: { startTime: new Date(startMs).toISOString(), endTime: new Date(endMs).toISOString() },
+      windowSize: `${seconds}s`,
+    }),
+  })
+
+  // Il JSON REST dovrebbe essere camelCase (kcalSum), ma il riferimento RPC mostra
+  // gli snake_case: si leggono entrambi, come gia' si fa per i passi.
+  const points = res.rollupDataPoints || []
+  let total = 0
+  let found = false
+  for (const p of points) {
+    const v = p.activeEnergyBurned || p.active_energy_burned || {}
+    for (const k of ['kcalSum', 'kcal_sum', 'kcal', 'sum']) {
+      if (typeof v[k] === 'number' || (typeof v[k] === 'string' && v[k] !== '')) {
+        total += Number(v[k])
+        found = true
+        break
+      }
+    }
+  }
+  // Nessun punto, o punti senza valore: Google non ha dati per quell'ora. Va
+  // distinto da "zero kcal", se no si mostrerebbe 0 al posto della stima.
+  return found ? Math.round(total) : null
+}
+
+/**
+ * Soglie di zona cardiaca per un giorno: min/max bpm reali di FAT_BURN, CARDIO, PEAK,
+ * calcolate da Google con Karvonen su eta' e battito a riposo. Molto piu' affidabili
+ * del "220 meno l'eta'", che ignora del tutto quanto e' allenato il cuore.
+ *
+ * Restituisce null (e non solleva) quando lo scope non e' stato concesso: chi chiama
+ * ripiega sulle soglie da eta', che e' meglio di non mostrare le zone del tutto.
+ *
+ * @returns {Promise<{heartRateZone:string, minBeatsPerMinute:number, maxBeatsPerMinute:number}[]|null>}
+ */
+export async function getHeartRateZones(dateMs) {
+  if (!hasZonesScope()) return null
+  const day = new Date(dateMs)
+  try {
+    const res = await api('/users/me/dataTypes/daily-heart-rate-zones/dataPoints?pageSize=60')
+    const points = (res.dataPoints || [])
+      .map((p) => p.dailyHeartRateZones || p.daily_heart_rate_zones)
+      .filter((z) => z?.date && (z.heartRateZones || z.heart_rate_zones))
+    if (!points.length) return null
+
+    // La soglia del giorno dell'allenamento; se manca, la piu' recente che lo precede:
+    // le zone cambiano lentamente, quella di ieri vale piu' di nessuna.
+    const key = (d) => d.year * 10000 + d.month * 100 + d.day
+    const target = key({ year: day.getFullYear(), month: day.getMonth() + 1, day: day.getDate() })
+    const best = points
+      .filter((p) => key(p.date) <= target)
+      .sort((a, b) => key(b.date) - key(a.date))[0] || points[0]
+
+    return (best.heartRateZones || best.heart_rate_zones).map((z) => ({
+      heartRateZone: z.heartRateZoneType || z.heart_rate_zone_type,
+      minBeatsPerMinute: Number(z.minBeatsPerMinute ?? z.min_beats_per_minute),
+      maxBeatsPerMinute: Number(z.maxBeatsPerMinute ?? z.max_beats_per_minute),
+    })).filter((z) => z.heartRateZone && Number.isFinite(z.minBeatsPerMinute))
+  } catch (e) {
+    console.warn('Lettura zone cardiache fallita (non bloccante):', e.message)
+    return null
+  }
 }
 
 /** Etichetta e icona Font Awesome per i tipi di allenamento rilevati */

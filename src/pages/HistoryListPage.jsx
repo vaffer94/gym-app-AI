@@ -12,8 +12,14 @@ import TrendChart from '../components/TrendChart'
 import {
   isHealthConfigured, isHealthConnected, connectHealth, disconnectHealth,
   getHealthSummary, clearHealthCache, getStepsGoal, setStepsGoal, localISO, exerciseTypeInfo,
+  connectHealthZones, hasZonesScope,
 } from '../data/health'
 import Stepper from '../components/Stepper'
+import { resolveKcalMany } from '../data/kcal'
+import { getActiveEnergy } from '../data/health'
+import { KcalChip } from '../components/KcalRow'
+import ExerciseStats from '../components/ExerciseStats'
+import { exerciseIndex } from '../data/exerciseStats'
 
 const PERIODS = [
   { id: 'week', label: 'Settimana' },
@@ -27,15 +33,40 @@ export default function HistoryListPage() {
   const repo = getRepo(user)
 
   const [sessions, setSessions] = useState(null)
-  const [tab, setTab] = useState('trends') // trends (default) | list | integrations
+  const [tab, setTab] = useState('trends') // trends (default) | list | exercises | integrations
+  const [openExercise, setOpenExercise] = useState(null)
+  // Cambiare scheda azzera l'esercizio aperto: se no si torna su "Esercizi" e ci si
+  // ritrova dentro la Cyclette visitata dieci minuti prima, senza sapere perche'.
+  const goTab = (t) => { setTab(t); setOpenExercise(null) }
   const [period, setPeriod] = useState('week')
   const [fitbit, setFitbit] = useState(null) // {stepsByDay, stepsGoal, workoutDays}
   const [fitbitError, setFitbitError] = useState(null)
   const [goal, setGoal] = useState(getStepsGoal())
+  const [kcalMap, setKcalMap] = useState(new Map())
+  const [, setZonesOn] = useState(hasZonesScope()) // solo per ridisegnare dopo il consenso
 
   useEffect(() => {
     repo.listSessions().then(setSessions)
   }, [repo])
+
+  // kcal di tutte le righe dell'elenco, allenamenti nostri e camminate rilevate da
+  // Google insieme: per il conto e' solo un intervallo di tempo. Risolte in blocco e
+  // con un freno sulle richieste in volo (vedi resolveKcalMany), non una per riga.
+  useEffect(() => {
+    const items = [
+      ...(sessions || []).map((s) => ({
+        id: s.id, startedAt: s.startedAt, endedAt: s.endedAt, hrAvg: s.hrAvg, pausedMs: s.pausedMs,
+      })),
+      ...(fitbit?.detectedWorkouts || [])
+        .filter((w) => w.endMs)
+        .map((w) => ({ id: `d-${w.startMs}`, startedAt: w.startMs, endedAt: w.endMs })),
+    ].filter((i) => i.endedAt)
+    if (!items.length) return
+    let alive = true
+    resolveKcalMany(items, { isConnected: isHealthConnected(), fetchActiveEnergy: getActiveEnergy })
+      .then((m) => alive && setKcalMap(m))
+    return () => { alive = false }
+  }, [sessions, fitbit])
 
   const loadHealth = () =>
     getHealthSummary().then((d) => { setFitbit(d); setFitbitError(null) }).catch((e) => setFitbitError(e.message))
@@ -84,14 +115,17 @@ export default function HistoryListPage() {
         <h2>📊 Storico</h2>
       </header>
 
-      <div className="row">
-        <button className={`btn ${tab === 'trends' ? 'btn--teal' : ''}`} style={{ flex: 1 }} onClick={() => setTab('trends')}>
+      <div className="row tabs">
+        <button className={`btn ${tab === 'trends' ? 'btn--teal' : ''}`} onClick={() => goTab('trends')}>
           Andamento
         </button>
-        <button className={`btn ${tab === 'list' ? 'btn--teal' : ''}`} style={{ flex: 1 }} onClick={() => setTab('list')}>
+        <button className={`btn ${tab === 'list' ? 'btn--teal' : ''}`} onClick={() => goTab('list')}>
           Allenamenti
         </button>
-        <button className={`btn ${tab === 'integrations' ? 'btn--teal' : ''}`} style={{ flex: 1 }} onClick={() => setTab('integrations')}>
+        <button className={`btn ${tab === 'exercises' ? 'btn--teal' : ''}`} onClick={() => goTab('exercises')}>
+          Esercizi
+        </button>
+        <button className={`btn ${tab === 'integrations' ? 'btn--teal' : ''}`} onClick={() => goTab('integrations')}>
           Integrazioni
         </button>
       </div>
@@ -104,6 +138,34 @@ export default function HistoryListPage() {
           <p className="muted">Nessun allenamento ancora. Il primo è il più importante!</p>
           <button className="btn btn--primary" onClick={() => navigate('/allenamento')}>Inizia ora</button>
         </div>
+      )}
+
+      {tab === 'exercises' && sessions?.length > 0 && (
+        openExercise ? (
+          <div className="stack">
+            <button className="btn" onClick={() => setOpenExercise(null)}>
+              <i className="fa-solid fa-arrow-left" /> Tutti gli esercizi
+            </button>
+            <ExerciseStats sessions={sessions} name={openExercise.name} color={openExercise.color} />
+          </div>
+        ) : (
+          <div className="stack">
+            {exerciseIndex(sessions).map((e) => (
+              <div key={e.id} className="card card--tap" onClick={() => setOpenExercise(e)}>
+                <div className="row">
+                  <span style={{ width: 14, height: 14, background: e.color, border: '2px solid var(--ink)', borderRadius: 4 }} />
+                  <div style={{ flex: 1, minWidth: 96 }}>
+                    <h3>{e.name}</h3>
+                    <p className="small muted">
+                      {e.times} volt{e.times === 1 ? 'a' : 'e'} · {formatClock(e.totalSec)} in totale
+                    </p>
+                  </div>
+                  <i className="fa-solid fa-arrow-right" aria-hidden="true" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )
       )}
 
       {tab === 'integrations' && (
@@ -138,13 +200,36 @@ export default function HistoryListPage() {
                   Aggiornati al massimo ogni 30 minuti.
                 </p>
                 <div className="row">
-                  <span className="label" style={{ margin: 0, flex: 1 }}>Obiettivo passi</span>
+                  <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Obiettivo passi</span>
                   <Stepper
                     value={goal}
                     onChange={(v) => { setGoal(v); setStepsGoal(v); setFitbit((f) => (f ? { ...f, stepsGoal: v } : f)) }}
                     min={1000} max={50000} step={500}
                   />
                 </div>
+              </>
+            )}
+
+            {/* Consenso separato: le zone stanno sotto uno scope diverso da passi e
+                allenamenti. Chiederlo a tutti in blocco significherebbe che un rifiuto
+                fa saltare anche cio' che gia' funziona. */}
+            {isHealthConnected() && !hasZonesScope() && (
+              <button
+                className="btn"
+                onClick={() => connectHealthZones().then(() => setZonesOn(true)).catch((e) => setFitbitError(e.message))}
+              >
+                <i className="fa-solid fa-heart-pulse" /> Usa le mie zone cardiache vere
+              </button>
+            )}
+            {isHealthConnected() && hasZonesScope() && (
+              <p className="small muted">
+                <i className="fa-solid fa-circle-check" /> Zone cardiache personalizzate attive
+                (età e battito a riposo, non “220 meno l’età”).
+              </p>
+            )}
+
+            {isHealthConnected() && (
+              <>
                 <button className="btn" onClick={() => { clearHealthCache(); loadHealth() }}>
                   <i className="fa-solid fa-rotate" /> Aggiorna dati adesso
                 </button>
@@ -190,6 +275,7 @@ export default function HistoryListPage() {
                       <p className="small muted">
                         {d.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })}
                         {' · '}{fmtTime(w.startMs)}{w.endMs ? ` → ${fmtTime(w.endMs)}` : ''}
+                        <KcalChip result={kcalMap.get(`d-${w.startMs}`)} />
                       </p>
                     </div>
                     <span className="small muted"><i className="fa-solid fa-heart-pulse" /> Google</span>
@@ -221,17 +307,25 @@ export default function HistoryListPage() {
                   <i className="fa-solid fa-stopwatch" /> {formatClock(st.durationSec)}
                   {' · '}{st.doneSeries}/{st.totalSeries} serie
                   {st.volumeKg > 0 ? ` · ${st.volumeKg} kg` : ''}
+                  <KcalChip result={kcalMap.get(s.id)} />
                 </p>
               </div>
               )
             })}
+          {/* L'asterisco senza spiegazione e' rumore: la legenda compare solo se in
+              elenco c'e' almeno un valore stimato invece che misurato */}
+          {[...kcalMap.values()].some((r) => r.source === 'stima') && (
+            <p className="small muted center">
+              * kcal stimate dal battito (la formula tende a leggere alto), non misurate dall'orologio
+            </p>
+          )}
         </div>
       )}
 
       {/* STREAK + KPI + completamento */}
       {tab === 'trends' && sessions?.length > 0 && (
         <>
-          <StreakCard sessions={sessions} fitbit={fitbit} />
+          <StreakCard sessions={sessions} fitbit={fitbit} navigate={navigate} />
 
           {fitbit && (
             <div className="card card--flat stack">
@@ -374,11 +468,28 @@ export default function HistoryListPage() {
 }
 
 /** Card streak: settimane di fila + calendario ultime 4 settimane (+ badge Fitbit) */
-function StreakCard({ sessions, fitbit }) {
+function StreakCard({ sessions, fitbit, navigate }) {
   const streak = weekStreak(sessions)
   const rest = daysSinceLast(sessions)
   const cal = last4Weeks(sessions)
   const dayNames = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
+
+  // Allenamenti per giorno: la cella con il manubrio deve poter aprire la sessione,
+  // se no il calendario dice "ti sei allenata" e poi obbliga a cercarla nell'elenco.
+  const byDay = new Map()
+  for (const s of sessions) {
+    if (!s.startedAt) continue
+    const d = new Date(s.startedAt)
+    d.setHours(0, 0, 0, 0)
+    const k = d.getTime()
+    byDay.set(k, [...(byDay.get(k) || []), s])
+  }
+  // Piu' sessioni nello stesso giorno: si apre la prima: e' l'unico caso ambiguo e
+  // resta comunque a un tocco di distanza dall'elenco completo.
+  const openDay = (ts) => {
+    const list = byDay.get(ts)
+    if (list?.length) navigate(`/storico/${list[0].id}`)
+  }
 
   return (
     <div className="card card--primary stack">
@@ -404,6 +515,12 @@ function StreakCard({ sessions, fitbit }) {
             <div
               key={c.ts}
               className={`cal-cell ${c.trained ? 'cal-cell--on' : ''} ${c.isToday ? 'cal-cell--today' : ''} ${c.future ? 'cal-cell--future' : ''}`}
+              role={c.trained ? 'button' : undefined}
+              tabIndex={c.trained ? 0 : undefined}
+              aria-label={c.trained ? `Apri l'allenamento del ${new Date(c.ts).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })}` : undefined}
+              style={c.trained ? { cursor: 'pointer' } : undefined}
+              onClick={() => c.trained && openDay(c.ts)}
+              onKeyDown={(e) => c.trained && (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), openDay(c.ts))}
             >
               {c.trained ? <i className="fa-solid fa-dumbbell" /> : c.dayNum}
               {(goalHit || detected) && (
