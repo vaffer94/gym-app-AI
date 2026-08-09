@@ -9,6 +9,7 @@ import { ConfirmDialog } from '../components/Dialog'
 import HrChart from '../components/HrChart'
 import KcalRow from '../components/KcalRow'
 import ZoneBars from '../components/ZoneBars'
+import EnergyBreakdown from '../components/EnergyBreakdown'
 import { zoneThresholds, timeInZones } from '../workout/hrAnalysis'
 import { getProfile } from '../data/kcal'
 import { getHeartRateZones } from '../data/health'
@@ -92,6 +93,8 @@ export default function SessionDetailPage() {
           <HrChart session={session} zones={zoneInfo?.zones} />
         </div>
       )}
+
+      <EnergyBreakdown session={session} />
 
       {zoneData && (
         <div className="card card--flat stack">

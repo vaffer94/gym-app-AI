@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { exerciseHistory, exerciseComparison } from '../data/exerciseStats'
-import { getProfile } from '../data/kcal'
+import { getProfile, resolveKcalMany } from '../data/kcal'
+import { getActiveEnergy, isHealthConnected } from '../data/health'
 
 /**
  * Statistiche di un singolo esercizio: quanto dura, quanto fa salire il battito, in
@@ -21,7 +22,23 @@ const fmtSec = (sec) => {
 }
 
 export default function ExerciseStats({ sessions, name, color }) {
-  const rows = useMemo(() => exerciseHistory(sessions, name, getProfile()), [sessions, name])
+  // I totali misurati servono a riscalare le stime dei singoli esercizi: senza,
+  // un esercizio puo' dichiarare piu' kcal dell'intera sessione da cui viene.
+  const [kcalBySession, setKcalBySession] = useState(new Map())
+  useEffect(() => {
+    let alive = true
+    const items = sessions
+      .filter((s) => s.endedAt)
+      .map((s) => ({ id: s.id, startedAt: s.startedAt, endedAt: s.endedAt, hrAvg: s.hrAvg, pausedMs: s.pausedMs }))
+    resolveKcalMany(items, { isConnected: isHealthConnected(), fetchActiveEnergy: getActiveEnergy })
+      .then((m) => alive && setKcalBySession(m))
+    return () => { alive = false }
+  }, [sessions])
+
+  const rows = useMemo(
+    () => exerciseHistory(sessions, name, getProfile(), null, kcalBySession),
+    [sessions, name, kcalBySession]
+  )
   const cmp = useMemo(() => exerciseComparison(rows), [rows])
 
   if (!cmp) return <p className="small muted">Nessun dato per questo esercizio.</p>
@@ -31,7 +48,7 @@ export default function ExerciseStats({ sessions, name, color }) {
   const METRICHE = [
     { id: 'durationSec', label: 'Durata', fmt: (v) => fmtMin(v) },
     { id: 'avgHr', label: 'Battito medio', fmt: (v) => `${Math.round(v)} bpm` },
-    { id: 'kcal', label: 'Energia (stima)', fmt: (v) => `${Math.round(v)} kcal` },
+    { id: 'kcal', label: ultima.kcalSource === 'google' ? 'Energia' : 'Energia (stima)', fmt: (v) => `${Math.round(v)} kcal` },
     { id: 'volumeKg', label: 'Volume', fmt: (v) => `${Math.round(v)} kg` },
   ].filter((m) => ultima[m.id] != null && ultima[m.id] > 0)
 
@@ -93,6 +110,12 @@ export default function ExerciseStats({ sessions, name, color }) {
           <p className="small muted" style={{ margin: 0 }}>
             Pieno = ultima volta · a righe = volta prima · tratteggiato = media dell’ultimo mese
           </p>
+          {ultima.kcalSource === 'google' && (
+            <p className="small muted" style={{ margin: 0 }}>
+              Le kcal sono la quota di questo esercizio sul totale misurato dall’orologio,
+              ripartito secondo battito e durata.
+            </p>
+          )}
         </div>
       )}
 

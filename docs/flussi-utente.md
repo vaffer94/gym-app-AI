@@ -118,7 +118,12 @@ Modello a **tre zone piu' il fuori-zona** (`FAT_BURN`, `CARDIO`, `PEAK`), cioe' 
 Scheda **Esercizi** nello Storico: elenco degli esercizi con quante volte e il tempo totale, e per ognuno una pagina con tempo totale, durata, battito medio, kcal, volume e zone del cuore.
 
 - Gli esercizi si identificano per **nome normalizzato**, non per `key`: la chiave e' univoca dentro una scheda, e duplicando la scheda la stessa "Cyclette" ne prenderebbe una nuova, spezzando in due lo storico proprio mentre se ne guarda l'andamento
-- Le **kcal per esercizio sono per forza una stima** dal battito: `active-energy-burned` su finestre di pochi minuti e' molto meno affidabile che su una sessione intera, e spezzare il totale in proporzione al tempo darebbe lo stesso numero a dieci minuti di cyclette e a dieci di stretching
+- **kcal per esercizio: Google da' la scala, Keytel la forma.** Google misura solo il totale dell'intervallo (`active-energy-burned` su finestre di pochi minuti non e' affidabile); Keytel sa come il consumo si distribuisce, perche' tiene conto di battito e durata di ogni tratto. Usati separatamente si contraddicevano: sul 03/08/2026 Google diceva 105 kcal in tutto e la sola cyclette, stimata, ne dichiarava di piu' dell'intero allenamento. Ora le stime dei tratti si riscalano sul totale misurato
+  - Il totale di riferimento si ricava **sommando le stesse quote**, non ricalcolando la sessione con `hrAvg`: erano due strade diverse per lo stesso numero e non coincidevano (`hrAvg` e' tirato in basso dai recuperi), coi parziali che non sommavano al totale
+  - Arrotondamento **coi resti maggiori**: arrotondare ogni voce per conto suo lasciava scarti di qualche kcal
+  - Il **recupero ha la sua fetta**: brucia anch'esso ed e' dentro l'intervallo misurato, quindi senza quella riga il conto non chiuderebbe
+  - Spezzare il totale in proporzione al solo *tempo* sarebbe stato piu' semplice, ma darebbe lo stesso numero a dieci minuti di cyclette e a dieci di stretching
+  - La scheda Esercizi legge il numero **dalla stessa ripartizione** del dettaglio sessione: due schermate che dicono 60 e 61 sarebbero un difetto
 - **Confronto** fra ultima volta, volta prima e media dell'ultimo mese (esclusa l'ultima, se no si confronterebbe con se stessa) nello stesso grafico: pieno / a righe / contorno tratteggiato, tutti nel colore dell'esercizio. Tre trattamenti grafici e non tre colori — si distinguono anche senza distinguere le tinte, e non competono con la codifica per colore usata altrove
 
 ## Fuori scope v1 (idee registrate)
