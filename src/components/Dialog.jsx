@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 
 /** Dialoghi con la grafica dell'app (mai popup nativi del browser) */
 
@@ -7,11 +8,31 @@ export function SheetDialog({ children, onClose }) {
   return <Backdrop onClose={onClose}>{children}</Backdrop>
 }
 
+/**
+ * Il foglio esce dall'albero e va in fondo a <body>.
+ *
+ * Non e' un vezzo: aperto da dentro un <p> (la riga di riepilogo nello storico) il
+ * parser HTML chiude d'autorita' il paragrafo appena incontra <h2> o <div>. Il DOM
+ * vero smette di corrispondere a quello che React crede di aver prodotto e i gestori
+ * di eventi non arrivano piu': il dialogo si apriva ma il pulsante "Chiudi" era morto.
+ * Un modale non deve dipendere da dove viene invocato — ne' per il markup valido ne'
+ * per i contesti di impilamento e gli overflow degli antenati.
+ */
 function Backdrop({ children, onClose }) {
-  return (
-    <div className="sheet-backdrop" onClick={(e) => e.target === e.currentTarget && onClose?.()}>
+  // stopPropagation e' necessario anche col portale: React fa risalire gli eventi lungo
+  // il proprio albero, non quello del DOM. Senza, un dialogo aperto da dentro una card
+  // cliccabile (la riga dello storico) chiuderebbe il foglio *e* aprirebbe la sessione.
+  return createPortal(
+    <div
+      className="sheet-backdrop"
+      onClick={(e) => {
+        e.stopPropagation()
+        if (e.target === e.currentTarget) onClose?.()
+      }}
+    >
       <div className="sheet" style={{ maxWidth: 380 }}>{children}</div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

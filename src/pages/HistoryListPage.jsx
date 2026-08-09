@@ -14,7 +14,9 @@ import {
   getHealthSummary, clearHealthCache, getStepsGoal, setStepsGoal, localISO, exerciseTypeInfo,
 } from '../data/health'
 import Stepper from '../components/Stepper'
-import { getProfileDraft, setProfile } from '../data/kcal'
+import { resolveKcalMany } from '../data/kcal'
+import { getActiveEnergy } from '../data/health'
+import { KcalChip } from '../components/KcalRow'
 
 const PERIODS = [
   { id: 'week', label: 'Settimana' },
@@ -33,10 +35,30 @@ export default function HistoryListPage() {
   const [fitbit, setFitbit] = useState(null) // {stepsByDay, stepsGoal, workoutDays}
   const [fitbitError, setFitbitError] = useState(null)
   const [goal, setGoal] = useState(getStepsGoal())
+  const [kcalMap, setKcalMap] = useState(new Map())
 
   useEffect(() => {
     repo.listSessions().then(setSessions)
   }, [repo])
+
+  // kcal di tutte le righe dell'elenco, allenamenti nostri e camminate rilevate da
+  // Google insieme: per il conto e' solo un intervallo di tempo. Risolte in blocco e
+  // con un freno sulle richieste in volo (vedi resolveKcalMany), non una per riga.
+  useEffect(() => {
+    const items = [
+      ...(sessions || []).map((s) => ({
+        id: s.id, startedAt: s.startedAt, endedAt: s.endedAt, hrAvg: s.hrAvg, pausedMs: s.pausedMs,
+      })),
+      ...(fitbit?.detectedWorkouts || [])
+        .filter((w) => w.endMs)
+        .map((w) => ({ id: `d-${w.startMs}`, startedAt: w.startMs, endedAt: w.endMs })),
+    ].filter((i) => i.endedAt)
+    if (!items.length) return
+    let alive = true
+    resolveKcalMany(items, { isConnected: isHealthConnected(), fetchActiveEnergy: getActiveEnergy })
+      .then((m) => alive && setKcalMap(m))
+    return () => { alive = false }
+  }, [sessions, fitbit])
 
   const loadHealth = () =>
     getHealthSummary().then((d) => { setFitbit(d); setFitbitError(null) }).catch((e) => setFitbitError(e.message))
@@ -149,10 +171,6 @@ export default function HistoryListPage() {
               </>
             )}
 
-            {/* Fuori dal blocco "se collegato" di proposito: questi campi servono
-                esattamente quando Google NON ha i dati, ed e' li' che la stima subentra */}
-            <ProfileFields />
-
             {isHealthConnected() && (
               <>
                 <button className="btn" onClick={() => { clearHealthCache(); loadHealth() }}>
@@ -200,6 +218,7 @@ export default function HistoryListPage() {
                       <p className="small muted">
                         {d.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })}
                         {' · '}{fmtTime(w.startMs)}{w.endMs ? ` → ${fmtTime(w.endMs)}` : ''}
+                        <KcalChip result={kcalMap.get(`d-${w.startMs}`)} />
                       </p>
                     </div>
                     <span className="small muted"><i className="fa-solid fa-heart-pulse" /> Google</span>
@@ -231,10 +250,16 @@ export default function HistoryListPage() {
                   <i className="fa-solid fa-stopwatch" /> {formatClock(st.durationSec)}
                   {' · '}{st.doneSeries}/{st.totalSeries} serie
                   {st.volumeKg > 0 ? ` · ${st.volumeKg} kg` : ''}
+                  <KcalChip result={kcalMap.get(s.id)} />
                 </p>
               </div>
               )
             })}
+          {/* L'asterisco senza spiegazione e' rumore: la legenda compare solo se in
+              elenco c'e' almeno un valore stimato invece che misurato */}
+          {[...kcalMap.values()].some((r) => r.source === 'stima') && (
+            <p className="small muted center">* kcal stimate dal battito, non misurate dall'orologio</p>
+          )}
         </div>
       )}
 
@@ -380,41 +405,6 @@ export default function HistoryListPage() {
         </>
       )}
     </div>
-  )
-}
-
-/**
- * Peso, eta' e sesso biologico: gli ingredienti della formula di Keytel, usata per
- * stimare le kcal dal battito quando Google Health non ha dati per quell'intervallo.
- * Restano su questo dispositivo, non finiscono su Firestore.
- */
-function ProfileFields() {
-  const [p, setP] = useState(getProfileDraft)
-  const save = (next) => { setP(next); setProfile(next) }
-
-  return (
-    <>
-      <div className="row" style={{ borderTop: '2px dashed var(--paper)', paddingTop: 12 }}>
-        <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Peso (kg)</span>
-        <Stepper value={p.weightKg} onChange={(v) => save({ ...p, weightKg: v })} min={30} max={200} step={1} />
-      </div>
-      <div className="row">
-        <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Età</span>
-        <Stepper value={p.ageYears} onChange={(v) => save({ ...p, ageYears: v })} min={12} max={99} step={1} />
-      </div>
-      <div className="row">
-        <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Sesso biologico</span>
-        <div className="chips-wrap">
-          <span className={`chip chip--select ${p.sex === 'f' ? 'chip--on' : ''}`} onClick={() => save({ ...p, sex: 'f' })}>F</span>
-          <span className={`chip chip--select ${p.sex === 'm' ? 'chip--on' : ''}`} onClick={() => save({ ...p, sex: 'm' })}>M</span>
-        </div>
-      </div>
-      <p className="small muted">
-        Servono a <strong>stimare le kcal dal battito</strong> quando Google Health non ha dati
-        per quell'ora. Il sesso biologico entra nella formula perché è su quello che è stata
-        validata (Keytel 2005): la stima vale ±15-20%.
-      </p>
-    </>
   )
 }
 

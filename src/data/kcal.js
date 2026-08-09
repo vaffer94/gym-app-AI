@@ -10,7 +10,7 @@
  * una stima al ±15-20% presentata come misura sarebbe una bugia.
  */
 
-const LS = { profile: 'gym.profile', kcal: 'gym.kcal.' }
+const LS = { profile: 'gym.profile', kcal: 'gym.kcal.', weightLog: 'gym.weightLog' }
 
 /* ---------- profilo (locale al dispositivo, come l'obiettivo passi) ---------- */
 
@@ -27,7 +27,36 @@ export function getProfile() {
 
 export function setProfile(p) {
   localStorage.setItem(LS.profile, JSON.stringify(p))
+  if (p?.weightKg) recordWeight(p.weightKg)
   clearKcalCache() // il profilo cambia => le stime gia' calcolate non valgono piu'
+}
+
+/* ---------- storico del peso ---------- */
+
+const today = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** @returns {{date:string, kg:number}[]} in ordine cronologico */
+export function getWeightLog() {
+  try {
+    const log = JSON.parse(localStorage.getItem(LS.weightLog) || '[]')
+    return Array.isArray(log) ? log.sort((a, b) => a.date.localeCompare(b.date)) : []
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Una voce al giorno: toccare il +/- dello stepper cinque volte di fila non deve
+ * lasciare cinque punti sul grafico, ma un unico peso per quella data.
+ */
+export function recordWeight(kg) {
+  const log = getWeightLog().filter((e) => e.date !== today())
+  log.push({ date: today(), kg })
+  // Un anno di misure basta e avanza per un grafico di andamento
+  localStorage.setItem(LS.weightLog, JSON.stringify(log.slice(-365)))
 }
 
 /** Valori grezzi per i campi del form, anche quando il profilo non e' ancora completo */
@@ -109,4 +138,29 @@ export async function sessionKcal(session, { isConnected, fetchActiveEnergy }) {
   const activeSec = Math.round((session.endedAt - session.startedAt - (session.pausedMs || 0)) / 1000)
   const kcal = estimateKcal({ avgHr: session.hrAvg, durationSec: activeSec, profile: getProfile() })
   return kcal ? { kcal, source: 'stima' } : null
+}
+
+/**
+ * Come sopra ma per una lista (lo storico), con al massimo 3 richieste in volo.
+ *
+ * Senza freno una pagina con venti allenamenti sparerebbe venti rollUp insieme al
+ * primo caricamento, con ottime probabilita' di prendersi un rate limit e mostrare
+ * meta' righe vuote. I valori di Google finiscono in cache, quindi il conto si paga
+ * una volta sola: dalla seconda visita la lista si riempie all'istante.
+ *
+ * @param {{id:string, startedAt:number, endedAt:number, hrAvg?:number, pausedMs?:number}[]} items
+ * @returns {Promise<Map<string, {kcal:number, source:'google'|'stima'}>>}
+ */
+export async function resolveKcalMany(items, deps, concurrency = 3) {
+  const out = new Map()
+  const queue = [...items]
+
+  const worker = async () => {
+    for (let it = queue.shift(); it; it = queue.shift()) {
+      const r = await sessionKcal(it, deps).catch(() => null)
+      if (r) out.set(it.id, r)
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, queue.length) }, worker))
+  return out
 }

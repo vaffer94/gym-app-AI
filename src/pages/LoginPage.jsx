@@ -50,6 +50,16 @@ export default function LoginPage() {
             </button>
           </>
         )}
+
+        {/* Anche con Firebase configurato, in sviluppo serve poter entrare senza le
+            credenziali vere: e' l'unico modo di provare a schermo le pagine protette.
+            import.meta.env.DEV e' falso in build, quindi in produzione questo blocco
+            non esiste proprio nel bundle — non e' nascosto, e' assente. */}
+        {isFirebaseConfigured && import.meta.env.DEV && (
+          <button className="btn btn--teal" onClick={signInDemo}>
+            Entra in modalità demo (solo sviluppo)
+          </button>
+        )}
         {error && (
           <div className="card card--flat center" style={{ borderColor: 'var(--danger)' }}>
             <p className="small">{error}</p>
