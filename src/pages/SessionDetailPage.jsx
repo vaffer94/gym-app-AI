@@ -7,6 +7,7 @@ import { formatClock } from '../workout/activeSession'
 import { categoryById } from '../data/catalog'
 import { ConfirmDialog } from '../components/Dialog'
 import HrChart from '../components/HrChart'
+import KcalRow from '../components/KcalRow'
 
 export default function SessionDetailPage() {
   const { user } = useAuth()
@@ -54,6 +55,7 @@ export default function SessionDetailPage() {
         {st.volumeKg > 0 && <Row label="Volume" value={`${st.volumeKg} kg`} />}
         {st.avgRestSec != null && <Row label="Recupero medio" value={`${st.avgRestSec}s (target ${st.restTargetSec}s)`} />}
         {session.hrAvg != null && <Row label="Battito medio / max" value={`${session.hrAvg} / ${session.hrMax} bpm`} />}
+        <KcalRow session={session} />
         {session.autoClosed && (
           <p className="small muted" style={{ margin: 0 }}>
             ⏱ Chiusa automaticamente: rimasta aperta senza attività (la fine è retrodatata all'ultima serie)

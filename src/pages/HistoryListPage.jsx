@@ -14,6 +14,7 @@ import {
   getHealthSummary, clearHealthCache, getStepsGoal, setStepsGoal, localISO, exerciseTypeInfo,
 } from '../data/health'
 import Stepper from '../components/Stepper'
+import { getProfileDraft, setProfile } from '../data/kcal'
 
 const PERIODS = [
   { id: 'week', label: 'Settimana' },
@@ -138,13 +139,22 @@ export default function HistoryListPage() {
                   Aggiornati al massimo ogni 30 minuti.
                 </p>
                 <div className="row">
-                  <span className="label" style={{ margin: 0, flex: 1 }}>Obiettivo passi</span>
+                  <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Obiettivo passi</span>
                   <Stepper
                     value={goal}
                     onChange={(v) => { setGoal(v); setStepsGoal(v); setFitbit((f) => (f ? { ...f, stepsGoal: v } : f)) }}
                     min={1000} max={50000} step={500}
                   />
                 </div>
+              </>
+            )}
+
+            {/* Fuori dal blocco "se collegato" di proposito: questi campi servono
+                esattamente quando Google NON ha i dati, ed e' li' che la stima subentra */}
+            <ProfileFields />
+
+            {isHealthConnected() && (
+              <>
                 <button className="btn" onClick={() => { clearHealthCache(); loadHealth() }}>
                   <i className="fa-solid fa-rotate" /> Aggiorna dati adesso
                 </button>
@@ -370,6 +380,41 @@ export default function HistoryListPage() {
         </>
       )}
     </div>
+  )
+}
+
+/**
+ * Peso, eta' e sesso biologico: gli ingredienti della formula di Keytel, usata per
+ * stimare le kcal dal battito quando Google Health non ha dati per quell'intervallo.
+ * Restano su questo dispositivo, non finiscono su Firestore.
+ */
+function ProfileFields() {
+  const [p, setP] = useState(getProfileDraft)
+  const save = (next) => { setP(next); setProfile(next) }
+
+  return (
+    <>
+      <div className="row" style={{ borderTop: '2px dashed var(--paper)', paddingTop: 12 }}>
+        <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Peso (kg)</span>
+        <Stepper value={p.weightKg} onChange={(v) => save({ ...p, weightKg: v })} min={30} max={200} step={1} />
+      </div>
+      <div className="row">
+        <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Età</span>
+        <Stepper value={p.ageYears} onChange={(v) => save({ ...p, ageYears: v })} min={12} max={99} step={1} />
+      </div>
+      <div className="row">
+        <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Sesso biologico</span>
+        <div className="chips-wrap">
+          <span className={`chip chip--select ${p.sex === 'f' ? 'chip--on' : ''}`} onClick={() => save({ ...p, sex: 'f' })}>F</span>
+          <span className={`chip chip--select ${p.sex === 'm' ? 'chip--on' : ''}`} onClick={() => save({ ...p, sex: 'm' })}>M</span>
+        </div>
+      </div>
+      <p className="small muted">
+        Servono a <strong>stimare le kcal dal battito</strong> quando Google Health non ha dati
+        per quell'ora. Il sesso biologico entra nella formula perché è su quello che è stata
+        validata (Keytel 2005): la stima vale ±15-20%.
+      </p>
+    </>
   )
 }
 

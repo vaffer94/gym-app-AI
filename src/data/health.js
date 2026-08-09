@@ -187,6 +187,52 @@ export async function getHealthSummary() {
   return { ...data, stepsGoal: getStepsGoal() }
 }
 
+/**
+ * kcal attive bruciate in un intervallo qualsiasi (rollUp con una sola finestra
+ * grande quanto l'intervallo stesso, cosi' la risposta e' un unico totale).
+ *
+ * "Attive" = al netto del metabolismo basale, che e' esattamente cio' che si vuole
+ * attribuire all'allenamento: il basale lo bruci anche dormendo.
+ *
+ * Funziona sia per gli allenamenti registrati da Google sia per i nostri, perche'
+ * la domanda e' su un intervallo di tempo e non su una sessione: la piattaforma
+ * calcola l'energia di continuo, indipendentemente da quale app possieda
+ * l'esercizio su Health Services.
+ *
+ * @returns {Promise<number|null>} kcal arrotondate, null se Google non ha dati
+ */
+export async function getActiveEnergy(startMs, endMs) {
+  const seconds = Math.round((endMs - startMs) / 1000)
+  if (!(seconds > 0)) return null
+
+  const res = await api('/users/me/dataTypes/active-energy-burned/dataPoints:rollUp', {
+    method: 'POST',
+    body: JSON.stringify({
+      range: { startTime: new Date(startMs).toISOString(), endTime: new Date(endMs).toISOString() },
+      windowSize: `${seconds}s`,
+    }),
+  })
+
+  // Il JSON REST dovrebbe essere camelCase (kcalSum), ma il riferimento RPC mostra
+  // gli snake_case: si leggono entrambi, come gia' si fa per i passi.
+  const points = res.rollupDataPoints || []
+  let total = 0
+  let found = false
+  for (const p of points) {
+    const v = p.activeEnergyBurned || p.active_energy_burned || {}
+    for (const k of ['kcalSum', 'kcal_sum', 'kcal', 'sum']) {
+      if (typeof v[k] === 'number' || (typeof v[k] === 'string' && v[k] !== '')) {
+        total += Number(v[k])
+        found = true
+        break
+      }
+    }
+  }
+  // Nessun punto, o punti senza valore: Google non ha dati per quell'ora. Va
+  // distinto da "zero kcal", se no si mostrerebbe 0 al posto della stima.
+  return found ? Math.round(total) : null
+}
+
 /** Etichetta e icona Font Awesome per i tipi di allenamento rilevati */
 const EXERCISE_TYPES = {
   WALKING: ['Camminata', 'fa-person-walking'],

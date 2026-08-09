@@ -2,6 +2,11 @@ import { useState } from 'react'
 
 /** Dialoghi con la grafica dell'app (mai popup nativi del browser) */
 
+/** Foglio vuoto: per contenuti che non sono ne' conferme ne' avvisi (es. una lista) */
+export function SheetDialog({ children, onClose }) {
+  return <Backdrop onClose={onClose}>{children}</Backdrop>
+}
+
 function Backdrop({ children, onClose }) {
   return (
     <div className="sheet-backdrop" onClick={(e) => e.target === e.currentTarget && onClose?.()}>

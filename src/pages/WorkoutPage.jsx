@@ -15,6 +15,7 @@ import { useWakeLock } from '../workout/useWakeLock'
 import ExerciseThumb from '../components/ExerciseThumb'
 import Stepper from '../components/Stepper'
 import { formatEntryTarget } from '../data/format'
+import KcalRow from '../components/KcalRow'
 
 const vibrate = (pattern = [300, 150, 300]) => navigator.vibrate?.(pattern)
 
@@ -148,7 +149,7 @@ export default function WorkoutPage() {
   /* ---------- riepilogo finale ---------- */
   if (finished && !askNotes) {
     const stats = computeStats(finished)
-    return <Summary stats={stats} prev={prevStats} planName={finished.planName} onHome={() => navigate('/')} />
+    return <Summary stats={stats} prev={prevStats} planName={finished.planName} session={finished} onHome={() => navigate('/')} />
   }
 
   /* ---------- richiesta note mancanti ---------- */
@@ -555,7 +556,7 @@ function NotesPrompt({ session, onDone }) {
 
 /* ---------- Riepilogo ---------- */
 
-function Summary({ stats, prev, planName, onHome }) {
+function Summary({ stats, prev, planName, session, onHome }) {
   const delta = (a, b) => {
     if (b == null) return null
     const d = a - b
@@ -581,6 +582,9 @@ function Summary({ stats, prev, planName, onHome }) {
         {stats.avgRestSec != null && (
           <StatRow label="Recupero medio" value={`${stats.avgRestSec}s (target ${stats.restTargetSec}s)`} />
         )}
+        {/* Subito dopo il traguardo Google non ha ancora sincronizzato: qui esce quasi
+            sempre la stima, e il dato misurato compare poi nel dettaglio dello storico */}
+        <KcalRow session={session} />
       </div>
 
       {Object.keys(stats.byCategory).length > 0 && (
