@@ -74,20 +74,31 @@ export function getProfileDraft() {
  * Formula di Keytel et al. (2005), validata su 115 soggetti contro calorimetria
  * indiretta. Restituisce kJ al minuto, qui convertiti in kcal (1 kcal = 4,184 kJ).
  *
- * E' il modello standard per stimare il dispendio da frequenza cardiaca, ma resta
- * una stima: l'errore tipico e' del 15-20% e cresce sotto i ~90 bpm, dove la
- * relazione battito-consumo non e' piu' lineare.
+ * ATTENZIONE, ED E' IL PUNTO DELICATO: Keytel predice il dispendio **totale** durante
+ * l'esercizio, metabolismo basale compreso. Google Health, con `active-energy-burned`,
+ * restituisce invece la sola quota **attiva**. Mostrarli nella stessa riga "Energia"
+ * senza allinearli significherebbe far cambiare significato al numero a seconda di chi
+ * ha risposto — quindi qui il basale si sottrae.
+ *
+ * Il basale a riposo vale 1 MET = 3,5 ml O2/kg/min ≈ 0,0175 kcal al minuto per kg:
+ * dipende dal solo peso, cosi' non serve chiedere anche l'altezza per una Mifflin-St Jeor.
+ *
+ * Resta comunque una stima, e per giunta prudente: la letteratura documenta che Keytel
+ * tende a sovrastimare. Per questo il numero e' sempre etichettato come tale.
  */
 export function estimateKcal({ avgHr, durationSec, profile }) {
   if (!profile || !avgHr || !(durationSec > 0)) return null
   const { ageYears: a, weightKg: w, sex } = profile
+  const min = durationSec / 60
   const kjPerMin =
     sex === 'm'
       ? -55.0969 + 0.6309 * avgHr + 0.1988 * w + 0.2017 * a
       : -20.4022 + 0.4472 * avgHr - 0.1263 * w + 0.074 * a
-  const kcal = (kjPerMin / 4.184) * (durationSec / 60)
+  const totale = (kjPerMin / 4.184) * min
+  const basale = 0.0175 * w * min
+  const attive = totale - basale
   // Battiti bassi mandano la formula sotto zero: meglio niente numero che un numero assurdo
-  return kcal > 0 ? Math.round(kcal) : null
+  return attive > 0 ? Math.round(attive) : null
 }
 
 /* ---------- cache ---------- */

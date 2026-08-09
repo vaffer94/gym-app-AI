@@ -258,7 +258,9 @@ export default function HistoryListPage() {
           {/* L'asterisco senza spiegazione e' rumore: la legenda compare solo se in
               elenco c'e' almeno un valore stimato invece che misurato */}
           {[...kcalMap.values()].some((r) => r.source === 'stima') && (
-            <p className="small muted center">* kcal stimate dal battito, non misurate dall'orologio</p>
+            <p className="small muted center">
+              * kcal stimate dal battito (la formula tende a leggere alto), non misurate dall'orologio
+            </p>
           )}
         </div>
       )}

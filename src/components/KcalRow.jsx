@@ -41,7 +41,8 @@ export default function KcalRow({ session }) {
 
       {res.source === 'stima' && (
         <p className="small muted" style={{ margin: 0 }}>
-          Stimata dal battito medio: collega Google Health per il dato misurato dall'orologio.
+          Stimata dal battito medio, e la formula tende a leggere alto. Con Google Health
+          collegato compare invece il dato misurato dall'orologio.
         </p>
       )}
     </>

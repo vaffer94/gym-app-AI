@@ -72,7 +72,9 @@
 
 1. **Fonte del dato, in ordine di fiducia:**
    - **Google Health**, tipo `active-energy-burned`, `rollUp` su una sola finestra grande quanto l'intervallo della sessione → kcal *attive* (al netto del basale) misurate dall'orologio. Scope `activity_and_fitness.readonly`, gia' concesso. Funziona sia per gli allenamenti registrati da Google sia per i nostri, perche' la domanda e' su un intervallo di tempo e non su una sessione
-   - **Stima da battito** (Keytel et al. 2005) quando Google non e' collegato o non ha dati per quell'ora. Richiede eta', peso e sesso biologico, impostati in Storico → Integrazioni sotto l'obiettivo passi e tenuti in `localStorage` (non su Firestore)
+   - **Stima da battito** (Keytel et al. 2005) quando Google non e' collegato o non ha dati per quell'ora. Richiede eta', peso e sesso biologico, impostati nella card **Parametri in home** e tenuti in `localStorage` (non su Firestore)
+   - ⚠️ **Le due fonti vanno rese omogenee**: Keytel predice il dispendio *totale* (basale compreso), `active-energy-burned` la sola quota *attiva*. Dalla stima si sottrae quindi il basale, stimato come 1 MET = 0,0175 kcal/min per kg — dipende dal solo peso, cosi' non serve chiedere anche l'altezza
+   - Anche cosi' la stima resta piu' alta del misurato (Keytel e' documentato come tendente a sovrastimare): sulla sessione del 03/08/2026 Google dava 105 kcal, la stima 251, la banda plausibile 3-4 MET 122-183. Nessun coefficiente correttivo inventato: si dichiara che la stima legge alto
 2. La fonte e' **sempre dichiarata** in interfaccia: la stima porta la scritta "(stima)". Un ±15-20% presentato come misura sarebbe una bugia
 3. Le kcal di Google vengono messe in cache per sessione (non cambiano piu'); le stime **no**, cosi' seguono subito le correzioni al profilo
 4. **Equivalente alimentare**: accanto alle kcal l'emoji dell'alimento piu' calorico che sta *sotto* al valore bruciato. Toccandola si apre la lista completa (21 voci, kcal crescenti) con la riga corrispondente evidenziata e gia' portata in vista. Sotto la voce piu' piccola (88 kcal) si mostra comunque quella, preceduta da "Quasi:"
