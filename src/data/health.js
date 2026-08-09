@@ -251,6 +251,66 @@ export async function getActiveEnergy(startMs, endMs) {
   return found ? Math.round(total) : null
 }
 
+/** Somma di un rollUp, leggendo sia camelCase (REST) sia snake_case (riferimento RPC) */
+function sumRollup(points, campi) {
+  let total = 0
+  let found = false
+  for (const p of points) {
+    for (const c of campi) {
+      const v = p[c]
+      if (!v) continue
+      for (const k of ['kcalSum', 'kcal_sum', 'kcal', 'sum']) {
+        if (typeof v[k] === 'number' || (typeof v[k] === 'string' && v[k] !== '')) {
+          total += Number(v[k])
+          found = true
+          break
+        }
+      }
+    }
+  }
+  return found ? total : null
+}
+
+/**
+ * Diagnostica del conto delle kcal su un intervallo. Serve a rispondere con dati veri
+ * al dubbio "questi numeri sono troppo bassi", separando tre ipotesi diverse:
+ *
+ * 1. `attivoFinestraUnica` — quello che l'app mostra oggi
+ * 2. `attivoAlMinuto` — stessa domanda spezzata in finestre da un minuto. Se il totale
+ *    differisce dal punto 1, il nostro rollUp sta perdendo pezzi: sarebbe un bug nostro
+ * 3. `totale` — `total-calories`, cioe' attivo + metabolismo basale. E' il criterio con
+ *    cui l'app Fitbit mostra le calorie di un allenamento, quindi e' il numero con cui
+ *    l'utente sta istintivamente confrontando il nostro
+ */
+export async function diagnosticaKcal(startMs, endMs) {
+  const seconds = Math.round((endMs - startMs) / 1000)
+  if (!(seconds > 0)) return null
+  const range = { startTime: new Date(startMs).toISOString(), endTime: new Date(endMs).toISOString() }
+
+  const chiedi = async (tipo, windowSize) => {
+    try {
+      const res = await api(`/users/me/dataTypes/${tipo}/dataPoints:rollUp`, {
+        method: 'POST',
+        body: JSON.stringify({ range, windowSize, pageSize: 10000 }),
+      })
+      const points = res.rollupDataPoints || []
+      return {
+        valore: sumRollup(points, ['activeEnergyBurned', 'active_energy_burned', 'totalCalories', 'total_calories']),
+        finestre: points.length,
+      }
+    } catch (e) {
+      return { errore: e.message }
+    }
+  }
+
+  const [attivoFinestraUnica, attivoAlMinuto, totale] = await Promise.all([
+    chiedi('active-energy-burned', `${seconds}s`),
+    chiedi('active-energy-burned', '60s'),
+    chiedi('total-calories', `${seconds}s`),
+  ])
+  return { durataSec: seconds, attivoFinestraUnica, attivoAlMinuto, totale }
+}
+
 /**
  * Soglie di zona cardiaca per un giorno: min/max bpm reali di FAT_BURN, CARDIO, PEAK,
  * calcolate da Google con Karvonen su eta' e battito a riposo. Molto piu' affidabili

@@ -20,6 +20,7 @@ import { getActiveEnergy } from '../data/health'
 import { KcalChip } from '../components/KcalRow'
 import ExerciseStats from '../components/ExerciseStats'
 import { exerciseIndex } from '../data/exerciseStats'
+import KcalDiagnostics from '../components/KcalDiagnostics'
 
 const PERIODS = [
   { id: 'week', label: 'Settimana' },
@@ -245,6 +246,8 @@ export default function HistoryListPage() {
 
             {fitbitError && <p className="small" style={{ color: 'var(--danger)' }}>{fitbitError}</p>}
           </div>
+
+          <KcalDiagnostics sessions={sessions} />
 
           <div className="card card--flat center" style={{ padding: '28px 20px' }}>
             <p className="small muted">Altre integrazioni arriveranno qui 🔌</p>
