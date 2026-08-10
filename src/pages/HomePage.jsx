@@ -1,7 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import ParamsCard from '../components/ParamsCard'
 
+/**
+ * La home e' un indice: una riga per posto dove andare, nient'altro. I parametri erano
+ * l'eccezione — un riquadro aperto con stepper e grafico — e prendevano piu' spazio dei
+ * tre gesti quotidiani pur essendo la cosa che si tocca meno spesso.
+ */
 const SECTIONS = [
   {
     to: '/allenamento',
@@ -23,6 +27,16 @@ const SECTIONS = [
     title: 'Storico',
     text: 'Allenamenti passati e statistiche',
     variant: 'card--yellow',
+  },
+  {
+    to: '/parametri',
+    emoji: '⚖️',
+    title: 'Parametri',
+    // Corto: piu' lungo di cosi' e la riga spinge la freccia a capo
+    text: 'Peso, altezza, età',
+    // Bianco e non un quarto colore: la palette e' volutamente corta, e questa e'
+    // l'unica voce che non si apre tutti i giorni
+    variant: '',
   },
 ]
 
@@ -64,8 +78,6 @@ export default function HomePage() {
           </div>
         ))}
       </div>
-
-      <ParamsCard />
 
       {user.isDemo && (
         <p className="center small muted">Modalità demo — i dati non vengono salvati</p>
