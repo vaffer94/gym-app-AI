@@ -18,7 +18,9 @@ const GRID = 'rgba(43, 43, 60, 0.12)'
 // Altezza fissa; la larghezza logica segue quella reale del contenitore
 // (ResizeObserver) cosi' i font restano a dimensione vera anche su telefono
 const H = 240
-const M = { top: 24, right: 10, bottom: 26, left: 40 }
+// left 56 e non 40: sull'asse verticale il tick piu' alto porta anche l'unita'. "130 bpm"
+// misura ~45px a 11px di carattere, e con 50 di margine sbordava di 1px dal riquadro.
+const M = { top: 24, right: 10, bottom: 26, left: 56 }
 const PH = H - M.top - M.bottom
 
 function fmtMin(sec) {
@@ -71,6 +73,18 @@ export default function HrChart({ session, zones }) {
     const yStep = ySpan <= 40 ? 10 : ySpan <= 80 ? 20 : 40
     const yTicks = []
     for (let v = yMin; v <= yMax; v += yStep) yTicks.push(v)
+
+    // I bpm di soglia diventano tacche vere sull'asse: la riga colorata da sola dice
+    // "qui comincia il cardio" ma non a quale battito, e leggerlo a occhio fra due
+    // tacche da 20 bpm e' esattamente cio' che rendeva il grafico poco utile.
+    const sogliaBpm = (zones || [])
+      .filter((z) => z.id !== 'sotto' && z.min > yMin && z.min < yMax)
+      .map((z) => z.min)
+    for (const b of sogliaBpm) {
+      // niente doppioni a ridosso: due etichette a 4 bpm di distanza si sovrappongono
+      if (!yTicks.some((v) => Math.abs(v - b) < ySpan / 12)) yTicks.push(b)
+    }
+    yTicks.sort((a, b) => a - b)
     const xStepMin = [1, 2, 5, 10, 15, 20, 30, 60].find((s) => tMax / 60 / s <= 6) || 60
     const xTicks = []
     for (let sec = 0; sec <= tMax; sec += xStepMin * 60) xTicks.push(sec)
@@ -154,12 +168,13 @@ export default function HrChart({ session, zones }) {
             )
           })}
 
-          {/* Griglia e assi */}
-          {yTicks.map((v) => (
+          {/* Griglia e assi. Sull'asse verticale il valore porta l'unita': "120" da solo
+              costringe a dedurre che si stanno leggendo battiti al minuto. */}
+          {yTicks.map((v, i) => (
             <g key={v}>
               <line x1={M.left} y1={y(v)} x2={W - M.right} y2={y(v)} stroke={GRID} strokeWidth="1" />
               <text x={M.left - 6} y={y(v) + 4} fontSize="11" fill={MUTED} textAnchor="end">
-                {v}
+                {v}{i === yTicks.length - 1 ? ' bpm' : ''}
               </text>
             </g>
           ))}
@@ -169,29 +184,20 @@ export default function HrChart({ session, zones }) {
             </text>
           ))}
 
-          {/* Confini delle zone cardiache: linea piena nel colore della zona che inizia
-              li' sopra, con la sigla a sinistra. Non tratteggiata, per non confondersi
-              con la media (che e' tratteggiata e grigia). */}
+          {/* Confini delle zone cardiache: solo la linea, senza scritte. Il nome sta in
+              legenda e il valore in bpm e' una tacca sull'asse: dentro il grafico le
+              etichette finivano sopra le bande degli esercizi e si leggevano male. */}
           {zoneLines.map((z) => (
-            <g key={z.id}>
-              <line x1={M.left} y1={y(z.bpm)} x2={W - M.right} y2={y(z.bpm)} stroke={z.color} strokeWidth="2" opacity="0.9" />
-              {/* Testo scuro con alone bianco, non colorato: il giallo di "brucia grassi"
-                  sopra la banda gialla di un esercizio era illeggibile. Il colore resta
-                  sulla linea, dove ha sfondo neutro sotto di se'. */}
-              <text
-                x={W - M.right - 3}
-                y={y(z.bpm) - 4}
-                fontSize="10"
-                fontWeight="800"
-                fill={INK}
-                stroke="#fff"
-                strokeWidth="3"
-                paintOrder="stroke"
-                textAnchor="end"
-              >
-                {z.label.toUpperCase()} {z.bpm}
-              </text>
-            </g>
+            <line
+              key={z.id}
+              x1={M.left}
+              y1={y(z.bpm)}
+              x2={W - M.right}
+              y2={y(z.bpm)}
+              stroke={z.color}
+              strokeWidth="2"
+              opacity="0.9"
+            />
           ))}
 
           {/* Media di sessione come riferimento */}
@@ -273,17 +279,24 @@ export default function HrChart({ session, zones }) {
         ))}
         {/* Stesso colore dei ritagli qui sopra, se no la legenda mente */}
         <LegendChip color="var(--card)" label="recupero / pausa" />
-        {session.hrAvg != null && <LegendChip dashed label={`media ${session.hrAvg} bpm`} />}
+        {session.hrAvg != null && <LegendChip dashed label={`battito medio ${session.hrAvg} bpm`} />}
+        {/* Le soglie: qui e non piu' dentro il grafico */}
+        {zoneLines.map((z) => (
+          <LegendChip key={z.id} line color={z.color} label={`${z.label} da ${z.bpm} bpm`} />
+        ))}
       </div>
     </div>
   )
 }
 
-function LegendChip({ color, label, dashed }) {
+/** `dashed` = media di sessione, `line` = soglia di zona, altrimenti quadratino pieno */
+function LegendChip({ color, label, dashed, line }) {
   return (
     <span className="small" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
       {dashed ? (
         <span style={{ width: 14, borderTop: `2px dashed ${MUTED}` }} />
+      ) : line ? (
+        <span style={{ width: 14, borderTop: `3px solid ${color}` }} />
       ) : (
         <span style={{ width: 11, height: 11, background: color, border: `1.5px solid ${INK}`, borderRadius: 3 }} />
       )}
