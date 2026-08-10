@@ -1,17 +1,23 @@
 import { useState } from 'react'
-import Stepper from './Stepper'
+import { useNavigate } from 'react-router-dom'
+import Stepper from '../components/Stepper'
 import { getProfileDraft, setProfile, getWeightLog } from '../data/kcal'
 
 /**
- * Parametri personali, in home e non fra le integrazioni: non sono un collegamento a
- * un servizio esterno, sono dati dell'utente. Servono a stimare le kcal quando Google
- * Health non ha dati per l'intervallo di un allenamento.
+ * Parametri personali: pagina a se' e non piu' un riquadro aperto in home.
+ *
+ * Non sono un collegamento a un servizio esterno (per questo non stanno fra le
+ * integrazioni), ma non sono nemmeno roba di tutti i giorni: il peso si aggiorna una
+ * volta ogni tanto, altezza ed eta' una volta e basta. Tenerli aperti in home voleva
+ * dire dare a un dato che si tocca di rado lo stesso spazio dei tre gesti quotidiani.
  *
  * Il peso e' in evidenza perche' e' l'unico che cambia nel tempo — ed e' l'unico che
- * ha senso rappresentare con un grafico. Eta' e sesso si impostano una volta e basta,
- * quindi stanno sotto un pieghevole e non occupano spazio tutti i giorni.
+ * ha senso rappresentare con un grafico. Gli altri campi stanno sotto, sempre aperti:
+ * il pieghevole aveva senso in home, dove rubava spazio; in una pagina sua nasconderli
+ * aggiunge solo un tocco per arrivare a un campo che si viene apposta a cercare.
  */
-export default function ParamsCard() {
+export default function ParamsPage() {
+  const navigate = useNavigate()
   const [p, setP] = useState(getProfileDraft)
   const [log, setLog] = useState(getWeightLog)
 
@@ -26,40 +32,46 @@ export default function ParamsCard() {
   const delta = log.length > 1 ? last.kg - first.kg : null
 
   return (
-    <div className="card stack">
-      <div className="row">
-        <span className="emoji-lg">⚖️</span>
-        <div style={{ flex: 1, minWidth: 96 }}>
-          <h3>Parametri</h3>
-          <p className="small muted">Servono a stimare le kcal degli allenamenti</p>
-        </div>
-      </div>
+    <div className="page">
+      <header className="appbar">
+        <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
+          <i className="fa-solid fa-arrow-left" />
+        </button>
+        <h2>⚖️ Parametri</h2>
+      </header>
 
-      <div className="row">
-        <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Peso (kg)</span>
-        <Stepper value={p.weightKg} onChange={(v) => save({ ...p, weightKg: v })} min={30} max={200} step={0.5} />
-      </div>
-
-      {log.length >= 2 ? (
-        <>
-          <WeightSparkline log={log} />
-          <p className="small muted" style={{ margin: 0 }}>
-            {fmtDate(first.date)} → oggi:{' '}
-            <strong>
-              {delta > 0 ? '+' : ''}{Math.round(delta * 10) / 10} kg
-            </strong>{' '}
-            in {log.length} misurazioni
-          </p>
-        </>
-      ) : (
-        <p className="small muted" style={{ margin: 0 }}>
-          Il grafico dell'andamento compare dalla seconda misurazione: una sola non è una tendenza.
+      <div className="card stack">
+        <p className="small muted">
+          Servono a stimare le kcal degli allenamenti quando Google Health non ha dati
+          per quell’intervallo.
         </p>
-      )}
 
-      <details>
-        <summary className="label details-summary">Altezza, età e sesso biologico</summary>
-        <div className="stack" style={{ paddingTop: 10 }}>
+        <div className="row">
+          <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Peso (kg)</span>
+          <Stepper value={p.weightKg} onChange={(v) => save({ ...p, weightKg: v })} min={30} max={200} step={0.5} />
+        </div>
+
+        {log.length >= 2 ? (
+          <>
+            <WeightSparkline log={log} />
+            <p className="small muted" style={{ margin: 0 }}>
+              {fmtDate(first.date)} → oggi:{' '}
+              <strong>
+                {delta > 0 ? '+' : ''}{Math.round(delta * 10) / 10} kg
+              </strong>{' '}
+              in {log.length} misurazioni
+            </p>
+          </>
+        ) : (
+          <p className="small muted" style={{ margin: 0 }}>
+            Il grafico dell'andamento compare dalla seconda misurazione: una sola non è una tendenza.
+          </p>
+        )}
+
+        {/* Niente pieghevole: aveva senso quando questa roba stava aperta in home e
+            rubava spazio ai gesti quotidiani. Ora che e' una pagina sua, nasconderla
+            aggiunge solo un tocco per arrivare a un campo che si viene apposta a vedere */}
+        <div className="stack" style={{ borderTop: '2px dashed var(--paper)', paddingTop: 10 }}>
           <div className="row">
             <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Altezza (cm)</span>
             <Stepper value={p.heightCm} onChange={(v) => save({ ...p, heightCm: v })} min={120} max={220} step={1} />
@@ -82,7 +94,7 @@ export default function ParamsCard() {
             validata per sesso biologico: la stima vale ±15-20%.
           </p>
         </div>
-      </details>
+      </div>
     </div>
   )
 }

@@ -45,11 +45,16 @@ export default function ExerciseStats({ sessions, name, color }) {
 
   const { ultima, precedente, mediaMese } = cmp
 
+  // Niente kcal qui: su una finestra di pochi minuti non sono calcolabili con
+  // abbastanza accuratezza da reggere un confronto fra allenamenti. La ripartizione
+  // ancorata al totale misurato resta nel dettaglio della singola sessione.
+  // "se c'e' il peso sollevato": le metriche a zero spariscono da sole.
   const METRICHE = [
-    { id: 'durationSec', label: 'Durata', fmt: (v) => fmtMin(v) },
-    { id: 'avgHr', label: 'Battito medio', fmt: (v) => `${Math.round(v)} bpm` },
-    { id: 'kcal', label: ultima.kcalSource === 'google' ? 'Energia' : 'Energia (stima)', fmt: (v) => `${Math.round(v)} kcal` },
-    { id: 'volumeKg', label: 'Volume', fmt: (v) => `${Math.round(v)} kg` },
+    { id: 'durationSec', label: 'Durata', fmt: (v) => fmtMin(v), breve: (v) => fmtMin(v) },
+    { id: 'avgHr', label: 'Battito medio', fmt: (v) => `${Math.round(v)} bpm`, breve: (v) => Math.round(v) },
+    { id: 'doneSeries', label: 'Serie', fmt: (v) => `${Math.round(v * 10) / 10}`, breve: (v) => Math.round(v * 10) / 10 },
+    { id: 'reps', label: 'Ripetizioni', fmt: (v) => `${Math.round(v)}`, breve: (v) => Math.round(v) },
+    { id: 'weightKg', label: 'Peso sollevato', fmt: (v) => `${Math.round(v * 10) / 10} kg`, breve: (v) => Math.round(v * 10) / 10 },
   ].filter((m) => ultima[m.id] != null && ultima[m.id] > 0)
 
   return (
@@ -80,24 +85,15 @@ export default function ExerciseStats({ sessions, name, color }) {
 
           {METRICHE.map((m) => {
             const valori = [
-              { key: 'ultima', label: 'Ultima volta', v: ultima[m.id], stile: 'pieno' },
-              precedente && { key: 'prec', label: 'Volta prima', v: precedente[m.id], stile: 'righe' },
-              mediaMese && { key: 'mese', label: `Media ultimo mese (${mediaMese.campioni})`, v: mediaMese[m.id], stile: 'contorno' },
+              { key: 'ultima', label: 'Ultima', v: ultima[m.id], stile: 'pieno' },
+              precedente && { key: 'prec', label: 'Prima', v: precedente[m.id], stile: 'righe' },
+              mediaMese && { key: 'mese', label: `Media (${mediaMese.campioni})`, v: mediaMese[m.id], stile: 'contorno' },
             ].filter((x) => x && x.v != null)
-            const max = Math.max(...valori.map((x) => x.v), 1)
 
             return (
-              <div key={m.id} className="stack" style={{ gap: 4 }}>
+              <div key={m.id} className="stack" style={{ gap: 4, paddingBottom: 4 }}>
                 <span className="small" style={{ fontWeight: 800 }}>{m.label}</span>
-                {valori.map((x) => (
-                  <div key={x.key} className="row" style={{ gap: 8 }}>
-                    <span className="small muted" style={{ width: 96, flex: '0 0 96px' }}>{x.label}</span>
-                    <div style={{ flex: 1, minWidth: 60, height: 18, position: 'relative' }}>
-                      <div style={{ ...barStyle(x.stile, color), width: `${Math.max(3, (x.v / max) * 100)}%` }} />
-                    </div>
-                    <span className="small" style={{ fontWeight: 800, width: 76, textAlign: 'right' }}>{m.fmt(x.v)}</span>
-                  </div>
-                ))}
+                <BarreVerticali valori={valori} colore={color} formato={m.breve} />
                 {precedente && ultima[m.id] != null && precedente[m.id] != null && (
                   <p className="small muted" style={{ margin: 0 }}>
                     {delta(ultima[m.id], precedente[m.id], m)}
@@ -108,14 +104,9 @@ export default function ExerciseStats({ sessions, name, color }) {
           })}
 
           <p className="small muted" style={{ margin: 0 }}>
-            Pieno = ultima volta · a righe = volta prima · tratteggiato = media dell’ultimo mese
+            Pieno = ultima volta · a righe = volta prima · tratteggiato = media dell’ultimo mese.
+            Le barre partono da zero, così le altezze sono confrontabili fra loro.
           </p>
-          {ultima.kcalSource === 'google' && (
-            <p className="small muted" style={{ margin: 0 }}>
-              Le kcal sono la quota di questo esercizio sul totale misurato dall’orologio,
-              ripartito secondo battito e durata.
-            </p>
-          )}
         </div>
       )}
 
@@ -149,9 +140,48 @@ export default function ExerciseStats({ sessions, name, color }) {
   )
 }
 
+/**
+ * Istogramma verticale a tre barre.
+ *
+ * Prima erano barre orizzontali dentro una colonna stretta di telefono: lo spazio
+ * disponibile era una sessantina di pixel, e tre lunghezze quasi uguali dentro
+ * sessanta pixel non dicono niente. In verticale l'altezza disponibile la decidiamo
+ * noi, quindi la differenza si vede.
+ *
+ * Base a ZERO e non al minimo: in un istogramma la lunghezza della barra *e'* il
+ * valore, e far partire l'asse da 150 farebbe sembrare 155 bpm il doppio di 152.
+ * Il prezzo e' che su grandezze poco variabili come il battito le barre si
+ * somigliano — per questo il numero e' scritto sopra ciascuna.
+ */
+function BarreVerticali({ valori, colore, formato }) {
+  const H = 96 // altezza dell'area delle barre, esclusa la riga dei numeri
+  const max = Math.max(...valori.map((x) => x.v), 1)
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height: H }}>
+        {valori.map((x) => (
+          <div key={x.key} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
+            <span className="small" style={{ fontWeight: 800, lineHeight: 1.2 }}>{formato(x.v)}</span>
+            {/* minimo 4px: una barra alta zero sparirebbe e sembrerebbe un dato mancante */}
+            <div style={{ ...barStyle(x.stile, colore), width: '100%', height: Math.max(4, Math.round((x.v / max) * (H - 20))) }} />
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 10, borderTop: '2px solid var(--ink)', paddingTop: 4 }}>
+        {valori.map((x) => (
+          <span key={x.key} className="small muted" style={{ flex: 1, textAlign: 'center', lineHeight: 1.2 }}>
+            {x.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /** Tre trattamenti grafici sullo stesso colore: leggibili anche senza distinguere tinte */
 function barStyle(stile, color) {
-  const base = { height: '100%', border: '2px solid var(--ink)', borderRadius: 999 }
+  const base = { border: '2px solid var(--ink)', borderRadius: '6px 6px 0 0' }
   if (stile === 'pieno') return { ...base, background: color }
   if (stile === 'righe') {
     return {
@@ -162,6 +192,8 @@ function barStyle(stile, color) {
   return { ...base, background: 'transparent', borderStyle: 'dashed' }
 }
 
+const UNITA = { avgHr: ' bpm', weightKg: ' kg', doneSeries: ' serie', reps: ' ripetizioni' }
+
 /** Variazione rispetto alla volta prima, con il verso scritto a parole */
 function delta(now, prev, m) {
   const d = now - prev
@@ -169,6 +201,5 @@ function delta(now, prev, m) {
   const segno = d > 0 ? '+' : '−'
   const abs = Math.abs(d)
   const valore = m.id === 'durationSec' ? `${Math.round(abs / 60)}′` : Math.round(abs)
-  const unita = m.id === 'avgHr' ? ' bpm' : m.id === 'kcal' ? ' kcal' : m.id === 'volumeKg' ? ' kg' : ''
-  return `${segno}${valore}${unita} rispetto alla volta prima.`
+  return `${segno}${valore}${UNITA[m.id] || ''} rispetto alla volta prima.`
 }

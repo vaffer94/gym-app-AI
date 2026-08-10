@@ -130,9 +130,45 @@ Scheda **Esercizi** nello Storico: elenco degli esercizi con quante volte e il t
   - La scheda Esercizi legge il numero **dalla stessa ripartizione** del dettaglio sessione: due schermate che dicono 60 e 61 sarebbero un difetto
 - **Confronto** fra ultima volta, volta prima e media dell'ultimo mese (esclusa l'ultima, se no si confronterebbe con se stessa) nello stesso grafico: pieno / a righe / contorno tratteggiato, tutti nel colore dell'esercizio. Tre trattamenti grafici e non tre colori — si distinguono anche senza distinguere le tinte, e non competono con la codifica per colore usata altrove
 
+## F6 — Obiettivi, e grafici piu' leggibili (10/08/2026)
+
+### F6.1 Obiettivi
+Terza voce della home, con pagina propria. Tre obiettivi in un posto solo — prima l'unico che esisteva (i passi) stava fra le **Integrazioni**, cioe' fra i collegamenti a servizi esterni, che e' un'altra categoria. In Integrazioni resta solo un rimando.
+
+1. **Allenamenti a settimana** (lunedi'–domenica). Nello Storico si vedono le **settimane di fila** in cui l'obiettivo e' stato rispettato. La settimana in corso non spezza il conto finche' non e' finita: mercoledi' con un allenamento su tre non e' un fallimento, e' una settimana a meta' — stessa grazia gia' usata per le settimane di fila
+2. **Passi al giorno**, spostato qui dalle Integrazioni. Chiave di salvataggio invariata: rinominarla avrebbe azzerato l'obiettivo gia' impostato
+3. **Energia a settimana, misurata in alimenti.** L'obiettivo si compone scegliendo cibi con le quantita': "due gelati e una pizza" dice qualcosa, "1210 kcal" no
+   - Il **carrello e' l'obiettivo**, il numero e' la sua somma: non due impostazioni che possono contraddirsi
+   - Il totale resta scrivibile a mano e in quel caso **l'elenco si svuota**: tenere un carrello che somma a un altro numero vorrebbe dire mostrare due obiettivi diversi
+   - Nel carrello si salva l'`id` dell'alimento, non l'oggetto: correggere una porzione aggiorna anche gli obiettivi gia' impostati
+
+Nello Storico, in cima all'Andamento, **una medaglietta per settimana**: piena (gialla) se l'obiettivo di allenamenti e' stato raggiunto, altrimenti solo il bordo e niente giallo dentro. Ha sostituito "3 settimane di fila", che era un numero senza contesto — non diceva quali settimane, quante ne fossero state saltate, ne' se prima fosse andata meglio. Cinque settimane visibili piu' un contatore col totale storico; la settimana in corso ha il bordo tratteggiato, perche' non e' ancora giudicabile.
+
+Sotto, la card **"Questa settimana"**: allenamenti fatti sul totale e un alimento per barra che si riempie con l'energia guadagnata.
+
+- Contano **solo gli allenamenti registrati dall'app**. Se valessero anche le attivita' che Google riconosce da solo (una camminata, le scale) la settimana si chiuderebbe stando in piedi, e l'obiettivo smetterebbe di dire qualcosa
+- Gli alimenti si riempiono **dal piu' economico in avanti**, che e' anche l'ordine in cui appaiono: partendo dalla pizza da 850 kcal, per meta' settimana sarebbero tutte barre vuote
+- La parte mancante e' **trasparente**, non grigia: il grigio sembrerebbe un secondo dato invece che il vuoto
+
+### F6.2 Grafici piu' leggibili
+- **Un colore e una voce di legenda per esercizio**, per nome e non per posizione: tre "Cyclette" nella stessa scheda prendevano tre colori e tre voci, e rendevano il grafico illeggibile proprio dove serviva di piu'. Stessa regola nelle zone del cuore, dove i contributi si sommano per nome
+- **Soglie di zona in legenda** invece che scritte sulle linee, e i bpm di soglia diventano **tacche vere dell'asse**: la scritta sulla linea copriva il tracciato, e il valore senza asse non era confrontabile. Margine sinistro 40 → 56 px, misurato: "130 bpm" era tagliato di un pixel a 320 px di larghezza
+- **Confronto fra allenamenti a istogrammi verticali**: in orizzontale, dentro una colonna di telefono, tre lunghezze quasi uguali in sessanta pixel non dicevano niente. Base a **zero** e non al minimo — la lunghezza della barra *e'* il valore, e far partire l'asse da 150 farebbe sembrare 155 bpm il doppio di 152; il prezzo e' che su grandezze poco variabili le barre si somigliano, per questo il numero e' scritto sopra ciascuna
+- Confronto su **durata, battito medio, serie, ripetizioni e peso sollevato**. Niente kcal: su una finestra di pochi minuti non sono calcolabili con abbastanza accuratezza da reggere un confronto (la ripartizione ancorata al totale misurato resta nel dettaglio della sessione). Niente volume: sommare kg di esercizi diversi produce un numero che non corrisponde a nessuna grandezza reale — "peso sollevato" e' il **carico**, non ripetizioni per kg
+- **Zone del cuore a istogrammi verticali** nel dettaglio dell'allenamento, con il nome dell'esercizio scritto **su ogni pezzo colorato**: i pastelli adiacenti dentro una barra alta 22 px non erano distinguibili in modo affidabile. Colonne in scala sulla zona piu' battuta e non su 100%, se no con l'80% del tempo in una zona sola le altre sarebbero alte pochi pixel e i pezzi dentro invisibili. Il nome si scrive solo sopra i 13 px di altezza; sotto quella soglia (e per i nomi troppo lunghi per la colonna) resta la riga di dettaglio
+
+### F6.3 Parametri
+Da riquadro aperto in home a **pagina propria**: erano stepper, grafico del peso e pieghevole, cioe' piu' spazio dei tre gesti quotidiani per la cosa che si tocca meno spesso. Nella pagina i campi sono **tutti aperti**: il pieghevole serviva a non rubare spazio in home, e in una pagina propria nasconderli aggiunge solo un tocco per arrivare a un campo che si viene apposta a cercare.
+
+### F6.4 Conferma del tocco
+Due punti dove il tocco non dava segno di essere arrivato.
+
+- **Alimenti dell'obiettivo**: il carrello che si aggiorna sta sotto al foglio aperto, quindi l'unico modo di sapere se il tocco era andato a segno era chiudere e guardare. La riga lampeggia, e accanto al nome resta un "×N" con le quantita' gia' scelte: il lampo dice "ho sentito", il numero dice quanto ne hai
+- **Pulsanti di Google Health**: sincronizzare vuol dire aspettare la rete, e senza stato visibile si preme, non succede niente, e si ripreme. Il pulsante si disabilita e dice cosa sta facendo
+- Con `prefers-reduced-motion` resta il lampo di colore e sparisce il movimento
+
 ## Fuori scope v1 (idee registrate)
 
 - **Gruppi di utenti**: condivisione schede, sfide — dopo web app + watch + pagamenti
-- **Obiettivi** nella sezione statistiche
 - Coach LLM (Step 7 del piano di sviluppo)
 - Eliminazione account (necessaria prima del Play Store)

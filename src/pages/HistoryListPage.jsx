@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { getRepo } from '../data/repo'
 import {
-  aggregateSessions, weekStreak, daysSinceLast, last4Weeks, avgPerWeek,
+  aggregateSessions, daysSinceLast, last4Weeks, avgPerWeek,
   longestAppDayStreak, longestActivityStreakThisMonth,
 } from '../data/aggregate'
 import { computeStats } from '../workout/sessionEngine'
@@ -11,10 +11,12 @@ import { formatClock } from '../workout/activeSession'
 import TrendChart from '../components/TrendChart'
 import {
   isHealthConfigured, isHealthConnected, connectHealth, disconnectHealth,
-  getHealthSummary, clearHealthCache, getStepsGoal, setStepsGoal, localISO, exerciseTypeInfo,
+  getHealthSummary, clearHealthCache, localISO, exerciseTypeInfo,
   connectHealthZones, hasZonesScope,
 } from '../data/health'
-import Stepper from '../components/Stepper'
+import { getStepsGoal } from '../data/goals'
+import WeekGoals from '../components/WeekGoals'
+import WeekMedals from '../components/WeekMedals'
 import { resolveKcalMany } from '../data/kcal'
 import { getWorkoutEnergy } from '../data/health'
 import { KcalChip } from '../components/KcalRow'
@@ -42,7 +44,6 @@ export default function HistoryListPage() {
   const [period, setPeriod] = useState('week')
   const [fitbit, setFitbit] = useState(null) // {stepsByDay, stepsGoal, workoutDays}
   const [fitbitError, setFitbitError] = useState(null)
-  const [goal, setGoal] = useState(getStepsGoal())
   const [kcalMap, setKcalMap] = useState(new Map())
   const [, setZonesOn] = useState(hasZonesScope()) // solo per ridisegnare dopo il consenso
 
@@ -77,28 +78,35 @@ export default function HistoryListPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const connect = async () => {
+  /**
+   * Quale operazione e' in corso, per dare al pulsante premuto uno stato visibile.
+   * Sincronizzare vuol dire aspettare la rete: senza, si preme, non succede niente
+   * per qualche secondo, e l'unica reazione sensata e' premere di nuovo.
+   */
+  const [busy, setBusy] = useState(null) // 'connect' | 'refresh' | 'zones' | null
+  const conAttesa = async (nome, fn) => {
+    setBusy(nome)
     try {
-      await connectHealth()
-      await loadHealth()
+      await fn()
     } catch (e) {
       setFitbitError(e.message)
+    } finally {
+      setBusy(null)
     }
   }
+
+  const connect = () => conAttesa('connect', async () => {
+    await connectHealth()
+    await loadHealth()
+  })
 
   const trends = useMemo(
     () => (sessions ? aggregateSessions(sessions, period) : []),
     [sessions, period]
   )
-  const maxVolume = Math.max(1, ...trends.map((g) => g.volumeKg))
-
   // dati per i grafici in ordine cronologico
   const chrono = useMemo(() => [...trends].reverse(), [trends])
   const chartLabels = chrono.map((g) => g.label)
-  const volumeData = useMemo(
-    () => [{ label: 'Volume (kg)', data: chrono.map((g) => g.volumeKg), backgroundColor: '#ff6b35', borderColor: '#2b2b3c', borderWidth: 2, borderRadius: 8 }],
-    [chrono]
-  )
   const durationData = useMemo(
     () => [
       { label: 'Durata media (min)', data: chrono.map((g) => Math.round(g.avgDurationSec / 60)), borderColor: '#2ec4b6', backgroundColor: '#2ec4b6', borderWidth: 3, tension: 0.35, pointRadius: 5, pointBorderColor: '#2b2b3c', pointBorderWidth: 2 },
@@ -189,8 +197,10 @@ export default function HistoryListPage() {
             )}
 
             {isHealthConfigured && !isHealthConnected() && (
-              <button className="btn btn--primary btn--big" onClick={connect}>
-                Collega Google Health
+              <button className="btn btn--primary btn--big" onClick={connect} disabled={busy === 'connect'}>
+                {busy === 'connect'
+                  ? <><i className="fa-solid fa-rotate fa-spin" /> Collego…</>
+                  : 'Collega Google Health'}
               </button>
             )}
 
@@ -200,14 +210,11 @@ export default function HistoryListPage() {
                   I dati compaiono nel calendario dell'Andamento (icone sui giorni) e nel grafico dei passi.
                   Aggiornati al massimo ogni 30 minuti.
                 </p>
-                <div className="row">
-                  <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Obiettivo passi</span>
-                  <Stepper
-                    value={goal}
-                    onChange={(v) => { setGoal(v); setStepsGoal(v); setFitbit((f) => (f ? { ...f, stepsGoal: v } : f)) }}
-                    min={1000} max={50000} step={500}
-                  />
-                </div>
+                {/* L'obiettivo passi e' un obiettivo, non un'impostazione della
+                    connessione: sta in Obiettivi insieme agli altri due */}
+                <button className="btn" onClick={() => navigate('/obiettivi')}>
+                  🎯 Obiettivo passi: {getStepsGoal().toLocaleString('it-IT')}
+                </button>
               </>
             )}
 
@@ -217,9 +224,15 @@ export default function HistoryListPage() {
             {isHealthConnected() && !hasZonesScope() && (
               <button
                 className="btn"
-                onClick={() => connectHealthZones().then(() => setZonesOn(true)).catch((e) => setFitbitError(e.message))}
+                disabled={busy === 'zones'}
+                onClick={() => conAttesa('zones', async () => {
+                  await connectHealthZones()
+                  setZonesOn(true)
+                })}
               >
-                <i className="fa-solid fa-heart-pulse" /> Usa le mie zone cardiache vere
+                {busy === 'zones'
+                  ? <><i className="fa-solid fa-rotate fa-spin" /> Chiedo il permesso…</>
+                  : <><i className="fa-solid fa-heart-pulse" /> Usa le mie zone cardiache vere</>}
               </button>
             )}
             {isHealthConnected() && hasZonesScope() && (
@@ -231,8 +244,17 @@ export default function HistoryListPage() {
 
             {isHealthConnected() && (
               <>
-                <button className="btn" onClick={() => { clearHealthCache(); loadHealth() }}>
-                  <i className="fa-solid fa-rotate" /> Aggiorna dati adesso
+                <button
+                  className="btn"
+                  disabled={busy === 'refresh'}
+                  onClick={() => conAttesa('refresh', async () => {
+                    clearHealthCache()
+                    await loadHealth()
+                  })}
+                >
+                  {busy === 'refresh'
+                    ? <><i className="fa-solid fa-rotate fa-spin" /> Aggiorno…</>
+                    : <><i className="fa-solid fa-rotate" /> Aggiorna dati adesso</>}
                 </button>
                 <button
                   className="btn"
@@ -329,6 +351,8 @@ export default function HistoryListPage() {
       {tab === 'trends' && sessions?.length > 0 && (
         <>
           <StreakCard sessions={sessions} fitbit={fitbit} navigate={navigate} />
+
+          <WeekGoals sessions={sessions} kcalById={kcalMap} onOpenGoals={() => navigate('/obiettivi')} />
 
           {fitbit && (
             <div className="card card--flat stack">
@@ -430,17 +454,14 @@ export default function HistoryListPage() {
             ))}
           </div>
 
+          {/* Niente grafico del volume aggregato: sommare i kg di esercizi diversi
+              produce un numero che non corrisponde a nessuna grandezza reale. Il peso
+              sollevato resta dov'e' confrontabile, cioe' dentro il singolo esercizio. */}
           {chrono.length > 0 && (
-            <>
-              <div className="card card--flat stack">
-                <span className="label" style={{ margin: 0 }}>Volume sollevato</span>
-                <TrendChart type="bar" labels={chartLabels} datasets={volumeData} yLabel="kg" />
-              </div>
-              <div className="card card--flat stack">
-                <span className="label" style={{ margin: 0 }}>Durata media e frequenza</span>
-                <TrendChart type="line" labels={chartLabels} datasets={durationData} />
-              </div>
-            </>
+            <div className="card card--flat stack">
+              <span className="label" style={{ margin: 0 }}>Durata media e frequenza</span>
+              <TrendChart type="line" labels={chartLabels} datasets={durationData} />
+            </div>
           )}
 
           <div className="stack">
@@ -450,14 +471,6 @@ export default function HistoryListPage() {
                   <h3 style={{ flex: 1 }}>{g.label}</h3>
                   <span className="chip">{g.count} allenament{g.count === 1 ? 'o' : 'i'}</span>
                 </div>
-                {g.volumeKg > 0 && (
-                  <div>
-                    <div className="bar-track">
-                      <div className="bar-fill" style={{ width: `${Math.round((g.volumeKg / maxVolume) * 100)}%` }} />
-                    </div>
-                    <p className="small muted">{g.volumeKg} kg di volume</p>
-                  </div>
-                )}
                 <p className="small muted">
                   Durata media {formatClock(g.avgDurationSec)} · completamento {g.completionPct}% · {g.doneSeries} serie
                 </p>
@@ -472,7 +485,6 @@ export default function HistoryListPage() {
 
 /** Card streak: settimane di fila + calendario ultime 4 settimane (+ badge Fitbit) */
 function StreakCard({ sessions, fitbit, navigate }) {
-  const streak = weekStreak(sessions)
   const rest = daysSinceLast(sessions)
   const cal = last4Weeks(sessions)
   const dayNames = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
@@ -496,15 +508,20 @@ function StreakCard({ sessions, fitbit, navigate }) {
 
   return (
     <div className="card card--primary stack">
+      {/* "3 settimane di fila" e' sparito a favore delle medaglie: era un numero che
+          non diceva quali settimane, quante ne erano state saltate, ne' se prima fosse
+          andata meglio. Resta il tempo dall'ultimo allenamento, che invece e' una cosa
+          sola e si legge a colpo d'occhio. */}
       <div className="row">
         <span className="emoji-xl">🔥</span>
-        <div style={{ flex: 1 }}>
-          <div className="kpi">{streak} settiman{streak === 1 ? 'a' : 'e'} di fila</div>
-          <p className="small muted">
-            {rest === 0 ? 'Ti sei allenata oggi!' : rest === 1 ? '1 giorno dall’ultimo allenamento' : `${rest} giorni dall’ultimo allenamento`}
-          </p>
+        <div className="kpi" style={{ flex: 1, minWidth: 96, fontSize: '1.1rem' }}>
+          {rest === 0 ? 'Ti sei allenata oggi!' : rest === 1 ? '1 giorno dall’ultimo allenamento' : `${rest} giorni dall’ultimo allenamento`}
         </div>
       </div>
+
+      {/* A tutta larghezza: con l'emoji accanto, le sei colonne scendevano sotto i
+          cinquanta pixel e le date andavano a capo */}
+      <WeekMedals sessions={sessions} />
 
       <div className="cal-grid">
         {dayNames.map((d, i) => (

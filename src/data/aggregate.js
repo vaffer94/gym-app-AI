@@ -27,7 +27,10 @@ function periodOf(ts, period) {
  * Ritorna i periodi dal più recente, con totali e medie.
  */
 const DAY = 24 * 3600 * 1000
-const mondayOf = (ts) => {
+/** Lunedi' della settimana di `ts`, a mezzanotte locale. Esportato: e' la definizione
+ *  di "settimana" usata anche dagli obiettivi, e due definizioni diverse darebbero
+ *  due conteggi diversi della stessa settimana. */
+export const mondayOf = (ts) => {
   const d = new Date(ts)
   d.setHours(0, 0, 0, 0)
   d.setDate(d.getDate() - ((d.getDay() + 6) % 7))

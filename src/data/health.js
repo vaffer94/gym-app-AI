@@ -5,6 +5,11 @@
  * Richiede VITE_GOOGLE_HEALTH_CLIENT_ID in .env.local (Google Cloud, vedi README).
  */
 
+// L'obiettivo passi e' un obiettivo dell'utente, non un dettaglio dell'integrazione:
+// vive in data/goals.js insieme agli altri. Qui serve solo perche' getHealthSummary
+// lo allega al riepilogo.
+import { getStepsGoal } from './goals'
+
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_HEALTH_CLIENT_ID
 export const isHealthConfigured = Boolean(CLIENT_ID)
 
@@ -17,15 +22,7 @@ const SCOPE = 'https://www.googleapis.com/auth/googlehealth.activity_and_fitness
  * passi e allenamenti, che invece funzionano gia'.
  */
 const SCOPE_METRICS = 'https://www.googleapis.com/auth/googlehealth.health_metrics_and_measurements.readonly'
-const LS = { token: 'gym.health.token', cache: 'gym.health.cache', goal: 'gym.health.stepsGoal' }
-
-/* ---------- obiettivo passi (impostazione locale dell'app) ---------- */
-export function getStepsGoal() {
-  return Number(localStorage.getItem(LS.goal)) || 10000
-}
-export function setStepsGoal(v) {
-  localStorage.setItem(LS.goal, String(v))
-}
+const LS = { token: 'gym.health.token', cache: 'gym.health.cache' }
 
 /* ---------- stato connessione ---------- */
 function getToken() {

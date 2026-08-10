@@ -16,6 +16,7 @@
   --teal-soft: #d5f4f1;
   --yellow: #ffd23f;
   --yellow-soft: #fff3c7;
+  --lilac-soft: #e4d9ff;
   --muted: #63637a;   /* abbastanza scuro da restare leggibile */
   --danger: #e63946;
 
@@ -91,6 +92,8 @@ p { margin: 0; }
 .card--primary { background: var(--primary-soft); }
 .card--teal { background: var(--teal-soft); }
 .card--yellow { background: var(--yellow-soft); }
+/* Il lilla non e' un colore nuovo: e' gia' nella palette delle schede (PLAN_COLORS) */
+.card--lilac { background: var(--lilac-soft); }
 
 /* Card cliccabile: si "preme" */
 .card--tap {
@@ -394,6 +397,26 @@ p { margin: 0; }
 @keyframes serie-pulse {
   0%, 100% { box-shadow: var(--shadow-sm); }
   50% { box-shadow: 6px 6px 0 var(--ink); transform: translate(-2px, -2px); }
+}
+
+/* Conferma visiva del tocco.
+   Serve dove il risultato dell'azione non e' sotto gli occhi: toccando un alimento
+   nell'elenco, il carrello che si aggiorna sta sotto al foglio aperto, e senza un
+   segnale l'unico modo di sapere se il tocco e' andato a segno e' chiudere e guardare.
+   Si ri-attiva a ogni tocco rimontando l'elemento (key che cambia), se no la seconda
+   pressione di fila non animerebbe niente. */
+@keyframes tap-flash {
+  0% { background: var(--yellow); transform: scale(0.97); }
+  100% { background: transparent; transform: scale(1); }
+}
+.tap-flash { animation: tap-flash 0.45s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  /* Resta il lampo di colore, sparisce il movimento */
+  @keyframes tap-flash {
+    0% { background: var(--yellow); }
+    100% { background: transparent; }
+  }
 }
 
 /* Sezione espandibile "Come si fa" */

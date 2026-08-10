@@ -31,30 +31,39 @@
  * nel riepilogo si vede l'icona da sola, e tre 🍕 identiche non direbbero nulla.
  */
 
-/** Ordine crescente di kcal: e' l'ordine in cui la lista viene mostrata. */
+/**
+ * Ordine crescente di kcal: e' l'ordine in cui la lista viene mostrata.
+ *
+ * Nel carrello dell'obiettivo settimanale finisce l'`id`, non l'oggetto: cosi'
+ * correggere una porzione o un valore aggiorna anche gli obiettivi gia' impostati,
+ * invece di lasciarli con dentro una copia vecchia.
+ */
 export const FOODS = [
-  { emoji: '🥂', name: 'Calice di vino bianco', portion: '125 ml', kcal: 88 },
-  { emoji: '🍷', name: 'Calice di vino rosso', portion: '125 ml', kcal: 91 },
-  { emoji: '🍺', name: 'Birra bionda', portion: '0,33 L', kcal: 108 },
-  { emoji: '🍧', name: 'Gelato in coppetta, gusto alla frutta', portion: '1 gusto', kcal: 110 },
-  { emoji: '🍸', name: 'Gin tonic', portion: 'classico', kcal: 120 },
-  { emoji: '🍋', name: 'Tè freddo al limone', portion: 'lattina 330 ml', kcal: 132 },
-  { emoji: '🥤', name: 'Coca-Cola', portion: 'lattina 330 ml', kcal: 139 },
-  { emoji: '🍹', name: 'Spritz', portion: 'calice 200 ml', kcal: 170 },
-  { emoji: '🍨', name: 'Gelato in coppetta, gusti alla crema', portion: '2 palline', kcal: 180 },
-  { emoji: '🍫', name: 'Barretta di cioccolato', portion: 'Snickers, 50 g', kcal: 241 },
-  { emoji: '🥔', name: 'Patatine in sacchetto', portion: '50 g', kcal: 274 },
-  { emoji: '🍟', name: 'Patatine fritte', portion: 'porzione media', kcal: 340 },
-  { emoji: '🍰', name: 'Tiramisù', portion: '1 porzione', kcal: 420 },
-  { emoji: '🍣', name: 'Sushi misto', portion: '11 pezzi', kcal: 500 },
-  { emoji: '🍔', name: 'Hamburger classico', portion: 'senza patatine', kcal: 600 },
-  { emoji: '🍜', name: 'Ramen di pollo', portion: '1 ciotola', kcal: 700 },
-  { emoji: '🫑', name: 'Pizza con le verdure', portion: 'intera', kcal: 750 },
-  { emoji: '🍕', name: 'Pizza margherita', portion: 'intera', kcal: 850 },
-  { emoji: '🐖', name: 'Ramen di maiale', portion: '1 ciotola', kcal: 900 },
-  { emoji: '🍄', name: 'Pizza prosciutto e funghi', portion: 'intera', kcal: 950 },
-  { emoji: '🌶️', name: 'Pizza diavola', portion: 'intera', kcal: 1050 },
+  { id: 'vino-bianco', emoji: '🥂', name: 'Calice di vino bianco', portion: '125 ml', kcal: 88 },
+  { id: 'vino-rosso', emoji: '🍷', name: 'Calice di vino rosso', portion: '125 ml', kcal: 91 },
+  { id: 'birra', emoji: '🍺', name: 'Birra bionda', portion: '0,33 L', kcal: 108 },
+  { id: 'gelato-frutta', emoji: '🍧', name: 'Gelato in coppetta, gusto alla frutta', portion: '1 gusto', kcal: 110 },
+  { id: 'gin-tonic', emoji: '🍸', name: 'Gin tonic', portion: 'classico', kcal: 120 },
+  { id: 'te-limone', emoji: '🍋', name: 'Tè freddo al limone', portion: 'lattina 330 ml', kcal: 132 },
+  { id: 'coca-cola', emoji: '🥤', name: 'Coca-Cola', portion: 'lattina 330 ml', kcal: 139 },
+  { id: 'spritz', emoji: '🍹', name: 'Spritz', portion: 'calice 200 ml', kcal: 170 },
+  { id: 'gelato-crema', emoji: '🍨', name: 'Gelato in coppetta, gusti alla crema', portion: '2 palline', kcal: 180 },
+  { id: 'snickers', emoji: '🍫', name: 'Barretta di cioccolato', portion: 'Snickers, 50 g', kcal: 241 },
+  { id: 'patatine-sacchetto', emoji: '🥔', name: 'Patatine in sacchetto', portion: '50 g', kcal: 274 },
+  { id: 'patatine-fritte', emoji: '🍟', name: 'Patatine fritte', portion: 'porzione media', kcal: 340 },
+  { id: 'tiramisu', emoji: '🍰', name: 'Tiramisù', portion: '1 porzione', kcal: 420 },
+  { id: 'sushi', emoji: '🍣', name: 'Sushi misto', portion: '11 pezzi', kcal: 500 },
+  { id: 'hamburger', emoji: '🍔', name: 'Hamburger classico', portion: 'senza patatine', kcal: 600 },
+  { id: 'ramen-pollo', emoji: '🍜', name: 'Ramen di pollo', portion: '1 ciotola', kcal: 700 },
+  { id: 'pizza-verdure', emoji: '🫑', name: 'Pizza con le verdure', portion: 'intera', kcal: 750 },
+  { id: 'pizza-margherita', emoji: '🍕', name: 'Pizza margherita', portion: 'intera', kcal: 850 },
+  { id: 'ramen-maiale', emoji: '🐖', name: 'Ramen di maiale', portion: '1 ciotola', kcal: 900 },
+  { id: 'pizza-funghi', emoji: '🍄', name: 'Pizza prosciutto e funghi', portion: 'intera', kcal: 950 },
+  { id: 'pizza-diavola', emoji: '🌶️', name: 'Pizza diavola', portion: 'intera', kcal: 1050 },
 ]
+
+/** @returns {object|null} null se l'id non esiste piu' (voce tolta dall'elenco) */
+export const foodById = (id) => FOODS.find((f) => f.id === id) || null
 
 /**
  * L'alimento piu' calorico che sta *sotto* alle kcal bruciate: quello che ti sei
