@@ -142,7 +142,9 @@ Terza voce della home, con pagina propria. Tre obiettivi in un posto solo — pr
    - Il totale resta scrivibile a mano e in quel caso **l'elenco si svuota**: tenere un carrello che somma a un altro numero vorrebbe dire mostrare due obiettivi diversi
    - Nel carrello si salva l'`id` dell'alimento, non l'oggetto: correggere una porzione aggiorna anche gli obiettivi gia' impostati
 
-Nello Storico, in cima all'Andamento, la card **"Questa settimana"**: allenamenti fatti sul totale, settimane di fila, e un alimento per barra che si riempie con l'energia guadagnata.
+Nello Storico, in cima all'Andamento, **una medaglietta per settimana**: piena (gialla) se l'obiettivo di allenamenti e' stato raggiunto, altrimenti solo il bordo e niente giallo dentro. Ha sostituito "3 settimane di fila", che era un numero senza contesto — non diceva quali settimane, quante ne fossero state saltate, ne' se prima fosse andata meglio. Cinque settimane visibili piu' un contatore col totale storico; la settimana in corso ha il bordo tratteggiato, perche' non e' ancora giudicabile.
+
+Sotto, la card **"Questa settimana"**: allenamenti fatti sul totale e un alimento per barra che si riempie con l'energia guadagnata.
 
 - Contano **solo gli allenamenti registrati dall'app**. Se valessero anche le attivita' che Google riconosce da solo (una camminata, le scale) la settimana si chiuderebbe stando in piedi, e l'obiettivo smetterebbe di dire qualcosa
 - Gli alimenti si riempiono **dal piu' economico in avanti**, che e' anche l'ordine in cui appaiono: partendo dalla pizza da 850 kcal, per meta' settimana sarebbero tutte barre vuote
@@ -156,7 +158,14 @@ Nello Storico, in cima all'Andamento, la card **"Questa settimana"**: allenament
 - **Zone del cuore a istogrammi verticali** nel dettaglio dell'allenamento, con il nome dell'esercizio scritto **su ogni pezzo colorato**: i pastelli adiacenti dentro una barra alta 22 px non erano distinguibili in modo affidabile. Colonne in scala sulla zona piu' battuta e non su 100%, se no con l'80% del tempo in una zona sola le altre sarebbero alte pochi pixel e i pezzi dentro invisibili. Il nome si scrive solo sopra i 13 px di altezza; sotto quella soglia (e per i nomi troppo lunghi per la colonna) resta la riga di dettaglio
 
 ### F6.3 Parametri
-Da riquadro aperto in home a **pagina propria**: erano stepper, grafico del peso e pieghevole, cioe' piu' spazio dei tre gesti quotidiani per la cosa che si tocca meno spesso.
+Da riquadro aperto in home a **pagina propria**: erano stepper, grafico del peso e pieghevole, cioe' piu' spazio dei tre gesti quotidiani per la cosa che si tocca meno spesso. Nella pagina i campi sono **tutti aperti**: il pieghevole serviva a non rubare spazio in home, e in una pagina propria nasconderli aggiunge solo un tocco per arrivare a un campo che si viene apposta a cercare.
+
+### F6.4 Conferma del tocco
+Due punti dove il tocco non dava segno di essere arrivato.
+
+- **Alimenti dell'obiettivo**: il carrello che si aggiorna sta sotto al foglio aperto, quindi l'unico modo di sapere se il tocco era andato a segno era chiudere e guardare. La riga lampeggia, e accanto al nome resta un "×N" con le quantita' gia' scelte: il lampo dice "ho sentito", il numero dice quanto ne hai
+- **Pulsanti di Google Health**: sincronizzare vuol dire aspettare la rete, e senza stato visibile si preme, non succede niente, e si ripreme. Il pulsante si disabilita e dice cosa sta facendo
+- Con `prefers-reduced-motion` resta il lampo di colore e sparisce il movimento
 
 ## Fuori scope v1 (idee registrate)
 
