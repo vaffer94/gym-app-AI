@@ -157,9 +157,18 @@ export function exerciseHistory(sessions, name, profile, googleZonesBySession, k
       kcalSource: kcal == null ? null : ripartizione?.source || 'stima',
       doneSeries: (ex?.series || []).filter((x) => x.done).length,
       sets: ex?.sets ?? null,
-      volumeKg: (ex?.series || [])
-        .filter((x) => x.done && x.actualWeightKg != null)
-        .reduce((a, x) => a + (x.actualReps || 0) * x.actualWeightKg, 0),
+      // Ripetizioni davvero fatte, sommate sulle serie completate: e' la metrica che
+      // dice se stai progredendo su un esercizio a corpo libero, dove il peso non c'e'
+      reps: (ex?.series || [])
+        .filter((x) => x.done && x.actualReps != null)
+        .reduce((a, x) => a + x.actualReps, 0),
+      // Il CARICO, non il volume: "924 kg" sarebbe ripetizioni x peso sommate, cioe'
+      // proprio la grandezza che non si vuole piu' vedere. Il peso e le ripetizioni
+      // stanno come metriche separate, che dicono di piu' del loro prodotto.
+      weightKg: Math.max(
+        0,
+        ...(ex?.series || []).filter((x) => x.done && x.actualWeightKg != null).map((x) => x.actualWeightKg)
+      ),
       perZone,
       zoneSource: info?.source || null,
     })
@@ -235,8 +244,9 @@ export function exerciseComparison(rows, now = Date.now()) {
           campioni: delMese.length,
           durationSec: num('durationSec', delMese),
           avgHr: num('avgHr', delMese),
-          kcal: num('kcal', delMese),
-          volumeKg: num('volumeKg', delMese),
+          doneSeries: num('doneSeries', delMese),
+          reps: num('reps', delMese),
+          weightKg: num('weightKg', delMese),
         }
       : null,
   }

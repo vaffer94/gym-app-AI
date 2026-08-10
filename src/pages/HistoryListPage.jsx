@@ -90,15 +90,9 @@ export default function HistoryListPage() {
     () => (sessions ? aggregateSessions(sessions, period) : []),
     [sessions, period]
   )
-  const maxVolume = Math.max(1, ...trends.map((g) => g.volumeKg))
-
   // dati per i grafici in ordine cronologico
   const chrono = useMemo(() => [...trends].reverse(), [trends])
   const chartLabels = chrono.map((g) => g.label)
-  const volumeData = useMemo(
-    () => [{ label: 'Volume (kg)', data: chrono.map((g) => g.volumeKg), backgroundColor: '#ff6b35', borderColor: '#2b2b3c', borderWidth: 2, borderRadius: 8 }],
-    [chrono]
-  )
   const durationData = useMemo(
     () => [
       { label: 'Durata media (min)', data: chrono.map((g) => Math.round(g.avgDurationSec / 60)), borderColor: '#2ec4b6', backgroundColor: '#2ec4b6', borderWidth: 3, tension: 0.35, pointRadius: 5, pointBorderColor: '#2b2b3c', pointBorderWidth: 2 },
@@ -430,17 +424,14 @@ export default function HistoryListPage() {
             ))}
           </div>
 
+          {/* Niente grafico del volume aggregato: sommare i kg di esercizi diversi
+              produce un numero che non corrisponde a nessuna grandezza reale. Il peso
+              sollevato resta dov'e' confrontabile, cioe' dentro il singolo esercizio. */}
           {chrono.length > 0 && (
-            <>
-              <div className="card card--flat stack">
-                <span className="label" style={{ margin: 0 }}>Volume sollevato</span>
-                <TrendChart type="bar" labels={chartLabels} datasets={volumeData} yLabel="kg" />
-              </div>
-              <div className="card card--flat stack">
-                <span className="label" style={{ margin: 0 }}>Durata media e frequenza</span>
-                <TrendChart type="line" labels={chartLabels} datasets={durationData} />
-              </div>
-            </>
+            <div className="card card--flat stack">
+              <span className="label" style={{ margin: 0 }}>Durata media e frequenza</span>
+              <TrendChart type="line" labels={chartLabels} datasets={durationData} />
+            </div>
           )}
 
           <div className="stack">
@@ -450,14 +441,6 @@ export default function HistoryListPage() {
                   <h3 style={{ flex: 1 }}>{g.label}</h3>
                   <span className="chip">{g.count} allenament{g.count === 1 ? 'o' : 'i'}</span>
                 </div>
-                {g.volumeKg > 0 && (
-                  <div>
-                    <div className="bar-track">
-                      <div className="bar-fill" style={{ width: `${Math.round((g.volumeKg / maxVolume) * 100)}%` }} />
-                    </div>
-                    <p className="small muted">{g.volumeKg} kg di volume</p>
-                  </div>
-                )}
                 <p className="small muted">
                   Durata media {formatClock(g.avgDurationSec)} · completamento {g.completionPct}% · {g.doneSeries} serie
                 </p>
