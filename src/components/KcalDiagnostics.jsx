@@ -82,6 +82,26 @@ export default function KcalDiagnostics({ sessions }) {
             v={res.totale}
           />
 
+          {res.sonde?.length > 0 && (
+            <div className="stack" style={{ gap: 2, borderTop: '2px dashed var(--paper)', paddingTop: 8 }}>
+              <span className="small" style={{ fontWeight: 800 }}>Fin dove regge la finestra</span>
+              {res.sonde.map((s) => (
+                <div key={s.finestraSec} className="row">
+                  <span className="small muted" style={{ flex: 1, minWidth: 96 }}>
+                    finestre da {s.finestraSec < 60 ? `${s.finestraSec}s` : `${s.finestraSec / 60} min`}
+                  </span>
+                  <span className="small" style={{ fontWeight: 800 }}>
+                    {s.errore ? '✕' : s.valore != null ? `${Math.round(s.valore)} kcal` : '—'}
+                  </span>
+                </div>
+              ))}
+              <p className="small muted" style={{ margin: 0 }}>
+                Il limite non è documentato da Google: qui si misura. Dove risponde, il totale
+                dovrebbe essere lo stesso — se cala al crescere della finestra, sta perdendo pezzi.
+              </p>
+            </div>
+          )}
+
           {stima != null && (
             <div className="row">
               <span className="small" style={{ flex: 1 }}>

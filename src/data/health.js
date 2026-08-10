@@ -315,12 +315,23 @@ export async function diagnosticaKcal(startMs, endMs) {
     }
   }
 
-  const [attivoFinestraUnica, attivoAlMinuto, totale] = await Promise.all([
-    chiedi('active-energy-burned', `${seconds}s`),
+  const [attivoAlMinuto, attivoFinestraUnica, totale] = await Promise.all([
     chiedi('active-energy-burned', '60s'),
-    chiedi('total-calories', `${seconds}s`),
+    chiedi('active-energy-burned', `${seconds}s`),
+    // total-calories con la stessa forma che funziona per l'energia attiva: con la
+    // finestra unica rispondeva 400 come l'altra, ed e' proprio la riga che serve
+    // per confrontarsi con quello che mostra l'app Fitbit
+    chiedi('total-calories', '60s'),
   ])
-  return { durataSec: seconds, attivoFinestraUnica, attivoAlMinuto, totale }
+
+  // La documentazione dichiara solo "almeno 1 secondo" e nessun massimo, ma sul campo
+  // le finestre grandi vengono rifiutate. Non essendo scritto da nessuna parte, il
+  // limite si misura: si prova a scalare e si guarda dove smette di rispondere.
+  const sonde = await Promise.all(
+    [60, 300, 900, 1800].map(async (s) => ({ finestraSec: s, ...(await chiedi('active-energy-burned', `${s}s`)) }))
+  )
+
+  return { durataSec: seconds, attivoAlMinuto, attivoFinestraUnica, totale, sonde }
 }
 
 /**
