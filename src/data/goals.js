@@ -114,6 +114,34 @@ export function weeksInLine(sessions, goal, now = Date.now()) {
 }
 
 /**
+ * Le ultime `quante` settimane, dalla piu' vecchia alla settimana in corso, con quanti
+ * allenamenti in ognuna e se l'obiettivo e' stato raggiunto. Piu' il totale storico
+ * delle settimane in linea, che e' il numero che dice se e' un'abitudine o un caso.
+ *
+ * "3 settimane di fila" da solo non diceva molto: non si vedeva ne' quali, ne' quante
+ * ne erano state saltate, ne' se prima era andata meglio.
+ *
+ * @returns {{settimane: {monday:number, count:number, hit:boolean, corrente:boolean}[], totale:number}}
+ */
+export function weeklyMedals(sessions, goal, quante = 5, now = Date.now()) {
+  const perWeek = new Map()
+  for (const s of sessions || []) {
+    if (!s.startedAt) continue
+    const k = mondayOf(s.startedAt)
+    perWeek.set(k, (perWeek.get(k) || 0) + 1)
+  }
+  const corrente = mondayOf(now)
+  const settimane = Array.from({ length: quante }, (_, i) => {
+    const monday = corrente - (quante - 1 - i) * 7 * DAY
+    const count = perWeek.get(monday) || 0
+    return { monday, count, hit: goal > 0 && count >= goal, corrente: monday === corrente }
+  })
+  let totale = 0
+  for (const [, count] of perWeek) if (goal > 0 && count >= goal) totale += 1
+  return { settimane, totale }
+}
+
+/**
  * Come si riempiono gli alimenti dell'obiettivo con l'energia guadagnata.
  *
  * Si riempie dal piu' economico al piu' caro: cosi' qualcosa si completa presto e si

@@ -1,4 +1,4 @@
-import { getWorkoutGoal, getKcalGoal, weeksInLine, weekSessions, weekKcal, fillCart } from '../data/goals'
+import { getWorkoutGoal, getKcalGoal, weekSessions, weekKcal, fillCart } from '../data/goals'
 
 /**
  * Come sta andando la settimana rispetto agli obiettivi.
@@ -12,7 +12,7 @@ export default function WeekGoals({ sessions, kcalById, onOpenGoals }) {
   const goalE = getKcalGoal()
   const fatti = weekSessions(sessions).length
   const guadagnate = Math.round(weekKcal(sessions, kcalById))
-  const diFila = weeksInLine(sessions, goalW)
+  // Le settimane in linea non si ripetono qui: stanno gia' nelle medaglie, in cima
 
   const pieni = fillCart(goalE.cart, guadagnate)
   // Obiettivo scritto a mano (nessun alimento): resta comunque una barra sola, se no
@@ -50,11 +50,6 @@ export default function WeekGoals({ sessions, kcalById, onOpenGoals }) {
             }}
           />
         </div>
-        <p className="small muted" style={{ margin: 0 }}>
-          {diFila > 0
-            ? <><strong>{diFila} settiman{diFila === 1 ? 'a' : 'e'} di fila</strong> in linea con l’obiettivo</>
-            : 'Nessuna settimana di fila in linea con l’obiettivo, per ora'}
-        </p>
       </div>
 
       {goalE.kcal > 0 ? (

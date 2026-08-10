@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { getRepo } from '../data/repo'
 import {
-  aggregateSessions, weekStreak, daysSinceLast, last4Weeks, avgPerWeek,
+  aggregateSessions, daysSinceLast, last4Weeks, avgPerWeek,
   longestAppDayStreak, longestActivityStreakThisMonth,
 } from '../data/aggregate'
 import { computeStats } from '../workout/sessionEngine'
@@ -16,6 +16,7 @@ import {
 } from '../data/health'
 import { getStepsGoal } from '../data/goals'
 import WeekGoals from '../components/WeekGoals'
+import WeekMedals from '../components/WeekMedals'
 import { resolveKcalMany } from '../data/kcal'
 import { getWorkoutEnergy } from '../data/health'
 import { KcalChip } from '../components/KcalRow'
@@ -454,7 +455,6 @@ export default function HistoryListPage() {
 
 /** Card streak: settimane di fila + calendario ultime 4 settimane (+ badge Fitbit) */
 function StreakCard({ sessions, fitbit, navigate }) {
-  const streak = weekStreak(sessions)
   const rest = daysSinceLast(sessions)
   const cal = last4Weeks(sessions)
   const dayNames = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
@@ -478,15 +478,20 @@ function StreakCard({ sessions, fitbit, navigate }) {
 
   return (
     <div className="card card--primary stack">
+      {/* "3 settimane di fila" e' sparito a favore delle medaglie: era un numero che
+          non diceva quali settimane, quante ne erano state saltate, ne' se prima fosse
+          andata meglio. Resta il tempo dall'ultimo allenamento, che invece e' una cosa
+          sola e si legge a colpo d'occhio. */}
       <div className="row">
         <span className="emoji-xl">🔥</span>
-        <div style={{ flex: 1 }}>
-          <div className="kpi">{streak} settiman{streak === 1 ? 'a' : 'e'} di fila</div>
-          <p className="small muted">
-            {rest === 0 ? 'Ti sei allenata oggi!' : rest === 1 ? '1 giorno dall’ultimo allenamento' : `${rest} giorni dall’ultimo allenamento`}
-          </p>
+        <div className="kpi" style={{ flex: 1, minWidth: 96, fontSize: '1.1rem' }}>
+          {rest === 0 ? 'Ti sei allenata oggi!' : rest === 1 ? '1 giorno dall’ultimo allenamento' : `${rest} giorni dall’ultimo allenamento`}
         </div>
       </div>
+
+      {/* A tutta larghezza: con l'emoji accanto, le sei colonne scendevano sotto i
+          cinquanta pixel e le date andavano a capo */}
+      <WeekMedals sessions={sessions} />
 
       <div className="cal-grid">
         {dayNames.map((d, i) => (
