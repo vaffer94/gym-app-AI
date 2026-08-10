@@ -14,7 +14,8 @@ import {
   getHealthSummary, clearHealthCache, localISO, exerciseTypeInfo,
   connectHealthZones, hasZonesScope,
 } from '../data/health'
-import { getStepsGoal, getWorkoutGoal, getKcalGoal, weeksInLine, weekKcal, weekSessions, fillCart } from '../data/goals'
+import { getStepsGoal } from '../data/goals'
+import WeekGoals from '../components/WeekGoals'
 import { resolveKcalMany } from '../data/kcal'
 import { getWorkoutEnergy } from '../data/health'
 import { KcalChip } from '../components/KcalRow'
@@ -319,6 +320,8 @@ export default function HistoryListPage() {
       {tab === 'trends' && sessions?.length > 0 && (
         <>
           <StreakCard sessions={sessions} fitbit={fitbit} navigate={navigate} />
+
+          <WeekGoals sessions={sessions} kcalById={kcalMap} onOpenGoals={() => navigate('/obiettivi')} />
 
           {fitbit && (
             <div className="card card--flat stack">
