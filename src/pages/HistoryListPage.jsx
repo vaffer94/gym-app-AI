@@ -11,10 +11,10 @@ import { formatClock } from '../workout/activeSession'
 import TrendChart from '../components/TrendChart'
 import {
   isHealthConfigured, isHealthConnected, connectHealth, disconnectHealth,
-  getHealthSummary, clearHealthCache, getStepsGoal, setStepsGoal, localISO, exerciseTypeInfo,
+  getHealthSummary, clearHealthCache, localISO, exerciseTypeInfo,
   connectHealthZones, hasZonesScope,
 } from '../data/health'
-import Stepper from '../components/Stepper'
+import { getStepsGoal, getWorkoutGoal, getKcalGoal, weeksInLine, weekKcal, weekSessions, fillCart } from '../data/goals'
 import { resolveKcalMany } from '../data/kcal'
 import { getWorkoutEnergy } from '../data/health'
 import { KcalChip } from '../components/KcalRow'
@@ -42,7 +42,6 @@ export default function HistoryListPage() {
   const [period, setPeriod] = useState('week')
   const [fitbit, setFitbit] = useState(null) // {stepsByDay, stepsGoal, workoutDays}
   const [fitbitError, setFitbitError] = useState(null)
-  const [goal, setGoal] = useState(getStepsGoal())
   const [kcalMap, setKcalMap] = useState(new Map())
   const [, setZonesOn] = useState(hasZonesScope()) // solo per ridisegnare dopo il consenso
 
@@ -194,14 +193,11 @@ export default function HistoryListPage() {
                   I dati compaiono nel calendario dell'Andamento (icone sui giorni) e nel grafico dei passi.
                   Aggiornati al massimo ogni 30 minuti.
                 </p>
-                <div className="row">
-                  <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Obiettivo passi</span>
-                  <Stepper
-                    value={goal}
-                    onChange={(v) => { setGoal(v); setStepsGoal(v); setFitbit((f) => (f ? { ...f, stepsGoal: v } : f)) }}
-                    min={1000} max={50000} step={500}
-                  />
-                </div>
+                {/* L'obiettivo passi e' un obiettivo, non un'impostazione della
+                    connessione: sta in Obiettivi insieme agli altri due */}
+                <button className="btn" onClick={() => navigate('/obiettivi')}>
+                  🎯 Obiettivo passi: {getStepsGoal().toLocaleString('it-IT')}
+                </button>
               </>
             )}
 

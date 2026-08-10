@@ -22,6 +22,13 @@ const SECTIONS = [
     variant: 'card--teal',
   },
   {
+    to: '/obiettivi',
+    emoji: '🎯',
+    title: 'Obiettivi',
+    text: 'Allenamenti, passi ed energia',
+    variant: 'card--lilac',
+  },
+  {
     to: '/storico',
     emoji: '📊',
     title: 'Storico',

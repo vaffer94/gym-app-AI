@@ -16,6 +16,7 @@
   --teal-soft: #d5f4f1;
   --yellow: #ffd23f;
   --yellow-soft: #fff3c7;
+  --lilac-soft: #e4d9ff;
   --muted: #63637a;   /* abbastanza scuro da restare leggibile */
   --danger: #e63946;
 
@@ -91,6 +92,8 @@ p { margin: 0; }
 .card--primary { background: var(--primary-soft); }
 .card--teal { background: var(--teal-soft); }
 .card--yellow { background: var(--yellow-soft); }
+/* Il lilla non e' un colore nuovo: e' gia' nella palette delle schede (PLAN_COLORS) */
+.card--lilac { background: var(--lilac-soft); }
 
 /* Card cliccabile: si "preme" */
 .card--tap {
