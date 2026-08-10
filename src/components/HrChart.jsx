@@ -279,18 +279,22 @@ export default function HrChart({ session, zones }) {
         ))}
         {/* Stesso colore dei ritagli qui sopra, se no la legenda mente */}
         <LegendChip color="var(--card)" label="recupero / pausa" />
-        {session.hrAvg != null && <LegendChip dashed label={`battito medio ${session.hrAvg} bpm`} />}
+        {session.hrAvg != null && <LegendChip dashed label="battito medio" value={`${session.hrAvg} bpm`} />}
         {/* Le soglie: qui e non piu' dentro il grafico */}
         {zoneLines.map((z) => (
-          <LegendChip key={z.id} line color={z.color} label={`${z.label} da ${z.bpm} bpm`} />
+          <LegendChip key={z.id} line color={z.color} label={`${z.label} da`} value={`${z.bpm} bpm`} />
         ))}
       </div>
     </div>
   )
 }
 
-/** `dashed` = media di sessione, `line` = soglia di zona, altrimenti quadratino pieno */
-function LegendChip({ color, label, dashed, line }) {
+/**
+ * `dashed` = media di sessione, `line` = soglia di zona, altrimenti quadratino pieno.
+ * `value` e' la parte numerica: sta in grassetto perche' e' l'informazione che si
+ * cerca, e in mezzo a cinque voci di legenda va trovata a colpo d'occhio.
+ */
+function LegendChip({ color, label, value, dashed, line }) {
   return (
     <span className="small" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
       {dashed ? (
@@ -301,6 +305,7 @@ function LegendChip({ color, label, dashed, line }) {
         <span style={{ width: 11, height: 11, background: color, border: `1.5px solid ${INK}`, borderRadius: 3 }} />
       )}
       {label}
+      {value && <strong>{value}</strong>}
     </span>
   )
 }
