@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { diagnosticaKcal, isHealthConnected } from '../data/health'
-import { getProfile, estimateKcal } from '../data/kcal'
+import { getProfile, estimateKcal, basalRate } from '../data/kcal'
 
 /**
  * Interroga Google in tre modi diversi sullo stesso intervallo, per rispondere con
@@ -38,13 +38,22 @@ export default function KcalDiagnostics({ sessions }) {
         profile: profilo,
       })
     : null
-  // Il basale si ricava per differenza fra i due numeri di Google, non da una formula
-  // nostra: prima lo approssimavo a 1 MET e dicevo 36 kcal dove la differenza vera era
-  // 56. Una diagnostica che stima cio' che potrebbe misurare non serve a niente.
-  const basale =
+  // DUE numeri distinti, mostrati fianco a fianco invece di spacciare l'uno per l'altro:
+  //
+  // - la differenza fra i due dati di Google. La loro documentazione dice che
+  //   total-calories e' "calculated from active energy expenditure and the user's basal
+  //   metabolic rate", quindi la differenza DOVREBBE essere il basale
+  // - il basale secondo Mifflin-St Jeor, cioe' la letteratura
+  //
+  // Se non coincidono, il confronto e' l'informazione: significa che il profilo
+  // corporeo registrato su Google non e' quello impostato qui, oppure che i due tipi
+  // di dato non sono allineati come la documentazione lascia intendere.
+  const differenzaGoogle =
     res?.totale?.valore != null && res?.attivoAlMinuto?.valore != null
       ? Math.round(res.totale.valore - res.attivoAlMinuto.valore)
       : null
+  const basale = basalRate(profilo)
+  const basaleAtteso = basale && res ? Math.round(basale.kcalPerMin * (res.durataSec / 60)) : null
 
   return (
     <div className="card stack">
@@ -116,12 +125,32 @@ export default function KcalDiagnostics({ sessions }) {
               <span className="small" style={{ fontWeight: 800 }}>{stima.total} kcal</span>
             </div>
           )}
-          {basale != null && basale > 0 && (
-            <p className="small muted" style={{ margin: 0 }}>
-              Differenza fra totali e attive: <strong>{basale} kcal</strong> in{' '}
-              {Math.round(res.durataSec / 60)} minuti. È il metabolismo basale secondo Google,
-              cioè quello che avresti bruciato comunque stando ferma.
-            </p>
+          {(differenzaGoogle != null || basaleAtteso != null) && (
+            <div className="stack" style={{ gap: 2, borderTop: '2px dashed var(--paper)', paddingTop: 8 }}>
+              <span className="small" style={{ fontWeight: 800 }}>
+                Metabolismo basale in {Math.round(res.durataSec / 60)} minuti
+              </span>
+              {differenzaGoogle != null && (
+                <div className="row">
+                  <span className="small muted" style={{ flex: 1, minWidth: 96 }}>differenza fra i due dati di Google</span>
+                  <span className="small" style={{ fontWeight: 800 }}>{differenzaGoogle} kcal</span>
+                </div>
+              )}
+              {basaleAtteso != null && (
+                <div className="row">
+                  <span className="small muted" style={{ flex: 1, minWidth: 96 }}>
+                    atteso da {basale.fonte === 'mifflin' ? 'Mifflin-St Jeor' : '1 MET (ripiego, manca l’altezza)'}
+                  </span>
+                  <span className="small" style={{ fontWeight: 800 }}>{basaleAtteso} kcal</span>
+                </div>
+              )}
+              <p className="small muted" style={{ margin: 0 }}>
+                Google dichiara che i totali sono “attive + metabolismo basale”, quindi le due
+                righe dovrebbero coincidere. Se non lo fanno, il profilo corporeo registrato su
+                Google non è quello impostato qui, oppure i due tipi di dato non sono allineati
+                come la documentazione lascia intendere.
+              </p>
+            </div>
           )}
         </>
       )}

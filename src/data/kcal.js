@@ -17,7 +17,7 @@ const LS = { profile: 'gym.profile', kcal: 'gym.kcal3.', weightLog: 'gym.weightL
 
 /* ---------- profilo (locale al dispositivo, come l'obiettivo passi) ---------- */
 
-/** @returns {{ageYears:number, weightKg:number, sex:'f'|'m'}|null} null se incompleto */
+/** @returns {{ageYears:number, weightKg:number, heightCm:number, sex:'f'|'m'}|null} null se incompleto */
 export function getProfile() {
   try {
     const p = JSON.parse(localStorage.getItem(LS.profile) || 'null')
@@ -26,6 +26,32 @@ export function getProfile() {
   } catch {
     return null
   }
+}
+
+/**
+ * Metabolismo basale con l'equazione di **Mifflin-St Jeor** (1990), che la letteratura
+ * clinica indica come la piu' affidabile fra quelle predittive: prevede il valore entro
+ * il 10% della calorimetria indiretta piu' spesso di ogni altra.
+ *
+ *   uomini:  BMR = 10·peso + 6,25·altezza − 5·eta' + 5
+ *   donne:   BMR = 10·peso + 6,25·altezza − 5·eta' − 161      (kcal al giorno)
+ *
+ * Senza altezza l'equazione non si puo' applicare e si ripiega su 1 MET
+ * (3,5 ml O2/kg/min ≈ 0,0175 kcal/min per kg). ATTENZIONE: 1 MET e' una convenzione
+ * di fisiologia dell'esercizio tarata su un uomo di 70 kg e 40 anni, NON un'equazione
+ * di metabolismo basale, e su una donna di corporatura media sovrastima di circa il
+ * 15%. Serve solo a non restare senza numero, e viene dichiarato come ripiego.
+ *
+ * @returns {{kcalPerMin:number, fonte:'mifflin'|'met'}|null}
+ */
+export function basalRate(profile) {
+  if (!profile?.weightKg || !profile?.ageYears) return null
+  const { weightKg: w, heightCm: h, ageYears: a, sex } = profile
+  if (h) {
+    const perDay = 10 * w + 6.25 * h - 5 * a + (sex === 'm' ? 5 : -161)
+    return perDay > 0 ? { kcalPerMin: perDay / 1440, fonte: 'mifflin' } : null
+  }
+  return { kcalPerMin: 0.0175 * w, fonte: 'met' }
 }
 
 export function setProfile(p) {
@@ -64,10 +90,11 @@ export function recordWeight(kg) {
 
 /** Valori grezzi per i campi del form, anche quando il profilo non e' ancora completo */
 export function getProfileDraft() {
+  const vuoto = { ageYears: 30, weightKg: 65, heightCm: 165, sex: 'f' }
   try {
-    return JSON.parse(localStorage.getItem(LS.profile) || 'null') || { ageYears: 30, weightKg: 65, sex: 'f' }
+    return { ...vuoto, ...(JSON.parse(localStorage.getItem(LS.profile) || 'null') || {}) }
   } catch {
-    return { ageYears: 30, weightKg: 65, sex: 'f' }
+    return vuoto
   }
 }
 
@@ -97,8 +124,10 @@ export function estimateKcal({ avgHr, durationSec, profile }) {
     sex === 'm'
       ? -55.0969 + 0.6309 * avgHr + 0.1988 * w + 0.2017 * a
       : -20.4022 + 0.4472 * avgHr - 0.1263 * w + 0.074 * a
+  // Keytel predice il dispendio TOTALE durante l'esercizio, quota basale compresa.
+  // Per ricavare la sola parte attiva si sottrae il basale con Mifflin-St Jeor.
   const totale = (kjPerMin / 4.184) * min
-  const basale = 0.0175 * w * min
+  const basale = (basalRate(profile)?.kcalPerMin ?? 0) * min
   // Battiti bassi mandano la formula sotto zero: meglio niente numero che un numero assurdo
   if (!(totale > 0)) return null
   return { total: Math.round(totale), active: Math.max(0, Math.round(totale - basale)) }

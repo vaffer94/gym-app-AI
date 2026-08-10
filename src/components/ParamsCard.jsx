@@ -58,8 +58,12 @@ export default function ParamsCard() {
       )}
 
       <details>
-        <summary className="label details-summary">Età e sesso biologico</summary>
+        <summary className="label details-summary">Altezza, età e sesso biologico</summary>
         <div className="stack" style={{ paddingTop: 10 }}>
+          <div className="row">
+            <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Altezza (cm)</span>
+            <Stepper value={p.heightCm} onChange={(v) => save({ ...p, heightCm: v })} min={120} max={220} step={1} />
+          </div>
           <div className="row">
             <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Età</span>
             <Stepper value={p.ageYears} onChange={(v) => save({ ...p, ageYears: v })} min={12} max={99} step={1} />
@@ -72,8 +76,10 @@ export default function ParamsCard() {
             </div>
           </div>
           <p className="small muted">
-            Il sesso biologico entra nella formula perché è su quello che è stata validata
-            (Keytel 2005): la stima vale ±15-20%.
+            Altezza, età e sesso servono al calcolo del metabolismo basale con l’equazione
+            di <strong>Mifflin-St Jeor</strong>, la più affidabile fra quelle predittive.
+            Il battito diventa kcal con la formula di <strong>Keytel (2005)</strong>, che è
+            validata per sesso biologico: la stima vale ±15-20%.
           </p>
         </div>
       </details>
