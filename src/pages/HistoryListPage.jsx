@@ -78,14 +78,27 @@ export default function HistoryListPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const connect = async () => {
+  /**
+   * Quale operazione e' in corso, per dare al pulsante premuto uno stato visibile.
+   * Sincronizzare vuol dire aspettare la rete: senza, si preme, non succede niente
+   * per qualche secondo, e l'unica reazione sensata e' premere di nuovo.
+   */
+  const [busy, setBusy] = useState(null) // 'connect' | 'refresh' | 'zones' | null
+  const conAttesa = async (nome, fn) => {
+    setBusy(nome)
     try {
-      await connectHealth()
-      await loadHealth()
+      await fn()
     } catch (e) {
       setFitbitError(e.message)
+    } finally {
+      setBusy(null)
     }
   }
+
+  const connect = () => conAttesa('connect', async () => {
+    await connectHealth()
+    await loadHealth()
+  })
 
   const trends = useMemo(
     () => (sessions ? aggregateSessions(sessions, period) : []),
@@ -184,8 +197,10 @@ export default function HistoryListPage() {
             )}
 
             {isHealthConfigured && !isHealthConnected() && (
-              <button className="btn btn--primary btn--big" onClick={connect}>
-                Collega Google Health
+              <button className="btn btn--primary btn--big" onClick={connect} disabled={busy === 'connect'}>
+                {busy === 'connect'
+                  ? <><i className="fa-solid fa-rotate fa-spin" /> Collego…</>
+                  : 'Collega Google Health'}
               </button>
             )}
 
@@ -209,9 +224,15 @@ export default function HistoryListPage() {
             {isHealthConnected() && !hasZonesScope() && (
               <button
                 className="btn"
-                onClick={() => connectHealthZones().then(() => setZonesOn(true)).catch((e) => setFitbitError(e.message))}
+                disabled={busy === 'zones'}
+                onClick={() => conAttesa('zones', async () => {
+                  await connectHealthZones()
+                  setZonesOn(true)
+                })}
               >
-                <i className="fa-solid fa-heart-pulse" /> Usa le mie zone cardiache vere
+                {busy === 'zones'
+                  ? <><i className="fa-solid fa-rotate fa-spin" /> Chiedo il permesso…</>
+                  : <><i className="fa-solid fa-heart-pulse" /> Usa le mie zone cardiache vere</>}
               </button>
             )}
             {isHealthConnected() && hasZonesScope() && (
@@ -223,8 +244,17 @@ export default function HistoryListPage() {
 
             {isHealthConnected() && (
               <>
-                <button className="btn" onClick={() => { clearHealthCache(); loadHealth() }}>
-                  <i className="fa-solid fa-rotate" /> Aggiorna dati adesso
+                <button
+                  className="btn"
+                  disabled={busy === 'refresh'}
+                  onClick={() => conAttesa('refresh', async () => {
+                    clearHealthCache()
+                    await loadHealth()
+                  })}
+                >
+                  {busy === 'refresh'
+                    ? <><i className="fa-solid fa-rotate fa-spin" /> Aggiorno…</>
+                    : <><i className="fa-solid fa-rotate" /> Aggiorna dati adesso</>}
                 </button>
                 <button
                   className="btn"

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Stepper from '../components/Stepper'
 import { SheetDialog } from '../components/Dialog'
@@ -107,7 +107,23 @@ export default function GoalsPage() {
  */
 function EnergyGoalCard({ goal, onQty, onAdd, onSet }) {
   const [picker, setPicker] = useState(false)
+  // Quale riga ha appena lampeggiato, e quante volte: il contatore serve a far
+  // ripartire l'animazione quando si tocca due volte lo stesso alimento
+  const [lampo, setLampo] = useState({ id: null, n: 0 })
   const totale = goal.kcal
+
+  const tocca = (id) => {
+    onAdd(id)
+    setLampo((l) => ({ id, n: l.n + 1 }))
+  }
+
+  // Il segno si toglie a lampo finito: se restasse, riaprendo l'elenco l'ultima riga
+  // toccata lampeggerebbe di nuovo per un'azione fatta cinque minuti prima
+  useEffect(() => {
+    if (!lampo.id) return undefined
+    const t = setTimeout(() => setLampo((l) => ({ id: null, n: l.n })), 500)
+    return () => clearTimeout(t)
+  }, [lampo])
 
   return (
     <div className="card stack">
@@ -172,25 +188,33 @@ function EnergyGoalCard({ goal, onQty, onAdd, onSet }) {
           <h2>🍽 Cosa vuoi guadagnarti</h2>
           <p className="small muted">Tocca un alimento per aggiungerlo all’obiettivo della settimana.</p>
           <div className="stack" style={{ gap: 2, maxHeight: '52vh', overflowY: 'auto', margin: '8px 0' }}>
-            {FOODS.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                className="row"
-                onClick={() => onAdd(f.id)}
-                style={{
-                  gap: 10, padding: '8px', width: '100%', textAlign: 'left',
-                  background: 'transparent', border: '2px solid transparent',
-                  borderRadius: 'var(--radius-sm)', font: 'inherit', color: 'inherit', cursor: 'pointer',
-                }}
-              >
-                <span style={{ fontSize: '1.3rem', lineHeight: 1 }}>{f.emoji}</span>
-                <span className="small" style={{ flex: 1, minWidth: 96 }}>
-                  {f.name} <span className="muted">({f.portion})</span>
-                </span>
-                <span className="small" style={{ fontWeight: 800 }}>{f.kcal}</span>
-              </button>
-            ))}
+            {FOODS.map((f) => {
+              const qty = goal.cart.find((i) => i.id === f.id)?.qty || 0
+              return (
+                <button
+                  // La key cambia a ogni tocco su questa riga: rimonta l'elemento e
+                  // fa ripartire il lampo anche alla seconda pressione di fila
+                  key={`${f.id}-${lampo.id === f.id ? lampo.n : 0}`}
+                  type="button"
+                  className={`row ${lampo.id === f.id ? 'tap-flash' : ''}`}
+                  onClick={() => tocca(f.id)}
+                  style={{
+                    gap: 10, padding: '8px', width: '100%', textAlign: 'left',
+                    background: 'transparent', border: '2px solid transparent',
+                    borderRadius: 'var(--radius-sm)', font: 'inherit', color: 'inherit', cursor: 'pointer',
+                  }}
+                >
+                  <span style={{ fontSize: '1.3rem', lineHeight: 1 }}>{f.emoji}</span>
+                  <span className="small" style={{ flex: 1, minWidth: 96 }}>
+                    {f.name} <span className="muted">({f.portion})</span>
+                  </span>
+                  {/* Il conto di quel che hai gia' messo: il lampo dice "ho sentito",
+                      questo dice quanto ne hai. Uno passa, l'altro resta */}
+                  {qty > 0 && <span className="chip">×{qty}</span>}
+                  <span className="small" style={{ fontWeight: 800 }}>{f.kcal}</span>
+                </button>
+              )
+            })}
           </div>
           <button className="btn btn--primary btn--big" onClick={() => setPicker(false)}>Chiudi</button>
         </SheetDialog>
