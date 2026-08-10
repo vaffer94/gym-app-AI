@@ -16,7 +16,7 @@ import {
 } from '../data/health'
 import Stepper from '../components/Stepper'
 import { resolveKcalMany } from '../data/kcal'
-import { getActiveEnergy } from '../data/health'
+import { getWorkoutEnergy } from '../data/health'
 import { KcalChip } from '../components/KcalRow'
 import ExerciseStats from '../components/ExerciseStats'
 import { exerciseIndex } from '../data/exerciseStats'
@@ -64,7 +64,7 @@ export default function HistoryListPage() {
     ].filter((i) => i.endedAt)
     if (!items.length) return
     let alive = true
-    resolveKcalMany(items, { isConnected: isHealthConnected(), fetchActiveEnergy: getActiveEnergy })
+    resolveKcalMany(items, { isConnected: isHealthConnected(), fetchEnergy: getWorkoutEnergy })
       .then((m) => alive && setKcalMap(m))
     return () => { alive = false }
   }, [sessions, fitbit])

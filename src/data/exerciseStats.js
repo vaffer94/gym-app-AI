@@ -1,5 +1,5 @@
 import { buildSegments, zonesByExercise, zoneThresholds } from '../workout/hrAnalysis'
-import { estimateKcal } from './kcal'
+import { estimateTotal } from './kcal'
 
 /**
  * Statistiche per singolo esercizio, attraverso tutte le sessioni.
@@ -56,7 +56,7 @@ function energyShape(session, profile) {
   const parts = segs
     .map((seg) => {
       const sec = Math.round(seg.endSec - seg.startSec)
-      const stima = estimateKcal({ avgHr: avgHrInRange(session, seg.startSec, seg.endSec), durationSec: sec, profile })
+      const stima = estimateTotal({ avgHr: avgHrInRange(session, seg.startSec, seg.endSec), durationSec: sec, profile })
       return stima == null ? null : { key: seg.key, name: seg.name, color: seg.color, sec, stima }
     })
     .filter(Boolean)
@@ -65,7 +65,7 @@ function energyShape(session, profile) {
   const activeSec = Math.round((session.endedAt - session.startedAt - (session.pausedMs || 0)) / 1000)
   const restSec = Math.max(0, activeSec - parts.reduce((a, p) => a + p.sec, 0))
   const restStima = restSec > 0
-    ? estimateKcal({ avgHr: avgHrOutsideRanges(session, segs), durationSec: restSec, profile }) || 0
+    ? estimateTotal({ avgHr: avgHrOutsideRanges(session, segs), durationSec: restSec, profile }) || 0
     : 0
 
   const base = parts.reduce((a, p) => a + p.stima, 0) + restStima
@@ -73,16 +73,19 @@ function energyShape(session, profile) {
 }
 
 /**
- * IL PUNTO: Google misura solo il TOTALE dell'intervallo — `active-energy-burned` su
- * finestre di pochi minuti non e' affidabile — mentre Keytel sa dire come il consumo
- * si distribuisce, perche' tiene conto di battito e durata di ogni tratto. Usati
- * separatamente si contraddicono: sulla sessione del 03/08 Google diceva 105 kcal in
- * tutto e la sola cyclette, stimata, ne dichiarava di piu' dell'intero allenamento.
+ * IL PUNTO: Google sa dire quanto si e' bruciato in un intervallo, ma non come quel
+ * consumo si ripartisce fra un esercizio e l'altro; Keytel sa la ripartizione, perche'
+ * tiene conto di battito e durata di ogni tratto, ma la sua scala e' una stima. Usati
+ * separatamente si contraddicono: sulla sessione del 03/08 il totale misurato era 105
+ * kcal e la sola cyclette, stimata, ne dichiarava di piu' dell'intero allenamento.
  *
  * Qui si prende da ognuno cio' che sa fare: **Google da' la scala, Keytel la forma**.
  *
  * Spezzare il totale in proporzione al solo TEMPO sarebbe stato piu' semplice, ma
  * darebbe lo stesso numero a dieci minuti di cyclette e a dieci di stretching.
+ *
+ * La scala e' il TOTALE (attive + basale), la stessa grandezza mostrata come "Energia":
+ * cosi' qualunque numero si guardi nell'app parla della stessa cosa.
  *
  * @returns {number|null} fattore di riscalatura, null se non c'e' un dato misurato
  */
@@ -140,7 +143,7 @@ export function exerciseHistory(sessions, name, profile, googleZonesBySession, k
     const misurato = kcalBySession?.get(s.id)
     const ripartizione = sessionEnergyBreakdown(s, profile, misurato)
     const quota = ripartizione?.parts.find((p) => p.key === seg.key)
-    const kcal = quota ? quota.kcal : estimateKcal({ avgHr, durationSec, profile })
+    const kcal = quota ? quota.kcal : estimateTotal({ avgHr, durationSec, profile })
 
     rows.push({
       sessionId: s.id,

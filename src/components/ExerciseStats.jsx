@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { exerciseHistory, exerciseComparison } from '../data/exerciseStats'
 import { getProfile, resolveKcalMany } from '../data/kcal'
-import { getActiveEnergy, isHealthConnected } from '../data/health'
+import { getWorkoutEnergy, isHealthConnected } from '../data/health'
 
 /**
  * Statistiche di un singolo esercizio: quanto dura, quanto fa salire il battito, in
@@ -30,7 +30,7 @@ export default function ExerciseStats({ sessions, name, color }) {
     const items = sessions
       .filter((s) => s.endedAt)
       .map((s) => ({ id: s.id, startedAt: s.startedAt, endedAt: s.endedAt, hrAvg: s.hrAvg, pausedMs: s.pausedMs }))
-    resolveKcalMany(items, { isConnected: isHealthConnected(), fetchActiveEnergy: getActiveEnergy })
+    resolveKcalMany(items, { isConnected: isHealthConnected(), fetchEnergy: getWorkoutEnergy })
       .then((m) => alive && setKcalBySession(m))
     return () => { alive = false }
   }, [sessions])

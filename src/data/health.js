@@ -206,36 +206,55 @@ export async function getHealthSummary() {
 }
 
 /**
- * kcal attive bruciate in un intervallo qualsiasi (rollUp con una sola finestra
- * grande quanto l'intervallo stesso, cosi' la risposta e' un unico totale).
- *
- * "Attive" = al netto del metabolismo basale, che e' esattamente cio' che si vuole
- * attribuire all'allenamento: il basale lo bruci anche dormendo.
+ * kcal di un intervallo, misurate dall'orologio.
  *
  * Funziona sia per gli allenamenti registrati da Google sia per i nostri, perche'
  * la domanda e' su un intervallo di tempo e non su una sessione: la piattaforma
  * calcola l'energia di continuo, indipendentemente da quale app possieda
  * l'esercizio su Health Services.
  *
- * @returns {Promise<number|null>} kcal arrotondate, null se Google non ha dati
+ * @returns {Promise<{total:number|null, active:number|null}>}
+ *   `total` = attive + metabolismo basale. E' il criterio con cui l'app Fitbit mostra
+ *   le calorie di un allenamento, quindi e' il numero che l'utente si aspetta.
+ *   `active` = la sola energia in piu' spesa allenandosi.
  */
+export async function getWorkoutEnergy(startMs, endMs) {
+  const [total, active] = await Promise.all([
+    getTotalCalories(startMs, endMs).catch(() => null),
+    getActiveEnergy(startMs, endMs).catch(() => null),
+  ])
+  return { total, active }
+}
+
+/** kcal totali (attive + basale) dell'intervallo */
+export async function getTotalCalories(startMs, endMs) {
+  return rollupKcal('total-calories', startMs, endMs, ['totalCalories', 'total_calories'])
+}
+
 export async function getActiveEnergy(startMs, endMs) {
+  return rollupKcal('active-energy-burned', startMs, endMs, ['activeEnergyBurned', 'active_energy_burned'])
+}
+
+async function rollupKcal(tipo, startMs, endMs, campi) {
   const seconds = Math.round((endMs - startMs) / 1000)
   if (!(seconds > 0)) return null
 
   // FINESTRE DA UN MINUTO, non una sola grande quanto l'intervallo.
   //
-  // La versione a finestra unica sembrava piu' pulita — una domanda, una risposta —
-  // ma sui dati veri del 09/08/2026 Google le ha risposto 400, mentre la stessa
-  // domanda spezzata al minuto tornava 89 kcal su 29 finestre. Peggio: quando la
-  // finestra unica *non* falliva restituiva valori sospettosamente bassi, il che fa
-  // pensare che coprisse solo una parte dell'intervallo. Sommare finestre piccole
-  // e' verificabile — il numero di finestre deve tornare coi minuti — e non ha mai
-  // fallito su dati reali.
+  // La finestra unica sembrava piu' pulita — una domanda, una risposta — ma sui dati
+  // veri del 09/08/2026 Google le ha risposto 400 ("Invalid argument in request"),
+  // mentre la stessa domanda spezzata al minuto tornava 89 kcal su 29 finestre.
+  // Sondando le dimensioni si e' visto che il limite sta fra 5 e 15 minuti per
+  // finestra, e non e' documentato: la documentazione dichiara solo un minimo di
+  // 1 secondo e nessun massimo.
+  //
+  // Verificato anche che non si perdono pezzi: finestre da 1 e da 5 minuti danno lo
+  // stesso identico totale. E il numero di finestre e' controllabile a occhio, deve
+  // tornare coi minuti dell'allenamento.
   //
   // pageSize resta al default (1440): un minuto per finestra copre 24 ore, e nessun
   // allenamento si avvicina a quel limite.
-  const res = await api('/users/me/dataTypes/active-energy-burned/dataPoints:rollUp', {
+  const res = await api(`/users/me/dataTypes/${tipo}/dataPoints:rollUp`, {
     method: 'POST',
     body: JSON.stringify({
       range: { startTime: new Date(startMs).toISOString(), endTime: new Date(endMs).toISOString() },
@@ -246,13 +265,13 @@ export async function getActiveEnergy(startMs, endMs) {
   // Il JSON REST dovrebbe essere camelCase (kcalSum), ma il riferimento RPC mostra
   // gli snake_case: si leggono entrambi, come gia' si fa per i passi.
   const points = res.rollupDataPoints || []
-  let total = 0
+  let somma = 0
   let found = false
   for (const p of points) {
-    const v = p.activeEnergyBurned || p.active_energy_burned || {}
+    const v = campi.map((c) => p[c]).find(Boolean) || {}
     for (const k of ['kcalSum', 'kcal_sum', 'kcal', 'sum']) {
       if (typeof v[k] === 'number' || (typeof v[k] === 'string' && v[k] !== '')) {
-        total += Number(v[k])
+        somma += Number(v[k])
         found = true
         break
       }
@@ -260,7 +279,7 @@ export async function getActiveEnergy(startMs, endMs) {
   }
   // Nessun punto, o punti senza valore: Google non ha dati per quell'ora. Va
   // distinto da "zero kcal", se no si mostrerebbe 0 al posto della stima.
-  return found ? Math.round(total) : null
+  return found ? Math.round(somma) : null
 }
 
 /** Somma di un rollUp, leggendo sia camelCase (REST) sia snake_case (riferimento RPC) */

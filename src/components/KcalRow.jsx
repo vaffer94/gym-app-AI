@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { nearestFood } from '../data/foods'
 import { sessionKcal } from '../data/kcal'
-import { getActiveEnergy, isHealthConnected } from '../data/health'
+import { getWorkoutEnergy, isHealthConnected } from '../data/health'
 import { FoodButton, foodLabel } from './FoodEquivalent'
 
 /**
@@ -16,7 +16,7 @@ export default function KcalRow({ session }) {
 
   useEffect(() => {
     let alive = true
-    sessionKcal(session, { isConnected: isHealthConnected(), fetchActiveEnergy: getActiveEnergy })
+    sessionKcal(session, { isConnected: isHealthConnected(), fetchEnergy: getWorkoutEnergy })
       .then((r) => alive && setRes(r))
       .catch(() => alive && setRes(null))
     return () => { alive = false }
@@ -38,6 +38,15 @@ export default function KcalRow({ session }) {
       </div>
 
       {match && <p className="small muted" style={{ margin: 0 }}>{foodLabel(match)}</p>}
+
+      {/* Il numero grande e' il TOTALE, come nell'app Fitbit e in ogni altra app di
+          fitness. Le attive restano visibili qui sotto: sono la parte davvero dovuta
+          all'allenamento, e chi vuole quel dato non deve rinunciarci. */}
+      {res.active != null && res.active > 0 && res.active !== res.kcal && (
+        <p className="small muted" style={{ margin: 0 }}>
+          di cui <strong>{res.active} kcal</strong> attive, cioè spese in più rispetto a stare ferma
+        </p>
+      )}
 
       {res.source === 'stima' && (
         <p className="small muted" style={{ margin: 0 }}>

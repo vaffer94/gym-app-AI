@@ -13,7 +13,7 @@
 // Prefisso della cache kcal con un numero di versione: i valori salvati fino al
 // 09/08/2026 venivano dalla query a finestra unica, che sottostimava. Cambiando
 // prefisso si invalidano da soli, senza chiedere a nessuno di svuotare niente.
-const LS = { profile: 'gym.profile', kcal: 'gym.kcal2.', weightLog: 'gym.weightLog' }
+const LS = { profile: 'gym.profile', kcal: 'gym.kcal3.', weightLog: 'gym.weightLog' }
 
 /* ---------- profilo (locale al dispositivo, come l'obiettivo passi) ---------- */
 
@@ -99,10 +99,13 @@ export function estimateKcal({ avgHr, durationSec, profile }) {
       : -20.4022 + 0.4472 * avgHr - 0.1263 * w + 0.074 * a
   const totale = (kjPerMin / 4.184) * min
   const basale = 0.0175 * w * min
-  const attive = totale - basale
   // Battiti bassi mandano la formula sotto zero: meglio niente numero che un numero assurdo
-  return attive > 0 ? Math.round(attive) : null
+  if (!(totale > 0)) return null
+  return { total: Math.round(totale), active: Math.max(0, Math.round(totale - basale)) }
 }
+
+/** Solo il totale, che e' la grandezza mostrata in interfaccia */
+export const estimateTotal = (args) => estimateKcal(args)?.total ?? null
 
 /* ---------- cache ---------- */
 
@@ -110,10 +113,14 @@ export function estimateKcal({ avgHr, durationSec, profile }) {
 // per non richiamare l'API a ogni apertura del dettaglio. Le stime NON si salvano,
 // cosi' seguono subito le correzioni al profilo.
 const readCache = (id) => {
-  const v = Number(localStorage.getItem(LS.kcal + id))
-  return Number.isFinite(v) && v > 0 ? v : null
+  try {
+    const v = JSON.parse(localStorage.getItem(LS.kcal + id) || 'null')
+    return v && v.kcal > 0 ? v : null
+  } catch {
+    return null
+  }
 }
-const writeCache = (id, kcal) => localStorage.setItem(LS.kcal + id, String(kcal))
+const writeCache = (id, valore) => localStorage.setItem(LS.kcal + id, JSON.stringify(valore))
 
 export function clearKcalCache() {
   for (const k of Object.keys(localStorage)) {
@@ -121,33 +128,46 @@ export function clearKcalCache() {
   }
 }
 
-// Ripulitura del prefisso precedente: cambiare versione bastava a non leggerli piu',
+// Ripulitura dei prefissi precedenti: cambiare versione bastava a non leggerli piu',
 // ma senza questo resterebbero sul dispositivo per sempre.
 try {
   for (const k of Object.keys(localStorage)) {
-    if (k.startsWith('gym.kcal.')) localStorage.removeItem(k)
+    if (k.startsWith('gym.kcal.') || k.startsWith('gym.kcal2.')) localStorage.removeItem(k)
   }
 } catch { /* localStorage non disponibile */ }
 
 /* ---------- orchestrazione ---------- */
 
 /**
- * @returns {Promise<{kcal:number, source:'google'|'stima'}|null>}
+ * `kcal` e' il TOTALE (attive + metabolismo basale): e' il criterio con cui l'app
+ * Fitbit mostra le calorie di un allenamento, quindi e' il numero che l'utente si
+ * aspetta di leggere. `active` resta disponibile come dettaglio secondario — la sola
+ * energia in piu' spesa allenandosi.
+ *
+ * Fino al 09/08/2026 si mostravano le attive: su una sessione da 30 minuti facevano
+ * 89 kcal contro le 145 totali, e sembravano sistematicamente troppo basse rispetto
+ * a qualunque altra app.
+ *
+ * @returns {Promise<{kcal:number, active:number|null, source:'google'|'stima'}|null>}
  *   null quando non si puo' dire niente di sensato (niente Google e niente profilo,
  *   oppure sessione senza battito registrato).
  */
-export async function sessionKcal(session, { isConnected, fetchActiveEnergy }) {
+export async function sessionKcal(session, { isConnected, fetchEnergy }) {
   if (!session?.startedAt || !session?.endedAt) return null
 
   const cached = readCache(session.id)
-  if (cached) return { kcal: cached, source: 'google' }
+  if (cached) return { ...cached, source: 'google' }
 
   if (isConnected) {
     try {
-      const kcal = await fetchActiveEnergy(session.startedAt, session.endedAt)
+      const { total, active } = await fetchEnergy(session.startedAt, session.endedAt)
+      // Se Google ha solo le attive si usano quelle: meglio la grandezza sbagliata
+      // ma misurata che nessun numero
+      const kcal = total ?? active
       if (kcal != null && kcal > 0) {
-        writeCache(session.id, kcal)
-        return { kcal, source: 'google' }
+        const valore = { kcal, active: active ?? null }
+        writeCache(session.id, valore)
+        return { ...valore, source: 'google' }
       }
     } catch {
       // token scaduto o API in errore: si scende alla stima invece di non mostrare nulla
@@ -158,8 +178,8 @@ export async function sessionKcal(session, { isConnected, fetchActiveEnergy }) {
   // "Durata" nel riepilogo, e sommarlo qui gonfierebbe le kcal di una sessione
   // interrotta a lungo.
   const activeSec = Math.round((session.endedAt - session.startedAt - (session.pausedMs || 0)) / 1000)
-  const kcal = estimateKcal({ avgHr: session.hrAvg, durationSec: activeSec, profile: getProfile() })
-  return kcal ? { kcal, source: 'stima' } : null
+  const stima = estimateKcal({ avgHr: session.hrAvg, durationSec: activeSec, profile: getProfile() })
+  return stima ? { kcal: stima.total, active: stima.active, source: 'stima' } : null
 }
 
 /**

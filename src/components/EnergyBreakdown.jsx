@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { sessionEnergyBreakdown } from '../data/exerciseStats'
 import { getProfile, sessionKcal } from '../data/kcal'
-import { getActiveEnergy, isHealthConnected } from '../data/health'
+import { getWorkoutEnergy, isHealthConnected } from '../data/health'
 
 /**
  * Dove sono finite le kcal dell'allenamento, esercizio per esercizio.
@@ -16,7 +16,7 @@ export default function EnergyBreakdown({ session }) {
 
   useEffect(() => {
     let alive = true
-    sessionKcal(session, { isConnected: isHealthConnected(), fetchActiveEnergy: getActiveEnergy })
+    sessionKcal(session, { isConnected: isHealthConnected(), fetchEnergy: getWorkoutEnergy })
       .then((misurato) => alive && setData(sessionEnergyBreakdown(session, getProfile(), misurato)))
       .catch(() => alive && setData(null))
     return () => { alive = false }

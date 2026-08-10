@@ -38,7 +38,13 @@ export default function KcalDiagnostics({ sessions }) {
         profile: profilo,
       })
     : null
-  const basale = profilo ? Math.round(0.0175 * profilo.weightKg * (res ? res.durataSec / 60 : 0)) : null
+  // Il basale si ricava per differenza fra i due numeri di Google, non da una formula
+  // nostra: prima lo approssimavo a 1 MET e dicevo 36 kcal dove la differenza vera era
+  // 56. Una diagnostica che stima cio' che potrebbe misurare non serve a niente.
+  const basale =
+    res?.totale?.valore != null && res?.attivoAlMinuto?.valore != null
+      ? Math.round(res.totale.valore - res.attivoAlMinuto.valore)
+      : null
 
   return (
     <div className="card stack">
@@ -105,15 +111,16 @@ export default function KcalDiagnostics({ sessions }) {
           {stima != null && (
             <div className="row">
               <span className="small" style={{ flex: 1 }}>
-                Nostra stima dal battito <span className="muted">(Keytel, attive)</span>
+                Nostra stima dal battito <span className="muted">(Keytel, totale)</span>
               </span>
-              <span className="small" style={{ fontWeight: 800 }}>{stima} kcal</span>
+              <span className="small" style={{ fontWeight: 800 }}>{stima.total} kcal</span>
             </div>
           )}
           {basale != null && basale > 0 && (
             <p className="small muted" style={{ margin: 0 }}>
-              Il tuo metabolismo basale in {Math.round(res.durataSec / 60)} minuti vale circa {basale} kcal:
-              è la differenza che ti aspetti fra la prima riga e la terza.
+              Differenza fra totali e attive: <strong>{basale} kcal</strong> in{' '}
+              {Math.round(res.durataSec / 60)} minuti. È il metabolismo basale secondo Google,
+              cioè quello che avresti bruciato comunque stando ferma.
             </p>
           )}
         </>
