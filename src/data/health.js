@@ -223,11 +223,23 @@ export async function getActiveEnergy(startMs, endMs) {
   const seconds = Math.round((endMs - startMs) / 1000)
   if (!(seconds > 0)) return null
 
+  // FINESTRE DA UN MINUTO, non una sola grande quanto l'intervallo.
+  //
+  // La versione a finestra unica sembrava piu' pulita — una domanda, una risposta —
+  // ma sui dati veri del 09/08/2026 Google le ha risposto 400, mentre la stessa
+  // domanda spezzata al minuto tornava 89 kcal su 29 finestre. Peggio: quando la
+  // finestra unica *non* falliva restituiva valori sospettosamente bassi, il che fa
+  // pensare che coprisse solo una parte dell'intervallo. Sommare finestre piccole
+  // e' verificabile — il numero di finestre deve tornare coi minuti — e non ha mai
+  // fallito su dati reali.
+  //
+  // pageSize resta al default (1440): un minuto per finestra copre 24 ore, e nessun
+  // allenamento si avvicina a quel limite.
   const res = await api('/users/me/dataTypes/active-energy-burned/dataPoints:rollUp', {
     method: 'POST',
     body: JSON.stringify({
       range: { startTime: new Date(startMs).toISOString(), endTime: new Date(endMs).toISOString() },
-      windowSize: `${seconds}s`,
+      windowSize: '60s',
     }),
   })
 

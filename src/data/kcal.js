@@ -10,7 +10,10 @@
  * una stima al ±15-20% presentata come misura sarebbe una bugia.
  */
 
-const LS = { profile: 'gym.profile', kcal: 'gym.kcal.', weightLog: 'gym.weightLog' }
+// Prefisso della cache kcal con un numero di versione: i valori salvati fino al
+// 09/08/2026 venivano dalla query a finestra unica, che sottostimava. Cambiando
+// prefisso si invalidano da soli, senza chiedere a nessuno di svuotare niente.
+const LS = { profile: 'gym.profile', kcal: 'gym.kcal2.', weightLog: 'gym.weightLog' }
 
 /* ---------- profilo (locale al dispositivo, come l'obiettivo passi) ---------- */
 
@@ -117,6 +120,14 @@ export function clearKcalCache() {
     if (k.startsWith(LS.kcal)) localStorage.removeItem(k)
   }
 }
+
+// Ripulitura del prefisso precedente: cambiare versione bastava a non leggerli piu',
+// ma senza questo resterebbero sul dispositivo per sempre.
+try {
+  for (const k of Object.keys(localStorage)) {
+    if (k.startsWith('gym.kcal.')) localStorage.removeItem(k)
+  }
+} catch { /* localStorage non disponibile */ }
 
 /* ---------- orchestrazione ---------- */
 

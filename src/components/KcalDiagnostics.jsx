@@ -67,14 +67,14 @@ export default function KcalDiagnostics({ sessions }) {
           </p>
 
           <Riga
-            etichetta="Attive, finestra unica"
-            nota="il numero che l’app mostra oggi"
-            v={res.attivoFinestraUnica}
+            etichetta="Attive, finestre da 1 minuto"
+            nota="è il numero che l’app usa: una finestra per minuto, sommate"
+            v={res.attivoAlMinuto}
           />
           <Riga
-            etichetta="Attive, finestre da 1 minuto"
-            nota="se differisce dalla riga sopra, la nostra query perde pezzi"
-            v={res.attivoAlMinuto}
+            etichetta="Attive, finestra unica"
+            nota="il vecchio metodo, tenuto solo per confronto: se dà meno della riga sopra, stava perdendo pezzi"
+            v={res.attivoFinestraUnica}
           />
           <Riga
             etichetta="Totali (attive + basale)"
@@ -103,15 +103,24 @@ export default function KcalDiagnostics({ sessions }) {
 }
 
 /**
- * L'errore grezzo dell'API e' un blocco JSON di trecento caratteri: illeggibile in una
- * riga di diagnostica, e per i casi ricorrenti dice meno di una frase in italiano.
+ * Per i casi ricorrenti una frase in italiano dice piu' del JSON grezzo. Per tutti
+ * gli altri si tiene il messaggio di Google.
+ *
+ * Prima riducevo ogni errore sconosciuto a "errore 400": comodo da leggere e inutile
+ * da diagnosticare. Proprio sul 400 che ci interessava, il motivo l'aveva scritto
+ * Google nel campo `message` e l'avevo buttato via. In una diagnostica il dettaglio
+ * e' il prodotto, non il rumore.
  */
 function messaggioErrore(testo = '') {
   if (/401|UNAUTHENTICATED/.test(testo)) return 'collegamento scaduto: premi di nuovo "Collega Google Health"'
   if (/403|PERMISSION_DENIED/.test(testo)) return 'permesso mancante per questo tipo di dato'
   if (/429|RESOURCE_EXHAUSTED/.test(testo)) return 'troppe richieste a Google: riprova fra qualche minuto'
-  const m = testo.match(/API (\d{3})/)
-  return m ? `Google ha risposto con errore ${m[1]}` : testo.slice(0, 90)
+  const m = testo.match(/"message":\s*"([^"]+)"/)
+  if (m) {
+    const codice = testo.match(/API (\d{3})/)
+    return `${codice ? `${codice[1]}: ` : ''}${m[1]}`
+  }
+  return testo.slice(0, 200)
 }
 
 function Riga({ etichetta, nota, v }) {
