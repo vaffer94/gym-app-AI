@@ -264,10 +264,12 @@ export default function HrChart({ session, zones }) {
         )}
       </div>
 
-      {/* Legenda: colore + nome, mai il solo colore */}
+      {/* Legenda: colore + nome, mai il solo colore. Una voce per esercizio DISTINTO:
+          con tre cyclette nella stessa scheda comparivano tre voci uguali di tre colori
+          diversi, ed era il punto in cui la legenda smetteva di aiutare. */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px' }}>
-        {segments.map((s, i) => (
-          <LegendChip key={i} color={s.color} label={s.name} />
+        {[...new Map(segments.map((s) => [s.name, s])).values()].map((s) => (
+          <LegendChip key={s.name} color={s.color} label={s.name} />
         ))}
         {/* Stesso colore dei ritagli qui sopra, se no la legenda mente */}
         <LegendChip color="var(--card)" label="recupero / pausa" />

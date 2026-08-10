@@ -10,11 +10,30 @@ import { exerciseColor } from '../data/planColors'
 
 /* ---------------- bande degli esercizi ---------------- */
 
-/** Bande esercizio, colore per posizione nella scheda */
+/** Stessa chiave usata per riconoscere un esercizio fra sessioni diverse */
+export const exerciseId = (name) => (name || '').trim().toLowerCase()
+
+/**
+ * Bande esercizio.
+ *
+ * Il colore segue il NOME, non la posizione nella scheda: tre "Cyclette" nella stessa
+ * scheda prendevano tre colori diversi e tre voci di legenda, che rendeva il grafico
+ * illeggibile proprio dove serviva di piu'. Ora la stessa cyclette e' sempre dello
+ * stesso colore, ovunque compaia.
+ */
 export function buildSegments(session) {
   const t0 = session.startedAt
+
+  // Un indice di colore per nome distinto, nell'ordine di prima apparizione
+  const coloreDi = new Map()
+  for (const e of session.exercises || []) {
+    const id = exerciseId(e.name)
+    if (!coloreDi.has(id)) coloreDi.set(id, coloreDi.size)
+  }
+
   const raw = (session.exercises || [])
-    .map((e, i) => {
+    .map((e) => {
+      const i = coloreDi.get(exerciseId(e.name)) ?? 0
       const dones = (e.series || []).filter((s) => s.done && s.doneAt)
       const firstDone = dones.length ? Math.min(...dones.map((s) => s.doneAt)) : null
       const start = e.startedAt ?? firstDone

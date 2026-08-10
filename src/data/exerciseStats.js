@@ -1,5 +1,7 @@
-import { buildSegments, zonesByExercise, zoneThresholds } from '../workout/hrAnalysis'
+import { buildSegments, zonesByExercise, zoneThresholds, exerciseId } from '../workout/hrAnalysis'
 import { estimateTotal } from './kcal'
+
+export { exerciseId }
 
 /**
  * Statistiche per singolo esercizio, attraverso tutte le sessioni.
@@ -9,8 +11,6 @@ import { estimateTotal } from './kcal'
  * prende una chiave nuova, e lo storico si spezzerebbe in due esercizi diversi proprio
  * mentre si cerca di guardarne l'andamento nel tempo.
  */
-
-export const exerciseId = (name) => (name || '').trim().toLowerCase()
 
 /** Battito medio nella finestra di un esercizio */
 function avgHrInRange(session, startSec, endSec) {
