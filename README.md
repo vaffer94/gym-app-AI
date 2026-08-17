@@ -166,6 +166,10 @@ L'attribuzione compare anche dentro l'app, nella schermata "Scrivimi": la CC-BY 
 chiede dove il lavoro viene usato, e un file nel repository non lo vede chi apre l'app
 dal telefono.
 
-Il codice di questo progetto non ha ancora un file di licenza: senza, vale il diritto
-d'autore per intero e nessuno puo' riusarlo, che su un repository pubblico e' quasi
-sempre un'omissione e non una scelta. Va deciso.
+Il codice di questo progetto e' **proprietario**: vedi [`LICENSE`](LICENSE). Il
+repository e' pubblico per essere leggibile, non riutilizzabile — e la licenza lo dice
+esplicitamente, invece di lasciarlo dedurre dall'assenza di un file.
+
+L'eccezione sono le icone e il catalogo esercizi, che sono materiale di terzi e
+mantengono la loro licenza: l'elenco sta sia in `LICENSE` sia in
+[`src/icons/CREDITI.md`](src/icons/CREDITI.md).
