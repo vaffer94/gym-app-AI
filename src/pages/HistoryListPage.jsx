@@ -14,15 +14,21 @@ import {
   getHealthSummary, clearHealthCache, localISO, exerciseTypeInfo,
   connectHealthZones, hasZonesScope,
 } from '../data/health'
-import { getStepsGoal } from '../data/goals'
+import { getStepsGoal, getTrackedActivityTypes, syncGoals, pushGoals } from '../data/goals'
+import {
+  allActivities, trackedActivities, activityDaysISO, dentroFinestra,
+  inizioFinestra, isDoppione, FINESTRA_GIORNI,
+} from '../data/activities'
 import WeekGoals from '../components/WeekGoals'
 import WeekMedals from '../components/WeekMedals'
+import MonthBreakdown from '../components/MonthBreakdown'
 import { resolveKcalMany } from '../data/kcal'
 import { getWorkoutEnergy } from '../data/health'
 import { KcalChip } from '../components/KcalRow'
 import ExerciseStats from '../components/ExerciseStats'
 import { exerciseIndex } from '../data/exerciseStats'
 import KcalDiagnostics from '../components/KcalDiagnostics'
+import TrackedActivities from '../components/TrackedActivities'
 
 const PERIODS = [
   { id: 'week', label: 'Settimana' },
@@ -45,11 +51,40 @@ export default function HistoryListPage() {
   const [fitbit, setFitbit] = useState(null) // {stepsByDay, stepsGoal, workoutDays}
   const [fitbitError, setFitbitError] = useState(null)
   const [kcalMap, setKcalMap] = useState(new Map())
+  // I tipi scelti stanno in localStorage, ma serve anche in stato: spuntare un chip in
+  // Integrazioni deve ricalcolare obiettivi e medaglie subito, non al prossimo ingresso
+  const [tracked, setTracked] = useState(getTrackedActivityTypes)
+  const [, setObiettiviAllineati] = useState(0) // solo per ridisegnare dopo la sincronizzazione
+
+  // Gli obiettivi possono essere stati cambiati da un altro dispositivo: qui si legge
+  // l'obiettivo passi, quello di allenamenti e le attivita' scelte, e mostrarli vecchi
+  // sarebbe peggio che non mostrarli
+  useEffect(() => {
+    let vivo = true
+    syncGoals(repo).then((esito) => {
+      if (!vivo || !esito.cambiato) return
+      setTracked(getTrackedActivityTypes())
+      setObiettiviAllineati((n) => n + 1)
+    }).catch((e) => console.warn('Obiettivi non allineati col profilo:', e.message))
+    return () => { vivo = false }
+  }, [repo])
   const [, setZonesOn] = useState(hasZonesScope()) // solo per ridisegnare dopo il consenso
 
   useEffect(() => {
     repo.listSessions().then(setSessions)
   }, [repo])
+
+  /**
+   * Le attivita' di Google che finiscono in elenco restano le ultime 4 settimane, anche
+   * se per i conteggi se ne tengono tre mesi: ogni riga costa due chiamate all'API per
+   * le kcal, e tre mesi di camminate farebbero dell'elenco un rotolo.
+   */
+  const detectedRecenti = useMemo(() => {
+    const da = Date.now() - 28 * 24 * 3600 * 1000
+    return (fitbit?.detectedWorkouts || [])
+      .filter((w) => w.startMs >= da)
+      .map((w) => ({ ...w, doppione: isDoppione(w, sessions) }))
+  }, [fitbit, sessions])
 
   // kcal di tutte le righe dell'elenco, allenamenti nostri e camminate rilevate da
   // Google insieme: per il conto e' solo un intervallo di tempo. Risolte in blocco e
@@ -59,8 +94,10 @@ export default function HistoryListPage() {
       ...(sessions || []).map((s) => ({
         id: s.id, startedAt: s.startedAt, endedAt: s.endedAt, hrAvg: s.hrAvg, pausedMs: s.pausedMs,
       })),
-      ...(fitbit?.detectedWorkouts || [])
-        .filter((w) => w.endMs)
+      // I doppioni non si chiedono: sono lo stesso intervallo di una sessione gia' in
+      // elenco, quindi due chiamate all'API per riscrivere un numero che c'e' gia'
+      ...detectedRecenti
+        .filter((w) => w.endMs && !w.doppione)
         .map((w) => ({ id: `d-${w.startMs}`, startedAt: w.startMs, endedAt: w.endMs })),
     ].filter((i) => i.endedAt)
     if (!items.length) return
@@ -68,7 +105,26 @@ export default function HistoryListPage() {
     resolveKcalMany(items, { isConnected: isHealthConnected(), fetchEnergy: getWorkoutEnergy })
       .then((m) => alive && setKcalMap(m))
     return () => { alive = false }
-  }, [sessions, fitbit])
+  }, [sessions, detectedRecenti])
+
+  /**
+   * Tutto cio' che conta come allenamento: le sessioni dell'app piu' le attivita' di
+   * Google scelte, senza i doppioni di quelle che l'app ha gia' registrato.
+   */
+  const activities = useMemo(
+    () => allActivities(sessions, fitbit?.detectedWorkouts, tracked),
+    [sessions, fitbit, tracked]
+  )
+  // Da quando le due fonti hanno entrambe dati: e' il periodo su cui si possono
+  // confrontare settimane fra loro senza barare
+  const daFinestra = useMemo(() => inizioFinestra(fitbit?.detectedRaw), [fitbit])
+  const mesiFinestra = Math.round(FINESTRA_GIORNI / 30)
+  // Solo i giorni delle attivita' scelte: le camminate riconosciute e non spuntate non
+  // devono costruire strisce di allenamento che non sono avvenute
+  const giorniGoogle = useMemo(
+    () => activityDaysISO(trackedActivities(fitbit?.detectedWorkouts, sessions, tracked)),
+    [fitbit, sessions, tracked]
+  )
 
   const loadHealth = () =>
     getHealthSummary().then((d) => { setFitbit(d); setFitbitError(null) }).catch((e) => setFitbitError(e.message))
@@ -210,6 +266,21 @@ export default function HistoryListPage() {
                   I dati compaiono nel calendario dell'Andamento (icone sui giorni) e nel grafico dei passi.
                   Aggiornati al massimo ogni 30 minuti.
                 </p>
+                {/* Quanto indietro arrivano i dati: serve a sapere fin dove i conteggi
+                    misti (app + Google) hanno davvero entrambe le fonti, invece di
+                    darlo per scontato */}
+                {fitbit?.detectedRaw && (
+                  <p className="small muted">
+                    <i className="fa-solid fa-clock-rotate-left" />{' '}
+                    {fitbit.detectedRaw.count} attività negli ultimi {fitbit.detectedRaw.giorni} giorni
+                    {fitbit.detectedRaw.since
+                      ? `, dal ${new Date(fitbit.detectedRaw.since).toLocaleDateString('it-IT')}`
+                      : ''}
+                    {fitbit.detectedRaw.completa
+                      ? '. Più indietro Google ne ha ancora, ma ci fermiamo qui.'
+                      : '. È tutto lo storico che Google ha: la finestra vera è più corta.'}
+                  </p>
+                )}
                 {/* L'obiettivo passi e' un obiettivo, non un'impostazione della
                     connessione: sta in Obiettivi insieme agli altri due */}
                 <button className="btn" onClick={() => navigate('/obiettivi')}>
@@ -269,6 +340,13 @@ export default function HistoryListPage() {
             {fitbitError && <p className="small" style={{ color: 'var(--danger)' }}>{fitbitError}</p>}
           </div>
 
+          {isHealthConnected() && (
+            <TrackedActivities
+              detectedWorkouts={fitbit?.detectedWorkouts}
+              onChange={(types) => { setTracked(types); pushGoals(repo) }}
+            />
+          )}
+
           <KcalDiagnostics sessions={sessions} />
 
           <div className="card card--flat center" style={{ padding: '28px 20px' }}>
@@ -281,7 +359,7 @@ export default function HistoryListPage() {
         <div className="stack">
           {[
             ...sessions.map((s) => ({ kind: 'session', ts: s.startedAt, s })),
-            ...(fitbit?.detectedWorkouts || []).map((w) => ({ kind: 'detected', ts: w.startMs, w })),
+            ...detectedRecenti.map((w) => ({ kind: 'detected', ts: w.startMs, w })),
           ]
             .sort((a, b) => b.ts - a.ts)
             .map((item) => {
@@ -290,9 +368,15 @@ export default function HistoryListPage() {
                 const [label, icon] = exerciseTypeInfo(w.type)
                 const d = new Date(w.startMs)
                 const fmtTime = (ms) => new Date(ms).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+                // Conteggiata = tipo scelto e non gia' registrata dall'app. Il doppione
+                // resta grafica da "vista e basta": non entra in nessun conto
+                const conta = tracked.includes(w.type) && !w.doppione
                 return (
-                  <div key={`d-${w.startMs}`} className="tile tile--ghost">
-                    <div className="thumb" style={{ background: 'transparent', borderStyle: 'dashed' }}>
+                  <div key={`d-${w.startMs}`} className={`tile ${conta ? 'tile--counted' : 'tile--ghost'}`}>
+                    <div
+                      className="thumb"
+                      style={{ background: 'transparent', borderStyle: conta ? 'solid' : 'dashed' }}
+                    >
                       <i className={`fa-solid ${icon}`} />
                     </div>
                     <div className="tile-body">
@@ -300,10 +384,19 @@ export default function HistoryListPage() {
                       <p className="small muted">
                         {d.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })}
                         {' · '}{fmtTime(w.startMs)}{w.endMs ? ` → ${fmtTime(w.endMs)}` : ''}
-                        <KcalChip result={kcalMap.get(`d-${w.startMs}`)} />
+                        {!w.doppione && <KcalChip result={kcalMap.get(`d-${w.startMs}`)} />}
                       </p>
+                      {/* Il doppione resta visibile invece di sparire: se un giorno il
+                          filtro sbagliasse, una riga scomparsa non lo direbbe a nessuno */}
+                      {w.doppione && (
+                        <p className="small muted" style={{ margin: 0 }}>
+                          Non conteggiata: è l’allenamento che hai già registrato con l’app
+                        </p>
+                      )}
                     </div>
-                    <span className="small muted"><i className="fa-solid fa-heart-pulse" /> Google</span>
+                    <span className={`small ${conta ? '' : 'muted'}`}>
+                      <i className="fa-solid fa-heart-pulse" /> Google
+                    </span>
                   </div>
                 )
               }
@@ -344,15 +437,32 @@ export default function HistoryListPage() {
               * kcal stimate dal battito (la formula tende a leggere alto), non misurate dall'orologio
             </p>
           )}
+          {/* Due finestre diverse sembrerebbero un difetto se non si dicesse che sono
+              due scelte: qui si scorre, altrove si conta */}
+          {detectedRecenti.length > 0 && (
+            <p className="small muted center">
+              Le attività rilevate da Google sono mostrate per le ultime 4 settimane. Negli
+              obiettivi e nei record ne valgono {mesiFinestra} mesi.
+            </p>
+          )}
         </div>
       )}
 
       {/* STREAK + KPI + completamento */}
       {tab === 'trends' && sessions?.length > 0 && (
         <>
-          <StreakCard sessions={sessions} fitbit={fitbit} navigate={navigate} />
+          <StreakCard
+            sessions={sessions}
+            fitbit={fitbit}
+            navigate={navigate}
+            medaglie={dentroFinestra(activities, daFinestra)}
+            mesiFinestra={mesiFinestra}
+            giorniGoogle={giorniGoogle}
+          />
 
-          <WeekGoals sessions={sessions} kcalById={kcalMap} onOpenGoals={() => navigate('/obiettivi')} />
+          <WeekGoals activities={activities} kcalById={kcalMap} onOpenGoals={() => navigate('/obiettivi')} />
+
+          <MonthBreakdown activities={activities} />
 
           {fitbit && (
             <div className="card card--flat stack">
@@ -416,8 +526,8 @@ export default function HistoryListPage() {
               <p className="small muted">record giorni di fila (app)</p>
             </div>
             <div className="card card--flat center" style={{ flex: 1, padding: '14px 8px' }}>
-              <div className="kpi"><i className="fa-solid fa-trophy" style={{ color: 'var(--teal)' }} /> {longestActivityStreakThisMonth(sessions, fitbit?.workoutDays)}</div>
-              <p className="small muted">record del mese{fitbit ? ' (app + Google)' : ''}</p>
+              <div className="kpi"><i className="fa-solid fa-trophy" style={{ color: 'var(--teal)' }} /> {longestActivityStreakThisMonth(sessions, giorniGoogle)}</div>
+              <p className="small muted">record del mese{giorniGoogle.length ? ' (app + Google)' : ''}</p>
             </div>
           </div>
 
@@ -484,7 +594,7 @@ export default function HistoryListPage() {
 }
 
 /** Card streak: settimane di fila + calendario ultime 4 settimane (+ badge Fitbit) */
-function StreakCard({ sessions, fitbit, navigate }) {
+function StreakCard({ sessions, fitbit, navigate, medaglie, mesiFinestra, giorniGoogle = [] }) {
   const rest = daysSinceLast(sessions)
   const cal = last4Weeks(sessions)
   const dayNames = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
@@ -521,7 +631,7 @@ function StreakCard({ sessions, fitbit, navigate }) {
 
       {/* A tutta larghezza: con l'emoji accanto, le sei colonne scendevano sotto i
           cinquanta pixel e le date andavano a capo */}
-      <WeekMedals sessions={sessions} />
+      <WeekMedals activities={medaglie} mesiFinestra={mesiFinestra} />
 
       <div className="cal-grid">
         {dayNames.map((d, i) => (
@@ -530,11 +640,16 @@ function StreakCard({ sessions, fitbit, navigate }) {
         {cal.map((c) => {
           const iso = localISO(new Date(c.ts))
           const goalHit = fitbit && (fitbit.stepsByDay[iso] || 0) >= fitbit.stepsGoal
-          const detected = fitbit && fitbit.workoutDays.includes(iso)
+          // Due cose diverse: la cornice e' un'attivita' che conta, il cuoricino e'
+          // qualcosa che Google ha visto e che si e' scelto di non conteggiare. Un
+          // giorno con l'attivita' conteggiata non mostra anche il cuoricino, se no
+          // direbbe due volte la stessa cosa con due significati diversi.
+          const conteggiata = giorniGoogle.includes(iso)
+          const detected = !conteggiata && fitbit && fitbit.workoutDays.includes(iso)
           return (
             <div
               key={c.ts}
-              className={`cal-cell ${c.trained ? 'cal-cell--on' : ''} ${c.isToday ? 'cal-cell--today' : ''} ${c.future ? 'cal-cell--future' : ''}`}
+              className={`cal-cell ${c.trained ? 'cal-cell--on' : ''} ${conteggiata ? 'cal-cell--activity' : ''} ${c.isToday ? 'cal-cell--today' : ''} ${c.future ? 'cal-cell--future' : ''}`}
               role={c.trained ? 'button' : undefined}
               tabIndex={c.trained ? 0 : undefined}
               aria-label={c.trained ? `Apri l'allenamento del ${new Date(c.ts).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })}` : undefined}
@@ -556,7 +671,16 @@ function StreakCard({ sessions, fitbit, navigate }) {
 
       {fitbit && (
         <p className="small muted">
-          <i className="fa-solid fa-shoe-prints" /> obiettivo passi · <i className="fa-solid fa-heart-pulse" /> allenamento rilevato da Google Health
+          <i className="fa-solid fa-dumbbell" /> allenamento registrato qui ·{' '}
+          <span
+            style={{
+              display: 'inline-block', width: 12, height: 12, verticalAlign: '-1px',
+              border: '2px solid var(--teal)', borderRadius: 3,
+            }}
+            aria-hidden="true"
+          />{' '}
+          attività conteggiata da Google · <i className="fa-solid fa-shoe-prints" /> obiettivo
+          passi · <i className="fa-solid fa-heart-pulse" /> attività rilevata ma non conteggiata
         </p>
       )}
     </div>

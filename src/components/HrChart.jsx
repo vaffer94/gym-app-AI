@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { buildSegments, buildRests } from '../workout/hrAnalysis'
+import { buildSegments, buildRests, binHr, hrWindowSec, splitHrRuns, HR_STEP_SEC } from '../workout/hrAnalysis'
 
 /**
  * Grafico HR della sessione (step 6): linea del battito nel tempo sopra le bande
@@ -96,13 +96,22 @@ export default function HrChart({ session, zones }) {
       .filter((z) => z.id !== 'sotto' && z.min > yMin && z.min < yMax)
       .map((z) => ({ id: z.id, label: z.label, color: z.color, bpm: z.min }))
 
-    return { points, segments, rests, tMax, x, y, yTicks, xTicks, zoneLines }
+    // La curva disegnata e' aggregata, non grezza: vedi hrWindowSec. Con finestra pari
+    // al passo nativo ogni finestra contiene un campione solo, min e max coincidono con
+    // la media e la fascia si richiude sulla linea: il caso "nessuna aggregazione" non
+    // e' un ramo a parte, cade fuori da solo.
+    const windowSec = hrWindowSec(tMax, PW)
+    const series = binHr(points, windowSec)
+    const runs = splitHrRuns(series, windowSec)
+    const aggregata = windowSec > HR_STEP_SEC
+
+    return { series, runs, windowSec, aggregata, segments, rests, tMax, x, y, yTicks, xTicks, zoneLines }
   }, [session, W, zones])
 
   if (!model) return <p className="small muted">Battito non registrato per questa sessione.</p>
 
-  const { points, segments, rests, x, y, yTicks, xTicks, zoneLines } = model
-  const hoverPoint = hover != null ? points[hover] : null
+  const { series, runs, windowSec, aggregata, segments, rests, x, y, yTicks, xTicks, zoneLines } = model
+  const hoverPoint = hover != null ? series[hover] : null
   const hoverSegment = hoverPoint ? segments.find((s) => hoverPoint.sec >= s.startSec && hoverPoint.sec <= s.endSec) : null
 
   function onMove(ev) {
@@ -110,7 +119,7 @@ export default function HrChart({ session, zones }) {
     const px = ((ev.clientX - rect.left) / rect.width) * W
     let best = 0
     let bestDist = Infinity
-    points.forEach((p, i) => {
+    series.forEach((p, i) => {
       const d = Math.abs(x(p.sec) - px)
       if (d < bestDist) {
         bestDist = d
@@ -213,30 +222,34 @@ export default function HrChart({ session, zones }) {
             />
           )}
 
-          {/* Linea HR (spezzata sui buchi di campionamento) */}
-          {(() => {
-            const runs = []
-            let run = [points[0]]
-            for (let i = 1; i < points.length; i++) {
-              if (points[i].sec - points[i - 1].sec > 60) {
-                runs.push(run)
-                run = []
-              }
-              run.push(points[i])
-            }
-            runs.push(run)
-            return runs.map((r, i) => (
-              <polyline
-                key={i}
-                points={r.map((p) => `${x(p.sec).toFixed(1)},${y(p.bpm).toFixed(1)}`).join(' ')}
-                fill="none"
-                stroke={INK}
-                strokeWidth="2"
-                strokeLinejoin="round"
-                strokeLinecap="round"
-              />
-            ))
-          })()}
+          {/* Fascia di oscillazione: min-max dentro ogni finestra, andata sui massimi e
+              ritorno sui minimi. Sta SOTTO la linea perche' e' il contesto, non il dato
+              che si legge; ed e' quello che impedisce al grafico di smentire il "max"
+              scritto nella card sopra, che la sola media abbasserebbe. */}
+          {aggregata && runs.map((r, i) => (
+            <polygon
+              key={`band-${i}`}
+              points={[
+                ...r.map((p) => `${x(p.sec).toFixed(1)},${y(p.max).toFixed(1)}`),
+                ...[...r].reverse().map((p) => `${x(p.sec).toFixed(1)},${y(p.min).toFixed(1)}`),
+              ].join(' ')}
+              fill={INK}
+              opacity="0.16"
+            />
+          ))}
+
+          {/* Linea HR aggregata (spezzata sui buchi di campionamento) */}
+          {runs.map((r, i) => (
+            <polyline
+              key={i}
+              points={r.map((p) => `${x(p.sec).toFixed(1)},${y(p.bpm).toFixed(1)}`).join(' ')}
+              fill="none"
+              stroke={INK}
+              strokeWidth="2"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          ))}
 
           {/* Crosshair + marker sul punto piu' vicino */}
           {hoverPoint && (
@@ -265,6 +278,11 @@ export default function HrChart({ session, zones }) {
             }}
           >
             {fmtClock(hoverPoint.sec)} · {hoverPoint.bpm} bpm
+            {/* Il range solo quando dice qualcosa: senza aggregazione min e max sono il
+                campione stesso, e "(97-97)" e' solo rumore da leggere */}
+            {hoverPoint.max > hoverPoint.min && (
+              <span className="muted"> ({hoverPoint.min}–{hoverPoint.max})</span>
+            )}
             <span className="muted"> — {hoverSegment ? hoverSegment.name : 'recupero / pausa'}</span>
           </div>
         )}
@@ -279,6 +297,9 @@ export default function HrChart({ session, zones }) {
         ))}
         {/* Stesso colore dei ritagli qui sopra, se no la legenda mente */}
         <LegendChip color="var(--card)" label="recupero / pausa" />
+        {/* La curva e' una media: dirlo e' obbligatorio, se no il picco disegnato piu'
+            basso del "max" della card sembra un errore invece che una scelta */}
+        {aggregata && <LegendChip band label="oscillazione · media su" value={`${windowSec}s`} />}
         {session.hrAvg != null && <LegendChip dashed label="battito medio" value={`${session.hrAvg} bpm`} />}
         {/* Le soglie: qui e non piu' dentro il grafico */}
         {zoneLines.map((z) => (
@@ -290,17 +311,22 @@ export default function HrChart({ session, zones }) {
 }
 
 /**
- * `dashed` = media di sessione, `line` = soglia di zona, altrimenti quadratino pieno.
+ * `dashed` = media di sessione, `line` = soglia di zona, `band` = fascia di
+ * oscillazione, altrimenti quadratino pieno.
  * `value` e' la parte numerica: sta in grassetto perche' e' l'informazione che si
  * cerca, e in mezzo a cinque voci di legenda va trovata a colpo d'occhio.
  */
-function LegendChip({ color, label, value, dashed, line }) {
+function LegendChip({ color, label, value, dashed, line, band }) {
   return (
     <span className="small" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
       {dashed ? (
         <span style={{ width: 14, borderTop: `2px dashed ${MUTED}` }} />
       ) : line ? (
         <span style={{ width: 14, borderTop: `3px solid ${color}` }} />
+      ) : band ? (
+        // Stessa opacita' della fascia nel grafico, con la linea della media in mezzo:
+        // il campioncino deve essere quello che si vede sopra, non un'approssimazione
+        <span style={{ width: 14, height: 11, background: INK, opacity: 0.16, borderRadius: 2 }} />
       ) : (
         <span style={{ width: 11, height: 11, background: color, border: `1.5px solid ${INK}`, borderRadius: 3 }} />
       )}

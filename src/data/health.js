@@ -179,25 +179,95 @@ export async function getHealthSummary() {
   // Allenamenti rilevati: sessioni "exercise"
   let workoutDays = []
   let detectedWorkouts = []
+  let detectedRaw = null
   try {
-    const exRes = await api('/users/me/dataTypes/exercise/dataPoints?pageSize=200')
-    const startMs = start.getTime()
-    detectedWorkouts = (exRes.dataPoints || [])
-      .map((p) => p.exercise)
-      .filter((ex) => ex?.interval?.startTime)
-      .map((ex) => ({
-        type: ex.exerciseType || 'UNKNOWN',
-        startMs: new Date(ex.interval.startTime).getTime(),
-        endMs: ex.interval.endTime ? new Date(ex.interval.endTime).getTime() : null,
-      }))
-      .filter((w) => w.startMs >= startMs)
-      .sort((a, b) => b.startMs - a.startMs)
+    // QUANTO INDIETRO ARRIVA GOOGLE, E PERCHE' SI PAGINA.
+    //
+    // La richiesta non ha nessun filtro di data. Con `pageSize=200` Google ha risposto
+    // comunque 25 punti piu' un `nextPageToken`: il tetto della pagina non e' quello
+    // che chiediamo noi, lo decide lui. Fermarsi alla prima pagina significava vedere
+    // ~35 giorni e credere che fosse tutto lo storico.
+    //
+    // Serve profondita' perche' le attivita' scelte devono contare anche nei record:
+    // se i dati di Google finissero prima di quelli dell'app, le settimane vecchie
+    // risulterebbero magre non perche' ci si e' allenate meno, ma perche' meta' delle
+    // fonti tace — ed e' esattamente il confronto falso che si vuole evitare.
+    //
+    // I due freni non sono arbitrari. Tre mesi sono esattamente il "Trimestre" del
+    // selettore di periodo, cioe' il piu' lungo che una schermata guardi: piu' indietro
+    // il dato non servirebbe a niente e renderebbe dispersivo l'elenco. Verificato sui
+    // dati veri del 17/08/2026 che Google ne ha molti di piu' (almeno un anno, 300
+    // attivita' fino al 25/08/2025), quindi il taglio e' una scelta, non un limite suo.
+    // Il tetto di pagine e' il freno di sicurezza: senza, una sincronizzazione sarebbe
+    // un'attesa muta di lunghezza ignota, ogni 30 minuti.
+    const PAGE_SIZE = 200
+    const MAX_PAGINE = 12
+    const GIORNI_FINESTRA = 90
+    const LIMITE_MS = Date.now() - GIORNI_FINESTRA * 24 * 3600 * 1000
+
+    const tutte = []
+    const viste = new Set() // guardia anti-ciclo, vedi sotto
+    let pageToken = null
+    let pagine = 0
+    do {
+      const q = new URLSearchParams({ pageSize: String(PAGE_SIZE) })
+      if (pageToken) q.set('pageToken', pageToken)
+      const exRes = await api(`/users/me/dataTypes/exercise/dataPoints?${q}`)
+
+      let nuovi = 0
+      for (const p of exRes.dataPoints || []) {
+        const ex = p.exercise
+        if (!ex?.interval?.startTime) continue
+        const startMs = new Date(ex.interval.startTime).getTime()
+        const chiave = `${ex.exerciseType || 'UNKNOWN'}|${startMs}`
+        if (viste.has(chiave)) continue
+        viste.add(chiave)
+        nuovi += 1
+        tutte.push({
+          type: ex.exerciseType || 'UNKNOWN',
+          startMs,
+          endMs: ex.interval.endTime ? new Date(ex.interval.endTime).getTime() : null,
+        })
+      }
+      pagine += 1
+      pageToken = exRes.nextPageToken || null
+
+      // Se il nome del parametro di paginazione fosse sbagliato, Google ignorerebbe il
+      // token e ci ridarebbe la prima pagina all'infinito: dodici richieste per gli
+      // stessi venticinque punti, con un conteggio che sembrerebbe pure aumentato.
+      // Una pagina che non porta niente di nuovo e' l'unico sintomo osservabile.
+      if (nuovi === 0) break
+      // Le pagine arrivano dalla piu' recente, ma non lo diamo per garantito: il minimo
+      // si ricalcola su tutto quello che si ha in mano
+      if (tutte.some((w) => w.startMs < LIMITE_MS)) break
+    } while (pageToken && pagine < MAX_PAGINE)
+
+    tutte.sort((a, b) => b.startMs - a.startMs)
+
+    // La finestra dei dati grezzi e' quella dichiarata, non i 28 giorni dei passi: i
+    // conteggi misti (medaglie, record) hanno bisogno di sapere cosa e' successo prima
+    // di quattro settimane fa, se no le settimane vecchie risulterebbero magre solo
+    // perche' meta' delle fonti tace.
+    detectedWorkouts = tutte.filter((w) => w.startMs >= LIMITE_MS)
+
+    // Cosa teniamo davvero, non cosa e' passato dalla rete: `giorni` e' la finestra
+    // entro cui i conteggi misti sono confrontabili, ed e' il numero da dichiarare in
+    // interfaccia. `completa` dice se ci siamo fermati noi al limite dichiarato (caso
+    // normale) o se e' finito lo storico di Google prima — nel secondo caso la finestra
+    // vera e' piu' corta di quella chiesta.
+    detectedRaw = {
+      count: detectedWorkouts.length,
+      since: detectedWorkouts.length ? detectedWorkouts[detectedWorkouts.length - 1].startMs : null,
+      giorni: GIORNI_FINESTRA,
+      pagine,
+      completa: Boolean(pageToken) || tutte.some((w) => w.startMs < LIMITE_MS),
+    }
     workoutDays = [...new Set(detectedWorkouts.map((w) => localISO(new Date(w.startMs))))]
   } catch (e) {
     console.warn('Lettura allenamenti rilevati fallita (non bloccante):', e.message)
   }
 
-  const data = { stepsByDay, workoutDays, detectedWorkouts }
+  const data = { stepsByDay, workoutDays, detectedWorkouts, detectedRaw }
   localStorage.setItem(LS.cache, JSON.stringify({ at: Date.now(), data }))
   return { ...data, stepsGoal: getStepsGoal() }
 }
@@ -414,6 +484,39 @@ export function exerciseTypeInfo(type) {
   if (EXERCISE_TYPES[type]) return EXERCISE_TYPES[type]
   const label = (type || 'Attività').toLowerCase().replaceAll('_', ' ')
   return [label.charAt(0).toUpperCase() + label.slice(1), 'fa-heart-pulse']
+}
+
+/**
+ * Le voci fra cui scegliere quali attivita' conteggiare.
+ *
+ * Non esiste una chiamata "dammi i tipi che monitori": l'elenco e' l'unione fra i tipi
+ * che sappiamo nominare e quelli comparsi davvero nei dati. Solo i primi lascerebbero
+ * fuori un tipo che Google usa e noi non conosciamo; solo i secondi obbligherebbero a
+ * nuotare una volta prima di poter dire che il nuoto conta.
+ *
+ * Raggruppate per etichetta: CYCLING e BIKING sono la stessa cosa per chi legge, e due
+ * voci "Bici" identiche sembrerebbero un difetto. Il gruppo si porta dietro tutti i
+ * codici, cosi' spuntando "Bici" contano entrambi.
+ *
+ * @returns {{label:string, icon:string, types:string[], volte:number}[]}
+ *   ordinate per quante volte sono comparse, poi per nome
+ */
+export function activityTypeOptions(detectedWorkouts = []) {
+  const visti = new Map()
+  for (const w of detectedWorkouts || []) {
+    if (w?.type) visti.set(w.type, (visti.get(w.type) || 0) + 1)
+  }
+
+  const gruppi = new Map()
+  for (const type of new Set([...Object.keys(EXERCISE_TYPES), ...visti.keys()])) {
+    const [label, icon] = exerciseTypeInfo(type)
+    const g = gruppi.get(label) || { label, icon, types: [], volte: 0 }
+    g.types.push(type)
+    g.volte += visti.get(type) || 0
+    gruppi.set(label, g)
+  }
+
+  return [...gruppi.values()].sort((a, b) => b.volte - a.volte || a.label.localeCompare(b.label, 'it'))
 }
 
 export { localISO }

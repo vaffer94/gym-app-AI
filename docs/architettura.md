@@ -54,7 +54,8 @@ esercizio, e tre copie divergono al primo ritocco.
 | `health.js` | Google Health API v4: OAuth, passi, allenamenti rilevati, energia, zone cardiache, diagnostica. Due scope, chiesti separatamente |
 | `kcal.js` | profilo utente (eta', peso, altezza, sesso), storico peso, stima Keytel, basale Mifflin-St Jeor, cache kcal per sessione |
 | `foods.js` | 21 equivalenti alimentari con fonti in testa e `id` stabile |
-| `goals.js` | i tre obiettivi (passi, allenamenti, energia) e il calcolo del progresso settimanale |
+| `goals.js` | i tre obiettivi (passi, allenamenti, energia), le attivita' di Google da conteggiare, la sincronizzazione col profilo e il calcolo del progresso settimanale |
+| `activities.js` | l'unione fra sessioni dell'app e attivita' di Google scelte: filtro dei doppioni, finestra dei conteggi misti. **Chi conta allenamenti passa da qui**, non dalle sessioni grezze |
 | `aggregate.js` | aggregazioni dello storico per settimana/mese/trimestre, streak, `mondayOf` (definizione unica di "settimana") |
 | `exerciseStats.js` | statistiche per esercizio attraverso le sessioni, ripartizione dell'energia, confronti |
 | `planColors.js` | palette schede/esercizi, **allineata a `watch/.../ui/theme/PlanColor.kt`** |
@@ -94,6 +95,7 @@ users/{uid}/
   workoutPlans/{planId}        scheda: nome, colore, finalita', esercizi ordinati
   customExercises/{exId}       esercizio custom: nome, categoria, foto WebP base64 (~50KB)
   meta/labels                  { values: [...] } le finalita' personali
+  meta/goals                   obiettivi + attivita' Google conteggiate + updatedAt
   sessions/{sessionId}         una sessione = un documento (regola anti-costi)
 ```
 
@@ -125,12 +127,21 @@ storico. E' il motivo per cui i campi dell'esercizio sono copiati e non referenz
 Non e' cache: e' lo strato di persistenza scelto per tutto cio' che e' locale al
 dispositivo e non ha senso sincronizzare. **Le chiavi non si rinominano** (§CLAUDE.md).
 
+Unica eccezione, gli **obiettivi**: stanno anche su `meta/goals` e localStorage e' la
+copia da cui si legge, perche' le schermate leggono gli obiettivi mentre disegnano e non
+possono aspettare la rete. Fra le due copie vince quella col `updatedAt` piu' alto — non
+si fondono: fondere "tre allenamenti" con "quattro" darebbe un numero che nessuno ha
+scelto. Un dispositivo nuovo ha timbro 0 e quindi perde sempre, che e' il caso da cui la
+sincronizzazione e' nata.
+
 | chiave | contenuto |
 |---|---|
 | `gym.profile` | eta', peso, altezza, sesso biologico — servono a Keytel e Mifflin-St Jeor |
 | `gym.weightLog` | storico peso per il grafico in Parametri |
 | `gym.health.stepsGoal` | obiettivo passi (chiave storica, namespace ereditato dalle integrazioni) |
 | `gym.goal.workouts`, `gym.goal.kcal` | obiettivo allenamenti e carrello alimenti |
+| `gym.goal.activityTypes` | i tipi di attivita' Google che valgono come allenamento |
+| `gym.goal.updatedAt` | quando questo dispositivo ha cambiato un obiettivo. **Serve a decidere chi vince** fra la copia locale e quella su `meta/goals` |
 | `gym.health.token`, `gym.health.cache` | token OAuth e riepilogo Google Health |
 | `gym.kcal3.` (prefisso) | kcal misurate per sessione. Il numero e' la **versione**: si incrementa per invalidare |
 | `gym.activeSession` | sessione in corso, per riprendere dopo la chiusura del browser |

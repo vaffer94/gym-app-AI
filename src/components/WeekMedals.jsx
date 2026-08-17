@@ -9,9 +9,9 @@ import { getWorkoutGoal, weeklyMedals } from '../data/goals'
  * in larghezza su un telefono senza rimpicciolire il disco sotto la soglia in cui si
  * capisce se e' pieno o vuoto; il resto della storia sta nel contatore accanto.
  */
-export default function WeekMedals({ sessions }) {
+export default function WeekMedals({ activities, mesiFinestra }) {
   const goal = getWorkoutGoal()
-  const { settimane, totale } = weeklyMedals(sessions, goal, 5)
+  const { settimane, totale } = weeklyMedals(activities, goal, 5)
 
   return (
     <div className="stack" style={{ gap: 6 }}>
@@ -60,8 +60,12 @@ export default function WeekMedals({ sessions }) {
           >
             {totale}
           </div>
+          {/* "in tutto" era una promessa che il dato non puo' piu' mantenere: da quando
+              contano anche le attivita' scelte su Google, il totale vale solo dove
+              entrambe le fonti hanno storia. Meglio dichiarare il periodo che dire
+              "sempre" contando tre mesi. */}
           <span className="small muted" style={{ display: 'block', lineHeight: 1.2, fontSize: '0.72rem' }}>
-            in tutto
+            in {mesiFinestra} mesi
           </span>
         </div>
       </div>

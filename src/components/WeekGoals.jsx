@@ -3,15 +3,19 @@ import { getWorkoutGoal, getKcalGoal, weekSessions, weekKcal, fillCart } from '.
 /**
  * Come sta andando la settimana rispetto agli obiettivi.
  *
- * Contano SOLO gli allenamenti registrati dall'app. Le attivita' che Google riconosce
- * da solo (una camminata, le scale) restano fuori: se valessero anche quelle la
- * settimana si chiuderebbe stando in piedi, e l'obiettivo smetterebbe di dire qualcosa.
+ * Contano gli allenamenti registrati dall'app piu' le attivita' che l'utente ha scelto
+ * di far valere fra quelle riconosciute da Google (vedi data/activities.js). Non tutte
+ * indistintamente: se valessero anche le camminate, la settimana si chiuderebbe stando
+ * in piedi. La riga sotto la barra dice quante vengono da fuori, perche' un obiettivo
+ * raggiunto senza sapere come non e' un'informazione.
  */
-export default function WeekGoals({ sessions, kcalById, onOpenGoals }) {
+export default function WeekGoals({ activities, kcalById, onOpenGoals }) {
   const goalW = getWorkoutGoal()
   const goalE = getKcalGoal()
-  const fatti = weekSessions(sessions).length
-  const guadagnate = Math.round(weekKcal(sessions, kcalById))
+  const dellaSettimana = weekSessions(activities)
+  const fatti = dellaSettimana.length
+  const daGoogle = dellaSettimana.filter((a) => a.source === 'google').length
+  const guadagnate = Math.round(weekKcal(activities, kcalById))
   // Le settimane in linea non si ripetono qui: stanno gia' nelle medaglie, in cima
 
   const pieni = fillCart(goalE.cart, guadagnate)
@@ -29,7 +33,7 @@ export default function WeekGoals({ sessions, kcalById, onOpenGoals }) {
         <span className="emoji-lg">🎯</span>
         <div style={{ flex: 1, minWidth: 96 }}>
           <h3>Questa settimana</h3>
-          <p className="small muted">Da lunedì, solo allenamenti registrati dall’app</p>
+          <p className="small muted">Da lunedì</p>
         </div>
         <button className="btn btn--sm" onClick={onOpenGoals} aria-label="Modifica gli obiettivi">
           <i className="fa-solid fa-pen" />
@@ -41,15 +45,25 @@ export default function WeekGoals({ sessions, kcalById, onOpenGoals }) {
           <span className="small" style={{ flex: 1, minWidth: 96 }}>Allenamenti</span>
           <span className="small" style={{ fontWeight: 800 }}>{fatti} di {goalW}</span>
         </div>
-        <div className="bar-track">
-          <div
-            className="bar-fill"
-            style={{
-              width: `${Math.min(100, (fatti / goalW) * 100)}%`,
-              background: fatti >= goalW ? 'var(--teal)' : 'var(--yellow)',
-            }}
-          />
+        {/* Una tacca per allenamento previsto: con obiettivi da tre o quattro, una barra
+            continua fa diventare la differenza fra uno e due una questione di pixel */}
+        <div
+          className="seg-track"
+          role="img"
+          aria-label={`${fatti} allenamenti su ${goalW}`}
+        >
+          {Array.from({ length: goalW }, (_, i) => (
+            <span
+              key={i}
+              className={`seg ${i < fatti ? (fatti >= goalW ? 'seg--done' : 'seg--on') : ''}`}
+            />
+          ))}
         </div>
+        {daGoogle > 0 && (
+          <p className="small muted" style={{ margin: 0 }}>
+            di cui {daGoogle} {daGoogle === 1 ? 'rilevata' : 'rilevate'} da Google
+          </p>
+        )}
       </div>
 
       {goalE.kcal > 0 ? (
