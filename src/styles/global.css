@@ -346,6 +346,40 @@ p { margin: 0; }
 .tile--tap { cursor: pointer; }
 .tile--tap:active { transform: translate(2px, 2px); }
 
+/* Punto di inserimento tra due tile: il (+) che aggiunge un esercizio ESATTAMENTE
+   li', invece di in fondo. Lo slot e' alto 0 e posizionato, cosi' il pulsante si
+   sovrappone alle due tile senza spostarle: il gesto e' "infilo qualcosa qui in
+   mezzo", e un pulsante in una riga tutta sua non lo direbbe. Lo z-index serve
+   perche' le tile hanno fondo pieno e coprirebbero il pulsante. */
+.insert-slot {
+  position: relative;
+  z-index: 2;
+  height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.btn-insert {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: var(--border);
+  border-radius: 999px;
+  background: var(--teal);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.btn-insert:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--ink);
+}
+
 /* Tile "fantasma": allenamenti rilevati da Google, non cliccabili */
 .tile--ghost {
   background: #f3eee3;

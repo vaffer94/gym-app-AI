@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { getRepo } from '../data/repo'
@@ -17,7 +17,11 @@ export default function PlanEditorPage() {
 
   const [plan, setPlan] = useState({ name: '', labels: [], exercises: [], color: null })
   const [allLabels, setAllLabels] = useState([])
-  const [picking, setPicking] = useState(false)
+  // Indice a cui infilare il prossimo esercizio (null = popup chiuso). Non un
+  // booleano: copiando una scheda si vuole aggiungere IN MEZZO, e "aggiungi in
+  // fondo e poi risali con le frecce" e' il giro che si sta togliendo. 0 e' un
+  // indice valido, quindi il confronto va sempre fatto con !== null.
+  const [picking, setPicking] = useState(null)
   const [editing, setEditing] = useState(null) // entry esercizio in modifica
   const [busy, setBusy] = useState(false)
   const [alertMsg, setAlertMsg] = useState(null)
@@ -135,23 +139,37 @@ export default function PlanEditorPage() {
         <label className="label">Esercizi ({plan.exercises.length})</label>
         <div className="stack">
           {plan.exercises.map((e, i) => (
-            <div key={e.key} className="tile">
-              <div className="row tile--tap" style={{ flex: 1, minWidth: 0 }} onClick={() => setEditing(e)}>
-                <ExerciseThumb image={e.image} category={e.category} />
-                <div className="tile-body">
-                  <div className="tile-title">{e.name}</div>
-                  <p className="small muted">{formatEntryTarget(e)}</p>
+            <Fragment key={e.key}>
+              {i > 0 && (
+                <div className="insert-slot">
+                  <button
+                    type="button"
+                    className="btn-insert"
+                    onClick={() => setPicking(i)}
+                    aria-label={`Aggiungi un esercizio tra ${plan.exercises[i - 1].name} e ${e.name}`}
+                  >
+                    <i className="fa-solid fa-plus" />
+                  </button>
                 </div>
+              )}
+              <div className="tile">
+                <div className="row tile--tap" style={{ flex: 1, minWidth: 0 }} onClick={() => setEditing(e)}>
+                  <ExerciseThumb image={e.image} category={e.category} />
+                  <div className="tile-body">
+                    <div className="tile-title">{e.name}</div>
+                    <p className="small muted">{formatEntryTarget(e)}</p>
+                  </div>
+                </div>
+                <div className="stack" style={{ gap: 4 }}>
+                  <button className="btn btn--sm" onClick={() => move(i, -1)} disabled={i === 0}><i className="fa-solid fa-arrow-up" /></button>
+                  <button className="btn btn--sm" onClick={() => move(i, 1)} disabled={i === plan.exercises.length - 1}><i className="fa-solid fa-arrow-down" /></button>
+                </div>
+                <button className="btn btn--sm" onClick={() => removeExercise(e.key)} aria-label="Rimuovi"><i className="fa-solid fa-xmark" /></button>
               </div>
-              <div className="stack" style={{ gap: 4 }}>
-                <button className="btn btn--sm" onClick={() => move(i, -1)} disabled={i === 0}><i className="fa-solid fa-arrow-up" /></button>
-                <button className="btn btn--sm" onClick={() => move(i, 1)} disabled={i === plan.exercises.length - 1}><i className="fa-solid fa-arrow-down" /></button>
-              </div>
-              <button className="btn btn--sm" onClick={() => removeExercise(e.key)} aria-label="Rimuovi"><i className="fa-solid fa-xmark" /></button>
-            </div>
+            </Fragment>
           ))}
         </div>
-        <button className="btn btn--teal btn--big" style={{ marginTop: 12 }} onClick={() => setPicking(true)}>
+        <button className="btn btn--teal btn--big" style={{ marginTop: 12 }} onClick={() => setPicking(plan.exercises.length)}>
           Aggiungi esercizio
         </button>
       </div>
@@ -160,11 +178,20 @@ export default function PlanEditorPage() {
         {id ? 'Salva modifiche' : 'Convalida scheda'}
       </button>
 
-      {picking && (
+      {picking !== null && (
         <ExercisePicker
           repo={repo}
-          onClose={() => setPicking(false)}
-          onAdd={(entry) => setPlan((p) => ({ ...p, exercises: [...p.exercises, entry] }))}
+          onClose={() => setPicking(null)}
+          onAdd={(entry) =>
+            setPlan((p) => {
+              const ex = [...p.exercises]
+              // clamp: tra l'apertura del popup e la conferma la lista puo' essersi
+              // accorciata, e splice con un indice fuori scala aggiungerebbe in coda
+              // senza dirlo
+              ex.splice(Math.min(picking, ex.length), 0, entry)
+              return { ...p, exercises: ex }
+            })
+          }
         />
       )}
 
