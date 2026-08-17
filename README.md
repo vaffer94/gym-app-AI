@@ -52,10 +52,18 @@ L'app sarà online su `https://<project-id>.web.app`. Dal telefono: apri l'URL �
 ```
 src/
   auth/          AuthContext (login Google + modalità demo)
-  lib/           init Firebase
-  pages/         schermate (Login, Home, placeholder Schede/Storico/Allenamento)
+  lib/           init Firebase, compressione foto
+  pages/         una schermata per file (Home, Schede, Allenamento, Storico, Obiettivi, Parametri)
+  components/    pezzi riusabili e grafici
+  data/          accesso ai dati e calcoli di dominio (repo, catalogo, health, kcal, obiettivi)
+  workout/       motore della sessione e analisi del battito
   styles/        design system (vedi DESIGN.md)
+watch/           app Wear OS standalone (Kotlin/Compose, Gradle proprio)
+docs/            piano di sviluppo, flussi utente, architettura
 ```
+
+Mappa dettagliata del codice, contratti dati e chiavi `localStorage`:
+[`docs/architettura.md`](docs/architettura.md).
 
 ## Setup sviluppo app Watch (Wear OS) — per lo Step 5
 
@@ -99,16 +107,24 @@ Firebase/Firestore della web app. Setup, struttura e stato di avanzamento: vedi
 
 ## Documenti di progetto
 
-- `DESIGN.md` — linee guida grafiche (stile cartoon)
-- Piano di sviluppo e flussi utente: nei documenti di sessione Cowork
+- [`CLAUDE.md`](CLAUDE.md) — come si lavora su questo repo (regole, comandi, trappole note). Lo leggono le chat di Claude, ma vale per chiunque
+- [`DESIGN.md`](DESIGN.md) — linee guida grafiche (stile cartoon), vincolanti
+- [`docs/piano-sviluppo-gym-app.md`](docs/piano-sviluppo-gym-app.md) — decisioni architetturali, modello dati, roadmap, rischi
+- [`docs/flussi-utente.md`](docs/flussi-utente.md) — come si comporta l'app e perché, iterazione per iterazione
+- [`docs/architettura.md`](docs/architettura.md) — mappa del codice e contratti dati
+- [`watch/README.md`](watch/README.md) — setup e stato dell'app Wear OS
 
 ## Roadmap (step incrementali)
 
 1. ✅ Fondamenta: login Google, home, PWA
-2. ⬜ Catalogo esercizi (free-exercise-db) + creazione schede + esercizi custom
-3. ⬜ Esecuzione allenamento (timer, serie, posticipa, note)
-4. ⬜ Storico e statistiche
-5. 🔄 App Wear OS standalone — codice completo in `watch/`, installata sul Pixel Watch: login Google e download schede da Firestore verificati sul dispositivo (19/07/2026); manca solo il test di un allenamento completo in condizioni reali
-6. ⬜ Sensori + always-on (watch)
+2. ✅ Catalogo esercizi (free-exercise-db) + creazione schede + esercizi custom
+3. ✅ Esecuzione allenamento (timer, serie, posticipa, note)
+4. ✅ Storico e statistiche (elenco, dettaglio, andamenti, calendario)
+5. ✅ App Wear OS standalone — codice completo in `watch/`, installata sul Pixel Watch: login Google e download schede da Firestore verificati sul dispositivo (19/07/2026)
+6. 🔄 Sensori + always-on (watch) — HR continuo e watchdog fatti, ambient mode no
+6.5 🔄 Google Health — base fatta (passi, allenamenti rilevati, energia, zone del cuore); dedup e vista salute completa no
 7. ⬜ Coach post-sessione
 8. ⬜ Play Store + monetizzazione
+
+Fuori roadmap, già in app: obiettivi settimanali con equivalente alimentare,
+statistiche per esercizio, parametri e storico peso.
