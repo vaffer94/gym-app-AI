@@ -1,8 +1,17 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import pkg from './package.json' with { type: 'json' }
 
 export default defineConfig({
+  // Quale build sta girando davvero sul dispositivo di chi segnala un difetto: il
+  // service worker puo' servire il bundle vecchio per un po' dopo un aggiornamento
+  // (e' gia' successo), e senza questo dato si cerca nel codice di oggi un difetto
+  // di quello di ieri
+  define: {
+    __APP_BUILD__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')),
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   plugins: [
     react(),
     VitePWA({

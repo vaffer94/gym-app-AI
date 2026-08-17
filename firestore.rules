@@ -10,5 +10,19 @@ service cloud.firestore {
     match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+    // Segnalazioni e idee: si scrivono da loggati, non si rileggono da nessuno.
+    // Sta fuori da users/ perche' e' l'unica cosa che non appartiene a chi la scrive:
+    // serve a chi mantiene l'app, e la si legge dalla console Firebase (che le regole
+    // non le applica). Il limite sul testo e' l'unico freno che serve: senza un
+    // endpoint anonimo non c'e' niente da martellare, ma un campo senza tetto e' un
+    // modo per riempire il database con un messaggio solo.
+    match /feedback/{id} {
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.testo is string
+                    && request.resource.data.testo.size() > 0
+                    && request.resource.data.testo.size() <= 2000;
+      allow read, update, delete: if false;
+    }
   }
 }
