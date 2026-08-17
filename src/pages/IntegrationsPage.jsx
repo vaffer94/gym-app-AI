@@ -65,13 +65,13 @@ export default function IntegrationsPage() {
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
           <Icona nome="indietro" />
         </button>
-        <h2>🔌 Integrazioni</h2>
+        <h2><Icona nome="integrazioni" /> Integrazioni</h2>
       </header>
 
       <div className="stack">
         <div className="card stack">
           <div className="row">
-            <span className="emoji-lg">⌚</span>
+            <Icona nome="orologio" size="1.8rem" />
             <div style={{ flex: 1 }}>
               <h3>Google Health</h3>
               <p className="small muted">Passi e allenamenti rilevati dal tuo Pixel Watch (ecosistema Fitbit)</p>
@@ -154,7 +154,7 @@ export default function IntegrationsPage() {
               {/* L'obiettivo passi e' un obiettivo, non un'impostazione della
                   connessione: sta in Obiettivi insieme agli altri due */}
               <button className="btn" onClick={() => navigate('/obiettivi')}>
-                🎯 Obiettivo passi: {getStepsGoal().toLocaleString('it-IT')}
+                <Icona nome="obiettivi" /> Obiettivo passi: {getStepsGoal().toLocaleString('it-IT')}
               </button>
             </>
           )}
@@ -227,7 +227,7 @@ export default function IntegrationsPage() {
         <KcalDiagnostics sessions={sessions} />
 
         <div className="card card--flat center" style={{ padding: '28px 20px' }}>
-          <p className="small muted">Altre integrazioni arriveranno qui 🔌</p>
+          <p className="small muted">Altre integrazioni arriveranno qui <Icona nome="integrazioni" /></p>
         </div>
       </div>
     </div>

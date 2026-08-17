@@ -79,12 +79,12 @@ export default function GoalsPage() {
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
           <Icona nome="indietro" />
         </button>
-        <h2>🎯 Obiettivi</h2>
+        <h2><Icona nome="obiettivi" /> Obiettivi</h2>
       </header>
 
       <div className="card stack">
         <div className="row">
-          <span className="emoji-lg">🏋️</span>
+          <Icona nome="allenamento" size="1.8rem" />
           <div style={{ flex: 1, minWidth: 96 }}>
             <h3>Allenamenti a settimana</h3>
             <p className="small muted">Quante volte vuoi allenarti da lunedì a domenica</p>
@@ -107,7 +107,7 @@ export default function GoalsPage() {
 
       <div className="card stack">
         <div className="row">
-          <span className="emoji-lg">👟</span>
+          <Icona nome="obiettivoPassi" size="1.8rem" />
           <div style={{ flex: 1, minWidth: 96 }}>
             <h3>Passi al giorno</h3>
             <p className="small muted">Serve a segnare i giorni buoni nel calendario</p>
@@ -196,7 +196,7 @@ function EnergyGoalCard({ goal, onQty, onAdd, onSet }) {
   return (
     <div className="card stack">
       <div className="row">
-        <span className="emoji-lg">🍽</span>
+        <Icona nome="obiettivoEnergia" size="1.8rem" />
         <div style={{ flex: 1, minWidth: 96 }}>
           <h3>Energia a settimana</h3>
           <p className="small muted">Quanto vuoi bruciare, misurato in cose buone</p>
@@ -213,7 +213,7 @@ function EnergyGoalCard({ goal, onQty, onAdd, onSet }) {
         const f = foodById(i.id)
         return (
           <div key={i.id} className="row" style={{ gap: 8 }}>
-            <span style={{ fontSize: '1.4rem', lineHeight: 1 }}>{f.emoji}</span>
+            <Icona nome={f.icona} size="1.4rem" />
             <div style={{ flex: 1, minWidth: 96 }}>
               <span className="small" style={{ fontWeight: 800 }}>{f.name}</span>
               <p className="small muted" style={{ margin: 0 }}>
@@ -254,7 +254,7 @@ function EnergyGoalCard({ goal, onQty, onAdd, onSet }) {
 
       {picker && (
         <SheetDialog onClose={() => setPicker(false)}>
-          <h2>🍽 Cosa vuoi guadagnarti</h2>
+          <h2><Icona nome="obiettivoEnergia" /> Cosa vuoi guadagnarti</h2>
           <p className="small muted">Tocca un alimento per aggiungerlo all’obiettivo della settimana.</p>
           <div className="stack" style={{ gap: 2, maxHeight: '52vh', overflowY: 'auto', margin: '8px 0' }}>
             {FOODS.map((f) => {
@@ -273,7 +273,7 @@ function EnergyGoalCard({ goal, onQty, onAdd, onSet }) {
                     borderRadius: 'var(--radius-sm)', font: 'inherit', color: 'inherit', cursor: 'pointer',
                   }}
                 >
-                  <span style={{ fontSize: '1.3rem', lineHeight: 1 }}>{f.emoji}</span>
+                  <Icona nome={f.icona} size="1.3rem" />
                   <span className="small" style={{ flex: 1, minWidth: 96 }}>
                     {f.name} <span className="muted">({f.portion})</span>
                   </span>

@@ -38,7 +38,7 @@ export default function StartWorkoutPage() {
     <div className="page">
       <header className="appbar">
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home"><Icona nome="indietro" /></button>
-        <h2>🔥 Allenamento</h2>
+        <h2><Icona nome="energia" /> Allenamento</h2>
       </header>
 
       {pending?.session && (
@@ -61,7 +61,7 @@ export default function StartWorkoutPage() {
 
       {plans?.length === 0 && (
         <div className="card center stack" style={{ padding: '40px 20px' }}>
-          <span className="emoji-xl">📋</span>
+          <Icona nome="schede" size="2.4rem" />
           <p className="muted">Prima crea una scheda!</p>
           <button className="btn btn--teal" onClick={() => navigate('/schede/nuova')}>Crea scheda</button>
         </div>

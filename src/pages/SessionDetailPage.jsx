@@ -83,14 +83,14 @@ export default function SessionDetailPage() {
         <KcalRow session={session} />
         {session.autoClosed && (
           <p className="small muted" style={{ margin: 0 }}>
-            ⏱ Chiusa automaticamente: rimasta aperta senza attività (la fine è retrodatata all'ultima serie)
+            <Icona nome="durata" /> Chiusa automaticamente: rimasta aperta senza attività (la fine è retrodatata all'ultima serie)
           </p>
         )}
       </div>
 
       {Array.isArray(session.hrT) && session.hrT.length >= 2 && (
         <div className="card card--flat stack">
-          <span className="label" style={{ margin: 0 }}>❤️ Battito cardiaco</span>
+          <span className="label" style={{ margin: 0 }}><Icona nome="catCardio" /> Battito cardiaco</span>
           <HrChart session={session} zones={zoneInfo?.zones} />
         </div>
       )}
@@ -99,7 +99,7 @@ export default function SessionDetailPage() {
 
       {zoneData && (
         <div className="card card--flat stack">
-          <span className="label" style={{ margin: 0 }}>🎯 Zone del cuore</span>
+          <span className="label" style={{ margin: 0 }}><Icona nome="obiettivi" /> Zone del cuore</span>
           <ZoneBars data={zoneData} thresholdSource={zoneInfo.source} />
         </div>
       )}
@@ -108,7 +108,7 @@ export default function SessionDetailPage() {
         <div className="card card--flat stack">
           <span className="label" style={{ margin: 0 }}>Serie per categoria</span>
           {Object.entries(st.byCategory).map(([cat, n]) => (
-            <Row key={cat} label={`${categoryById(cat).emoji} ${categoryById(cat).label}`} value={`${n} (${Math.round((n / st.doneSeries) * 100)}%)`} />
+            <Row key={cat} label={<><Icona nome={categoryById(cat).icona} /> {categoryById(cat).label}</>} value={`${n} (${Math.round((n / st.doneSeries) * 100)}%)`} />
           ))}
         </div>
       )}
@@ -134,7 +134,7 @@ export default function SessionDetailPage() {
                 {e.mode !== 'duration' && e.startedAt && e.endedAt ? ` — ${formatClock(Math.round((e.endedAt - e.startedAt) / 1000))}` : ''}
               </p>
             )}
-            {e.note && <p className="small">📝 {e.note}</p>}
+            {e.note && <p className="small"><Icona nome="notaScritta" /> {e.note}</p>}
           </div>
         ))}
       </div>

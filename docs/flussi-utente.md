@@ -503,21 +503,73 @@ l'una dall'altra. Sono le prime due da ridisegnare, ed e' scritto sia nel regist
 Undici delle dodici stanno nella tabella `EXERCISE_TYPES` di `data/health.js`, che ora
 contiene nomi del registro (`'corsa'`) e non piu' classi CSS (`'fa-person-running'`).
 
-### F9.4 Le emoji restano emoji
+### F9.4 Le emoji diventano icone anche loro (pixellandole)
 
-Le emoji delle **categorie muscolari** e degli **equivalenti alimentari** non sono state
-toccate, per due motivi diversi.
+Fermarsi alle icone di Font Awesome aveva lasciato l'app **mezza a pixel e mezza no**, che
+sta peggio di com'era prima: le cinquanta emoji sono ovunque, a partire dalla home.
 
-Sugli **alimenti** la sostituzione non e' proponibile: su 21 cibi la libreria copre mela,
-torta, caffe' e bottiglia. Pizza, birra, hamburger, sushi, ramen, patatine e gelato non
-esistono in nessuna libreria a pixel gratuita. Mostrare la stessa icona generica per cibi
-diversi toglierebbe al carrello l'unica cosa che lo rende leggibile a colpo d'occhio —
-e qui serve riconoscere *cosa* e', non *che tipo* di cosa e'.
+Il primo ragionamento era che gli alimenti dovessero restare emoji, perche' nessuna libreria
+a pixel ha pizza, birra, sushi e ramen. **Era la domanda sbagliata**: non serve che qualcuno
+abbia disegnato una pizza a pixel, basta pixellare la pizza che c'e' gia'.
+`scripts/emoji2icona.py` prende il disegno ufficiale di un set di emoji libero, lo riduce a
+24×24 con poche tinte e lo passa a `png2icona.py`. Il carrello resta leggibile: nell'elenco
+si distinguono prosecco, vino rosso, birra, gin tonic, spritz e i due gelati.
 
-Sulle **categorie muscolari** ci sarebbero cinque equivalenti su dieci (braccia, avambracci,
-spalle, petto, cardio) e nessuno per schiena, addome, gambe, polpacci e collo. Cinque icone
-a pixel e cinque emoji a colori nella stessa lista starebbero peggio di dieci emoji: o si
-disegnano tutte e dieci, o si lasciano stare.
+Dettaglio tecnico che decide la resa: il ridimensionamento usa la **media dell'area** e non
+il nearest-neighbour. Scendendo da 72 px a 24, il nearest tiene un pixel ogni tre e i tratti
+sottili spariscono — il manico del bilanciere, il quadrante dell'orologio. La media li
+conserva come tinta intermedia, e la quantizzazione subito dopo li riporta a un colore netto.
+
+**La regola di quando serve il colore**, imparata sbagliando: dove prima c'era un'EMOJI va
+un'icona a colori, dove c'era un'icona di Font Awesome resta il disegno monocromatico di
+pixelarticons. Le monocromatiche funzionano dentro un pulsante, accanto a "Indietro" o
+"Pausa", dove devono solo ripetere il verbo; da sole a 2.4rem come illustrazione di sezione
+sono povere — la home con la fiamma di contorno al posto di 🔥 sembrava spenta. Sono 46
+icone derivate, e restano alla libreria solo le cinque emoji che stavano dentro un pulsante.
+
+**Eccezione**: `scale` di pixelarticons e' il ridimensionamento, non una bilancia, e in home
+diceva "ingrandisci" al posto di "peso" — quella si genera dall'emoji ⚖.
+
+### F9.4-ter Due difetti trovati solo guardando l'app
+
+Il primo: le icone uscivano con un **alone nero irregolare**. Non veniva da Twemoji ma dallo
+script — nei PNG i pixel trasparenti hanno un colore sotto, quasi sempre nero, e mediando
+l'area senza tenerne conto un pixel di bordo (meta' disegno, meta' trasparente-nero) esce
+scurissimo. Si corregge moltiplicando i colori per l'opacita' **prima** di mediare e
+dividendo dopo, cosi' i pixel trasparenti pesano zero invece di pesare come nero.
+
+Il secondo, piu' vistoso: **il maiale era blu scuro col bordo rosa**, e l'hamburger uguale.
+`png2icona.py` faceva ripiegare il primo colore su `currentColor`, cosi' un'icona segue il
+colore del testo che accompagna. E' giusto per un disegno di un colore solo — una freccia,
+una X — e sbagliato per uno a piu' tinte, dove il "primo colore" e' solo la regione piu'
+grande, che diventava il blu del testo. Ora `converti()` ha `segui_testo`, acceso per le
+monocromatiche e spento per le derivate.
+
+Nessuno dei due si vedeva nei PNG di prova: il primo si notava solo ingrandendo, il secondo
+esisteva solo una volta diventato SVG dentro l'app. E' il motivo per cui la verifica a
+schermo non e' una formalita' finale.
+
+Restano caratteri di testo, e non sono un dimenticanza: `→` `✓` `✕` stanno dentro frasi,
+sono segni tipografici e non disegni.
+
+### F9.4-bis Le licenze, e perche' prima non c'erano
+
+Finche' l'app scriveva nel codice il **carattere** `👟`, il disegno lo metteva il telefono
+di chi guardava: l'app distribuiva una lettera, non un'immagine, e non c'era niente da
+dichiarare. Pixellando, il disegno **entra nel bundle** e viene ridistribuito.
+
+Scelto **Twemoji** (CC-BY 4.0): PNG pronti, forme piatte che reggono la riduzione, e
+l'obbligo si esaurisce in una riga di attribuzione. Scartati **OpenMoji** (CC BY-SA: lo
+share-alike sulle derivate complica un repository pubblico con disegni di tre provenienze) e
+**Fluent Emoji** di Microsoft, che pure e' MIT e sarebbe stato il piu' comodo: pubblica solo
+SVG, e rasterizzarli richiede `cairo`, una libreria di sistema da installare a parte.
+
+L'attribuzione sta in tre posti apposta: `src/icons/CREDITI.md` (l'elenco autorevole), il
+README, e **dentro l'app** nella schermata "Scrivimi" — la CC-BY chiede il credito dove il
+lavoro viene usato, e un file nel repository non lo vede chi apre l'app dal telefono.
+
+**Valutata e rimandata**: l'idea di un repository separato per le icone. Aveva senso solo
+per pubblicarle, e quel bisogno e' caduto.
 
 ### F9.5 Come si aggiunge un'icona disegnata a mano
 

@@ -23,12 +23,15 @@
  * buco di 300 kcal la maggior parte degli allenamenti sarebbe finita sempre sullo
  * stesso premio, e il paragone avrebbe smesso di dire qualcosa.
  *
- * Le emoji sono le icone: e' la convenzione del design system dell'app
- * ("emoji come icone", vedi l'intestazione di global.css). Niente immagini da
- * scaricare, funziona offline e non pesa sul bundle.
+ * `icona` e' un nome del registro (src/icons/registry.js), non un'emoji: i disegni
+ * sono icone a pixel derivate dalle emoji che stavano qui prima, generate da
+ * scripts/genera-icone-emoji.py. Restano dentro il bundle, quindi funziona ancora
+ * tutto offline.
  *
- * Emoji volutamente diverse anche per piatti della stessa famiglia (le tre pizze):
- * nel riepilogo si vede l'icona da sola, e tre 🍕 identiche non direbbero nulla.
+ * Icone volutamente diverse anche per piatti della stessa famiglia (le tre pizze):
+ * nel riepilogo si vede l'icona da sola, e tre pizze identiche non direbbero nulla.
+ * E' anche il motivo per cui questi disegni non si possono accorpare: qui serve
+ * riconoscere QUALE cibo, non "un cibo".
  */
 
 /**
@@ -39,27 +42,27 @@
  * invece di lasciarli con dentro una copia vecchia.
  */
 export const FOODS = [
-  { id: 'vino-bianco', emoji: '🥂', name: 'Calice di vino bianco', portion: '125 ml', kcal: 88 },
-  { id: 'vino-rosso', emoji: '🍷', name: 'Calice di vino rosso', portion: '125 ml', kcal: 91 },
-  { id: 'birra', emoji: '🍺', name: 'Birra bionda', portion: '0,33 L', kcal: 108 },
-  { id: 'gelato-frutta', emoji: '🍧', name: 'Gelato in coppetta, gusto alla frutta', portion: '1 gusto', kcal: 110 },
-  { id: 'gin-tonic', emoji: '🍸', name: 'Gin tonic', portion: 'classico', kcal: 120 },
-  { id: 'te-limone', emoji: '🍋', name: 'Tè freddo al limone', portion: 'lattina 330 ml', kcal: 132 },
-  { id: 'coca-cola', emoji: '🥤', name: 'Coca-Cola', portion: 'lattina 330 ml', kcal: 139 },
-  { id: 'spritz', emoji: '🍹', name: 'Spritz', portion: 'calice 200 ml', kcal: 170 },
-  { id: 'gelato-crema', emoji: '🍨', name: 'Gelato in coppetta, gusti alla crema', portion: '2 palline', kcal: 180 },
-  { id: 'snickers', emoji: '🍫', name: 'Barretta di cioccolato', portion: 'Snickers, 50 g', kcal: 241 },
-  { id: 'patatine-sacchetto', emoji: '🥔', name: 'Patatine in sacchetto', portion: '50 g', kcal: 274 },
-  { id: 'patatine-fritte', emoji: '🍟', name: 'Patatine fritte', portion: 'porzione media', kcal: 340 },
-  { id: 'tiramisu', emoji: '🍰', name: 'Tiramisù', portion: '1 porzione', kcal: 420 },
-  { id: 'sushi', emoji: '🍣', name: 'Sushi misto', portion: '11 pezzi', kcal: 500 },
-  { id: 'hamburger', emoji: '🍔', name: 'Hamburger classico', portion: 'senza patatine', kcal: 600 },
-  { id: 'ramen-pollo', emoji: '🍜', name: 'Ramen di pollo', portion: '1 ciotola', kcal: 700 },
-  { id: 'pizza-verdure', emoji: '🫑', name: 'Pizza con le verdure', portion: 'intera', kcal: 750 },
-  { id: 'pizza-margherita', emoji: '🍕', name: 'Pizza margherita', portion: 'intera', kcal: 850 },
-  { id: 'ramen-maiale', emoji: '🐖', name: 'Ramen di maiale', portion: '1 ciotola', kcal: 900 },
-  { id: 'pizza-funghi', emoji: '🍄', name: 'Pizza prosciutto e funghi', portion: 'intera', kcal: 950 },
-  { id: 'pizza-diavola', emoji: '🌶️', name: 'Pizza diavola', portion: 'intera', kcal: 1050 },
+  { id: 'vino-bianco', icona: 'ciboProsecco', name: 'Calice di vino bianco', portion: '125 ml', kcal: 88 },
+  { id: 'vino-rosso', icona: 'ciboVinoRosso', name: 'Calice di vino rosso', portion: '125 ml', kcal: 91 },
+  { id: 'birra', icona: 'ciboBirra', name: 'Birra bionda', portion: '0,33 L', kcal: 108 },
+  { id: 'gelato-frutta', icona: 'ciboGranita', name: 'Gelato in coppetta, gusto alla frutta', portion: '1 gusto', kcal: 110 },
+  { id: 'gin-tonic', icona: 'ciboGinTonic', name: 'Gin tonic', portion: 'classico', kcal: 120 },
+  { id: 'te-limone', icona: 'ciboTeLimone', name: 'Tè freddo al limone', portion: 'lattina 330 ml', kcal: 132 },
+  { id: 'coca-cola', icona: 'ciboCola', name: 'Coca-Cola', portion: 'lattina 330 ml', kcal: 139 },
+  { id: 'spritz', icona: 'ciboSpritz', name: 'Spritz', portion: 'calice 200 ml', kcal: 170 },
+  { id: 'gelato-crema', icona: 'ciboGelato', name: 'Gelato in coppetta, gusti alla crema', portion: '2 palline', kcal: 180 },
+  { id: 'snickers', icona: 'ciboCioccolato', name: 'Barretta di cioccolato', portion: 'Snickers, 50 g', kcal: 241 },
+  { id: 'patatine-sacchetto', icona: 'ciboPatatine', name: 'Patatine in sacchetto', portion: '50 g', kcal: 274 },
+  { id: 'patatine-fritte', icona: 'ciboFritte', name: 'Patatine fritte', portion: 'porzione media', kcal: 340 },
+  { id: 'tiramisu', icona: 'ciboTiramisu', name: 'Tiramisù', portion: '1 porzione', kcal: 420 },
+  { id: 'sushi', icona: 'ciboSushi', name: 'Sushi misto', portion: '11 pezzi', kcal: 500 },
+  { id: 'hamburger', icona: 'ciboHamburger', name: 'Hamburger classico', portion: 'senza patatine', kcal: 600 },
+  { id: 'ramen-pollo', icona: 'ciboRamen', name: 'Ramen di pollo', portion: '1 ciotola', kcal: 700 },
+  { id: 'pizza-verdure', icona: 'ciboPizzaVerdure', name: 'Pizza con le verdure', portion: 'intera', kcal: 750 },
+  { id: 'pizza-margherita', icona: 'ciboPizza', name: 'Pizza margherita', portion: 'intera', kcal: 850 },
+  { id: 'ramen-maiale', icona: 'ciboRamenMaiale', name: 'Ramen di maiale', portion: '1 ciotola', kcal: 900 },
+  { id: 'pizza-funghi', icona: 'ciboPizzaFunghi', name: 'Pizza prosciutto e funghi', portion: 'intera', kcal: 950 },
+  { id: 'pizza-diavola', icona: 'ciboPizzaDiavola', name: 'Pizza diavola', portion: 'intera', kcal: 1050 },
 ]
 
 /** @returns {object|null} null se l'id non esiste piu' (voce tolta dall'elenco) */

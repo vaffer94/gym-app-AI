@@ -70,7 +70,7 @@ export default function FeedbackPage() {
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
           <Icona nome="indietro" />
         </button>
-        <h2>💬 Scrivimi</h2>
+        <h2><Icona nome="scrivimi" /> Scrivimi</h2>
       </header>
 
       <div className="card stack">
@@ -142,6 +142,32 @@ export default function FeedbackPage() {
           allenamenti né obiettivi.
         </p>
       </div>
+
+      <Crediti />
     </div>
+  )
+}
+
+/**
+ * L'attribuzione delle icone.
+ *
+ * Sta qui e non solo in src/icons/CREDITI.md perche' la CC-BY chiede il credito dove
+ * il lavoro viene usato, e un file nel repository non lo vede chi apre l'app dal
+ * telefono. Questa e' la schermata che piu' somiglia a un "info sull'app", ed e'
+ * l'unico posto dove una riga del genere non ruba spazio a qualcosa che serve.
+ *
+ * Il giorno in cui tutte le icone derivate saranno state ridisegnate, questo
+ * riquadro si cancella insieme a src/icons/da-emoji/.
+ */
+function Crediti() {
+  return (
+    <p className="small muted center" style={{ margin: 0 }}>
+      Icone:{' '}
+      <a href="https://pixelarticons.com/" target="_blank" rel="noreferrer noopener">pixelarticons</a>
+      {' '}(MIT) e{' '}
+      <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noreferrer noopener">Twemoji</a>
+      {' '}(<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer noopener">CC-BY 4.0</a>),
+      ridotte a pixel art.
+    </p>
   )
 }

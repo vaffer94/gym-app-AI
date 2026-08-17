@@ -38,7 +38,7 @@ export default function ParamsPage() {
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
           <Icona nome="indietro" />
         </button>
-        <h2>⚖️ Parametri</h2>
+        <h2><Icona nome="parametri" /> Parametri</h2>
       </header>
 
       <div className="card stack">

@@ -2,7 +2,7 @@
    GYM APP — Design System "Cartoon"
    Regole: contorni netti (3px ink), angoli molto stondati,
    ombre piatte "sticker" (no blur), palette limitata,
-   font arrotondati, emoji come icone. Poche cose per schermata.
+   font arrotondati, icone a pixel (src/icons). Poche cose per schermata.
    ============================================================ */
 
 :root {
@@ -202,12 +202,11 @@ p { margin: 0; }
    l'una, sotto il minimo leggibile: si dispongono 2x2 chiedendo meta' riga a testa. */
 .tabs > .btn { flex: 1 1 calc(50% - 6px); }
 
-/* ---------- Emoji icona grande ---------- */
-
-.emoji-xl { font-size: 2.4rem; line-height: 1; }
-.emoji-lg { font-size: 1.8rem; line-height: 1; }
-
 /* ---------- Icone ---------- */
+
+/* .emoji-xl e .emoji-lg sono state tolte insieme alle emoji: erano misure di
+   font, e un SVG non si dimensiona col font-size. La misura ora e' la prop
+   `size` di <Icona>, che accetta le stesse (2.4rem, 1.8rem). */
 
 /* Le icone sono SVG a pixel su griglia 24x24 (pixelarticons + le nostre, in
    src/icons/). Si dimensionano in em per crescere col testo che accompagnano.

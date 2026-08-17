@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { diagnosticaKcal, isHealthConnected } from '../data/health'
 import { getProfile, estimateKcal, basalRate } from '../data/kcal'
+import Icona from '../icons'
 
 /**
  * Interroga Google in tre modi diversi sullo stesso intervallo, per rispondere con
@@ -58,7 +59,7 @@ export default function KcalDiagnostics({ sessions }) {
   return (
     <div className="card stack">
       <div className="row">
-        <span className="emoji-lg">🔍</span>
+        <Icona nome="cerca" size="1.8rem" />
         <div style={{ flex: 1, minWidth: 96 }}>
           <h3>Da dove vengono le kcal</h3>
           <p className="small muted">

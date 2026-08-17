@@ -19,7 +19,7 @@ export default function SchedeListPage() {
     <div className="page">
       <header className="appbar">
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home"><Icona nome="indietro" /></button>
-        <h2>📋 Le tue schede</h2>
+        <h2><Icona nome="schede" /> Le tue schede</h2>
       </header>
 
       <button className="btn btn--primary btn--big" onClick={() => navigate('/schede/nuova')}>
@@ -30,7 +30,7 @@ export default function SchedeListPage() {
 
       {plans?.length === 0 && (
         <div className="card center stack" style={{ padding: '40px 20px' }}>
-          <span className="emoji-xl">📋</span>
+          <Icona nome="schede" size="2.4rem" />
           <p className="muted">Nessuna scheda ancora. Crea la tua prima!</p>
         </div>
       )}

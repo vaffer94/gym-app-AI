@@ -150,7 +150,7 @@ export default function HistoryListPage() {
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
           <Icona nome="indietro" />
         </button>
-        <h2>📊 Storico</h2>
+        <h2><Icona nome="storicoSezione" /> Storico</h2>
       </header>
 
       <div className="row tabs">
@@ -177,7 +177,7 @@ export default function HistoryListPage() {
 
       {sessions?.length === 0 && (
         <div className="card center stack" style={{ padding: '40px 20px' }}>
-          <span className="emoji-xl">🏋️</span>
+          <Icona nome="allenamento" size="2.4rem" />
           <p className="muted">Nessun allenamento ancora. Il primo è il più importante!</p>
           <button className="btn btn--primary" onClick={() => navigate('/allenamento')}>Inizia ora</button>
         </div>
@@ -479,7 +479,7 @@ function StreakCard({ sessions, fitbit, navigate, medaglie, mesiFinestra, giorni
           andata meglio. Resta il tempo dall'ultimo allenamento, che invece e' una cosa
           sola e si legge a colpo d'occhio. */}
       <div className="row">
-        <span className="emoji-xl">🔥</span>
+        <Icona nome="energia" size="2.4rem" />
         <div className="kpi" style={{ flex: 1, minWidth: 96, fontSize: '1.1rem' }}>
           {rest === 0 ? 'Ti sei allenata oggi!' : rest === 1 ? '1 giorno dall’ultimo allenamento' : `${rest} giorni dall’ultimo allenamento`}
         </div>

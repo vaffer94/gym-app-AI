@@ -6,3 +6,6 @@ dev-dist
 *.log
 .DS_Store
 .firebase
+
+# PNG scaricati da scripts/emoji2icona.py: si riscaricano da soli
+scripts/.cache-emoji/

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import Icona from '../icons'
 
 export default function LoginPage() {
   const { user, signInWithGoogle, signInDemo, isFirebaseConfigured } = useAuth()
@@ -25,7 +26,7 @@ export default function LoginPage() {
   return (
     <div className="page">
       <div className="login-hero">
-        <div className="logo">🏋️</div>
+        <div className="logo"><Icona nome="allenamento" size="3.4rem" /></div>
         <h1>Gym App</h1>
         <p className="muted">Il tuo compagno di allenamento</p>
       </div>

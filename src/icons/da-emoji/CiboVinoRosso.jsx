@@ -1,0 +1,56 @@
+// 🍷 (calice di vino rosso) — pixellata da twemoji, CC-BY 4.0 — attribuzione richiesta
+// generato da scripts/png2icona.py — non si modifica a mano:
+// si ridisegna il PNG e si rilancia lo script
+export default function CiboVinoRosso(props) {
+  return (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" shapeRendering="crispEdges">
+    <g fill="var(--ico-a, #d5dce2)">
+    <rect x="6" y="0" width="12" height="1"/>
+    <rect x="4" y="1" width="16" height="1"/>
+    <rect x="4" y="2" width="1" height="1"/>
+    <rect x="8" y="2" width="7" height="1"/>
+    <rect x="19" y="2" width="1" height="1"/>
+    <rect x="5" y="3" width="1" height="1"/>
+    <rect x="17" y="3" width="1" height="1"/>
+    <rect x="6" y="4" width="12" height="1"/>
+    </g>
+    <g fill="var(--ico-b, #ffffff)">
+    <rect x="5" y="2" width="3" height="1"/>
+    <rect x="15" y="2" width="4" height="1"/>
+    <rect x="6" y="3" width="11" height="1"/>
+    </g>
+    <g fill="var(--ico-c, #8899a6)">
+    <rect x="4" y="3" width="1" height="1"/>
+    <rect x="18" y="3" width="2" height="2"/>
+    <rect x="4" y="4" width="2" height="1"/>
+    <rect x="4" y="5" width="3" height="1"/>
+    <rect x="17" y="5" width="2" height="1"/>
+    <rect x="4" y="6" width="2" height="1"/>
+    <rect x="18" y="6" width="1" height="2"/>
+    <rect x="5" y="7" width="1" height="2"/>
+    <rect x="17" y="8" width="2" height="1"/>
+    <rect x="6" y="9" width="1" height="1"/>
+    <rect x="16" y="9" width="2" height="1"/>
+    <rect x="6" y="10" width="2" height="1"/>
+    <rect x="15" y="10" width="2" height="1"/>
+    <rect x="8" y="11" width="2" height="1"/>
+    <rect x="14" y="11" width="2" height="1"/>
+    <rect x="9" y="12" width="6" height="1"/>
+    <rect x="10" y="13" width="3" height="1"/>
+    <rect x="11" y="14" width="2" height="6"/>
+    <rect x="10" y="20" width="4" height="1"/>
+    <rect x="8" y="21" width="7" height="1"/>
+    <rect x="7" y="22" width="10" height="1"/>
+    <rect x="8" y="23" width="8" height="1"/>
+    </g>
+    <g fill="var(--ico-d, #aa3349)">
+    <rect x="7" y="5" width="10" height="1"/>
+    <rect x="6" y="6" width="12" height="2"/>
+    <rect x="6" y="8" width="11" height="1"/>
+    <rect x="7" y="9" width="9" height="1"/>
+    <rect x="8" y="10" width="7" height="1"/>
+    <rect x="10" y="11" width="4" height="1"/>
+    </g>
+    </svg>
+  )
+}

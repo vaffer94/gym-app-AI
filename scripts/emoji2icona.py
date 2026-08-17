@@ -19,7 +19,7 @@ import ssl
 import sys
 import urllib.request
 
-from PIL import Image
+from PIL import Image, ImageChops
 
 # Da dove arrivano i disegni. La licenza NON e' un dettaglio: l'icona che esce di
 # qui e' un'opera derivata e si porta dietro la licenza della fonte.
@@ -92,22 +92,47 @@ def quadra(img):
     return tela
 
 
-def pixella(img, lato=24, colori=6):
+def pixella(img, lato=24, colori=4):
     """Riduce a griglia e a poche tinte.
 
     Il ridimensionamento usa BOX (media dell'area) e non NEAREST: scendendo da
     72 o 618 pixel a 24, NEAREST tiene un pixel ogni tre o ogni venticinque e i
     tratti sottili spariscono del tutto. La media li conserva come tinta
     intermedia, e la quantizzazione subito dopo li riporta a un colore netto.
-    """
-    piccola = img.resize((lato, lato), Image.BOX)
 
-    # L'alfa va deciso PRIMA di quantizzare: quantizzando in RGBA i colori
-    # semitrasparenti dei bordi diventerebbero tinte a se' stanti e sprecherebbero
-    # meta' della palette in aloni.
-    alfa = piccola.getchannel("A").point(lambda a: 255 if a >= 110 else 0)
-    rgb = Image.new("RGB", piccola.size, (255, 255, 255))
-    rgb.paste(piccola.convert("RGB"), mask=alfa)
+    IL PUNTO DELICATO e' la trasparenza. Nei PNG i pixel trasparenti hanno un
+    colore sotto, quasi sempre nero. Mediando l'area senza tenerne conto, un
+    pixel di bordo (meta' disegno, meta' trasparente-nero) esce scurissimo: la
+    prima versione di questo script disegnava cosi' un alone nero irregolare
+    attorno a tutto — il maiale nero col bordo rosa. Si evita moltiplicando i
+    colori per l'opacita' PRIMA di mediare (alfa premoltiplicato) e dividendo
+    dopo: cosi' i pixel trasparenti pesano zero invece di pesare come nero.
+    """
+    r, g, b, a = img.split()
+    pre = Image.merge("RGB", (ImageChops.multiply(r, a),
+                              ImageChops.multiply(g, a),
+                              ImageChops.multiply(b, a)))
+    pre_p = pre.resize((lato, lato), Image.BOX).load()
+    alfa_p = a.resize((lato, lato), Image.BOX).load()
+
+    # Si divide per riportare i colori al loro valore vero. Sono 576 pixel:
+    # farlo a mano costa niente e evita di tirare dentro numpy.
+    rgb = Image.new("RGB", (lato, lato), (255, 255, 255))
+    px = rgb.load()
+    alfa = Image.new("L", (lato, lato), 0)
+    pa = alfa.load()
+    for y in range(lato):
+        for x in range(lato):
+            av = alfa_p[x, y]
+            # sotto meta' opacita' il pixel non entra nel disegno: un'icona a
+            # pixel non ha sfumature di bordo, o c'e' o non c'e'
+            if av < 128:
+                continue
+            pa[x, y] = 255
+            pr, pg, pb = pre_p[x, y]
+            px[x, y] = (min(255, pr * 255 // av),
+                        min(255, pg * 255 // av),
+                        min(255, pb * 255 // av))
 
     ridotta = rgb.quantize(colors=colori, method=Image.MEDIANCUT, dither=0).convert("RGB")
     ridotta.putalpha(alfa)
@@ -119,7 +144,7 @@ if __name__ == "__main__":
     ap.add_argument("emoji")
     ap.add_argument("--fonte", default="twemoji", choices=list(FONTI))
     ap.add_argument("--lato", type=int, default=24)
-    ap.add_argument("--colori", type=int, default=6)
+    ap.add_argument("--colori", type=int, default=4)
     ap.add_argument("--nome", help="nome nel registro, es. 'passi'")
     ap.add_argument("--png", help="scrive un PNG invece del componente")
     a = ap.parse_args()
@@ -138,10 +163,11 @@ if __name__ == "__main__":
 
     tmp = os.path.join(CACHE, "_tmp.png")
     icona.save(tmp)
-    svg, tinte = converti(tmp, a.lato)
+    svg, tinte = converti(tmp, a.lato, segui_testo=False)
     grezzo = a.nome or codepoint(a.emoji)
     nome = "".join(p.capitalize() for p in re.split(r"[-_ ]+", grezzo) if p)
-    print(componente(nome, svg, a.lato))
+    prov = f"{a.emoji} pixellata da {a.fonte} — {FONTI[a.fonte][2]}"
+    print(componente(nome, svg, a.lato, prov))
 
     print(f"{a.emoji} da {a.fonte} ({FONTI[a.fonte][2]})", file=sys.stderr)
     print(f"{len(tinte)} tinte, {len(svg)} byte", file=sys.stderr)

@@ -24,7 +24,7 @@ from PIL import Image
 NOMI = ["--ico-a", "--ico-b", "--ico-c", "--ico-d", "--ico-e", "--ico-f"]
 
 
-def converti(path, dimensione=24):
+def converti(path, dimensione=24, segui_testo=True):
     img = Image.open(path).convert("RGBA")
     if img.size != (dimensione, dimensione):
         # NEAREST e' obbligatorio: qualunque altro filtro inventa colori
@@ -79,9 +79,13 @@ def converti(path, dimensione=24):
              f'shape-rendering="crispEdges">']
     for i, (colore, strisce) in enumerate(livelli.items()):
         var = NOMI[i] if i < len(NOMI) else NOMI[-1]
-        # il primo colore usa currentColor come ripiego: cosi' l'icona segue il
-        # colore del testo come tutte le altre, finche' non le dai una variabile
-        ripiego = "currentColor" if i == 0 else colore
+        # `segui_testo` fa ripiegare il PRIMO colore su currentColor, cosi'
+        # l'icona prende il colore del testo che accompagna. Ha senso per un
+        # disegno di un colore solo (una freccia, una X), e NON ce l'ha per un
+        # disegno a piu' tinte: li' il primo colore e' semplicemente la regione
+        # piu' grande, e farla diventare il colore del testo dava un maiale
+        # blu scuro col bordo rosa. Chi ha piu' tinte tiene i suoi colori.
+        ripiego = "currentColor" if (segui_testo and i == 0) else colore
         parti.append(f'<g fill="var({var}, {ripiego})">')
         for x, y, w, h in strisce:
             alt = "" if h == 1 else f' height="{h}"'
@@ -91,7 +95,7 @@ def converti(path, dimensione=24):
     return "\n".join(parti), list(livelli)
 
 
-def componente(nome_componente, svg, dimensione):
+def componente(nome_componente, svg, dimensione, provenienza=None):
     """Impacchetta l'SVG in un componente React.
 
     Si genera un .jsx invece di importare il .svg perche' importare un SVG come
@@ -112,7 +116,12 @@ def componente(nome_componente, svg, dimensione):
     corpo = re.sub(r'\b([a-z]+)-([a-z])([a-z]*)="',
                    lambda m: f'{m.group(1)}{m.group(2).upper()}{m.group(3)}="', corpo)
     rientrato = corpo.replace("\n", "\n    ")
-    return (f"// generato da scripts/png2icona.py — non si modifica a mano:\n"
+    # La provenienza sta NEL file e non solo nei crediti: fra un anno, guardando
+    # un singolo componente, si deve capire da dove viene e con che licenza
+    # senza andare a cercare.
+    testa = f"// {provenienza}\n" if provenienza else ""
+    return (f"{testa}"
+            f"// generato da scripts/png2icona.py — non si modifica a mano:\n"
             f"// si ridisegna il PNG e si rilancia lo script\n"
             f"export default function {nome_componente}(props) {{\n"
             f"  return (\n    {rientrato}\n  )\n}}\n")

@@ -33,7 +33,7 @@ export default function TrackedActivities({ detectedWorkouts, onChange }) {
   return (
     <div className="card stack">
       <div className="row">
-        <span className="emoji-lg">🏊</span>
+        <Icona nome="nuotoSezione" size="1.8rem" />
         <div style={{ flex: 1, minWidth: 96 }}>
           <h3>Attività da conteggiare</h3>
           <p className="small muted">

@@ -38,7 +38,6 @@ import { Heart } from 'pixelarticons/react/Heart'
 import { Star } from 'pixelarticons/react/Star'
 import { Trophy } from 'pixelarticons/react/Trophy'
 import { Target } from 'pixelarticons/react/Target'
-import { Fire } from 'pixelarticons/react/Fire'
 import { WarningDiamond } from 'pixelarticons/react/WarningDiamond'
 import { CircleInfo } from 'pixelarticons/react/CircleInfo'
 import { Cloud } from 'pixelarticons/react/Cloud'
@@ -55,6 +54,54 @@ import { Waves } from 'pixelarticons/react/Waves'
 import { TreePine } from 'pixelarticons/react/TreePine'
 import { Leaf } from 'pixelarticons/react/Leaf'
 import { Flag } from 'pixelarticons/react/Flag'
+
+// Derivate dalle emoji che l'app usava — vedi src/icons/CREDITI.md
+import Allenamento from './da-emoji/Allenamento'
+import Obiettivi from './da-emoji/Obiettivi'
+import ObiettivoPassi from './da-emoji/ObiettivoPassi'
+import ObiettivoEnergia from './da-emoji/ObiettivoEnergia'
+import Festa from './da-emoji/Festa'
+import Energia from './da-emoji/Energia'
+import Schede from './da-emoji/Schede'
+import StoricoSezione from './da-emoji/StoricoSezione'
+import Integrazioni from './da-emoji/Integrazioni'
+import Orologio from './da-emoji/Orologio'
+import Cerca from './da-emoji/Cerca'
+import NuotoSezione from './da-emoji/NuotoSezione'
+import Scrivimi from './da-emoji/Scrivimi'
+import NotaScritta from './da-emoji/NotaScritta'
+import Parametri from './da-emoji/Parametri'
+import CatBraccia from './da-emoji/CatBraccia'
+import CatAvambracci from './da-emoji/CatAvambracci'
+import CatSpalle from './da-emoji/CatSpalle'
+import CatPetto from './da-emoji/CatPetto'
+import CatSchiena from './da-emoji/CatSchiena'
+import CatCore from './da-emoji/CatCore'
+import CatGambe from './da-emoji/CatGambe'
+import CatPolpacci from './da-emoji/CatPolpacci'
+import CatCardio from './da-emoji/CatCardio'
+import CatCollo from './da-emoji/CatCollo'
+import CiboProsecco from './da-emoji/CiboProsecco'
+import CiboVinoRosso from './da-emoji/CiboVinoRosso'
+import CiboBirra from './da-emoji/CiboBirra'
+import CiboGranita from './da-emoji/CiboGranita'
+import CiboGinTonic from './da-emoji/CiboGinTonic'
+import CiboTeLimone from './da-emoji/CiboTeLimone'
+import CiboCola from './da-emoji/CiboCola'
+import CiboSpritz from './da-emoji/CiboSpritz'
+import CiboGelato from './da-emoji/CiboGelato'
+import CiboCioccolato from './da-emoji/CiboCioccolato'
+import CiboPatatine from './da-emoji/CiboPatatine'
+import CiboFritte from './da-emoji/CiboFritte'
+import CiboTiramisu from './da-emoji/CiboTiramisu'
+import CiboSushi from './da-emoji/CiboSushi'
+import CiboHamburger from './da-emoji/CiboHamburger'
+import CiboRamen from './da-emoji/CiboRamen'
+import CiboPizzaVerdure from './da-emoji/CiboPizzaVerdure'
+import CiboPizza from './da-emoji/CiboPizza'
+import CiboRamenMaiale from './da-emoji/CiboRamenMaiale'
+import CiboPizzaFunghi from './da-emoji/CiboPizzaFunghi'
+import CiboPizzaDiavola from './da-emoji/CiboPizzaDiavola'
 
 export const ICONE = {
   // --- navigazione e azioni ---
@@ -93,7 +140,6 @@ export const ICONE = {
   medaglia: Star,
   trofeo: Trophy,
   passi: Target,
-  energia: Fire,
 
   // --- stati e messaggi ---
   avviso: WarningDiamond,
@@ -116,4 +162,52 @@ export const ICONE = {
   yoga: Leaf,
   ballo: Music,
   sport: Flag,
+
+  // --- derivate dalle emoji, a colori (src/icons/da-emoji/) ---
+  allenamento: Allenamento,                 // 🏋 avvia allenamento, logo
+  obiettivi: Obiettivi,                     // 🎯 sezione Obiettivi
+  obiettivoPassi: ObiettivoPassi,           // 👟 obiettivo passi
+  obiettivoEnergia: ObiettivoEnergia,       // 🍽 obiettivo energia, equivalenti
+  festa: Festa,                             // 🎉 fine allenamento
+  energia: Energia,                         // 🔥 avvia allenamento, obiettivo settimana, HIIT
+  schede: Schede,                           // 📋 sezione Schede
+  storicoSezione: StoricoSezione,           // 📊 sezione Storico
+  integrazioni: Integrazioni,               // 🔌 sezione Integrazioni
+  orologio: Orologio,                       // ⌚ watch, in home e in Integrazioni
+  cerca: Cerca,                             // 🔍 diagnostica kcal
+  nuotoSezione: NuotoSezione,               // 🏊 intestazione attivita' conteggiate
+  scrivimi: Scrivimi,                       // 💬 intestazione Scrivimi
+  notaScritta: NotaScritta,                 // 📝 nota di un esercizio nello storico
+  parametri: Parametri,                     // ⚖ sezione Parametri: peso, altezza, eta'
+  catBraccia: CatBraccia,                   // 💪 categoria Braccia
+  catAvambracci: CatAvambracci,             // ✊ categoria Avambracci
+  catSpalle: CatSpalle,                     // 🤸 categoria Spalle
+  catPetto: CatPetto,                       // 🛡 categoria Petto
+  catSchiena: CatSchiena,                   // 🧗 categoria Schiena
+  catCore: CatCore,                         // 🍫 categoria Core / Addome
+  catGambe: CatGambe,                       // 🦵 categoria Gambe
+  catPolpacci: CatPolpacci,                 // 🦶 categoria Polpacci
+  catCardio: CatCardio,                     // ❤ categoria Cardio
+  catCollo: CatCollo,                       // 🦒 categoria Collo
+  ciboProsecco: CiboProsecco,               // 🥂 calice di vino bianco
+  ciboVinoRosso: CiboVinoRosso,             // 🍷 calice di vino rosso
+  ciboBirra: CiboBirra,                     // 🍺 birra bionda
+  ciboGranita: CiboGranita,                 // 🍧 gelato alla frutta
+  ciboGinTonic: CiboGinTonic,               // 🍸 gin tonic
+  ciboTeLimone: CiboTeLimone,               // 🍋 te' freddo al limone
+  ciboCola: CiboCola,                       // 🥤 Coca-Cola
+  ciboSpritz: CiboSpritz,                   // 🍹 spritz
+  ciboGelato: CiboGelato,                   // 🍨 gelato alla crema
+  ciboCioccolato: CiboCioccolato,           // 🍫 barretta di cioccolato
+  ciboPatatine: CiboPatatine,               // 🥔 patatine in sacchetto
+  ciboFritte: CiboFritte,                   // 🍟 patatine fritte
+  ciboTiramisu: CiboTiramisu,               // 🍰 tiramisu'
+  ciboSushi: CiboSushi,                     // 🍣 sushi misto
+  ciboHamburger: CiboHamburger,             // 🍔 hamburger
+  ciboRamen: CiboRamen,                     // 🍜 ramen di pollo
+  ciboPizzaVerdure: CiboPizzaVerdure,       // 🫑 pizza con le verdure
+  ciboPizza: CiboPizza,                     // 🍕 pizza margherita
+  ciboRamenMaiale: CiboRamenMaiale,         // 🐖 ramen di maiale
+  ciboPizzaFunghi: CiboPizzaFunghi,         // 🍄 pizza prosciutto e funghi
+  ciboPizzaDiavola: CiboPizzaDiavola,       // 🌶 pizza diavola
 }

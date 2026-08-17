@@ -44,12 +44,12 @@ export default function WatchPage() {
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
           <Icona nome="indietro" />
         </button>
-        <h2>⌚ Dal polso</h2>
+        <h2><Icona nome="orologio" /> Dal polso</h2>
       </header>
 
       <div className="card stack">
         <div className="row">
-          <span className="emoji-lg">⌚</span>
+          <Icona nome="orologio" size="1.8rem" />
           <div style={{ flex: 1, minWidth: 96 }}>
             <h3>App per l’orologio</h3>
             <p className="small muted">Wear OS — Pixel Watch e simili</p>

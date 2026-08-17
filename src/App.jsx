@@ -14,13 +14,14 @@ import GoalsPage from './pages/GoalsPage'
 import IntegrationsPage from './pages/IntegrationsPage'
 import FeedbackPage from './pages/FeedbackPage'
 import WatchPage from './pages/WatchPage'
+import Icona from './icons'
 
 function Protected({ children }) {
   const { user, loading } = useAuth()
   if (loading) {
     return (
       <div className="page center" style={{ paddingTop: '40vh' }}>
-        <span className="emoji-xl">🏋️</span>
+        <Icona nome="allenamento" size="2.4rem" />
       </div>
     )
   }

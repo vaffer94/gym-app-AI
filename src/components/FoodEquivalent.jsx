@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { FOODS, nearestFood } from '../data/foods'
 import { SheetDialog } from './Dialog'
+import Icona from '../icons'
 
 /**
  * L'equivalente alimentare delle kcal, in due pezzi riusabili: il pulsante-emoji e
@@ -31,7 +32,7 @@ export function FoodButton({ kcal, compact = false }) {
         title={`${foodLabel(match)} — tocca per la lista`}
         aria-label={`Equivalente: ${foodLabel(match)}. Apri la lista degli alimenti`}
       >
-        <span style={{ fontSize: compact ? '1rem' : '1.25rem', lineHeight: 1 }}>{match.food.emoji}</span>
+        <Icona nome={match.food.icona} size={compact ? '1rem' : '1.25rem'} />
       </button>
       {open && <FoodDialog kcal={kcal} onClose={() => setOpen(false)} />}
     </>
@@ -55,7 +56,7 @@ export function FoodDialog({ kcal, onClose }) {
 
   return (
     <SheetDialog onClose={onClose}>
-      <h2>🍽 Quanto vale un allenamento</h2>
+      <h2><Icona nome="obiettivoEnergia" /> Quanto vale un allenamento</h2>
       <p className="small muted">
         Hai bruciato <strong>{kcal} kcal</strong>. Gli alimenti evidenziati sono quelli che ci stanno dentro.
       </p>
@@ -81,7 +82,7 @@ export function FoodDialog({ kcal, onClose }) {
                 opacity: within ? 1 : 0.45,
               }}
             >
-              <span style={{ fontSize: '1.3rem', lineHeight: 1 }}>{f.emoji}</span>
+              <Icona nome={f.icona} size="1.3rem" />
               <span className="small" style={{ flex: 1, minWidth: 96 }}>
                 {f.name} <span className="muted">({f.portion})</span>
               </span>

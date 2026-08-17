@@ -67,7 +67,7 @@ export default function ExercisePicker({ repo, onAdd, onClose }) {
                   className={`chip chip--select ${category === c.id ? 'chip--on' : ''}`}
                   onClick={() => setCategory(category === c.id ? null : c.id)}
                 >
-                  {c.emoji} {c.label}
+                  <Icona nome={c.icona} /> {c.label}
                 </span>
               ))}
             </div>
@@ -262,7 +262,7 @@ function CustomForm({ initialName, initialCategory, repo, onBack, onDone }) {
               className={`chip chip--select ${category === c.id ? 'chip--on' : ''}`}
               onClick={() => setCategory(c.id)}
             >
-              {c.emoji} {c.label}
+              <Icona nome={c.icona} /> {c.label}
             </span>
           ))}
         </div>

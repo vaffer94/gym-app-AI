@@ -1,18 +1,18 @@
 // Tassonomia fissa delle categorie (non estendibile dall'utente)
 export const CATEGORIES = [
-  { id: 'braccia_sup', label: 'Braccia', emoji: '💪' },
-  { id: 'braccia_inf', label: 'Avambracci', emoji: '✊' },
-  { id: 'spalle', label: 'Spalle', emoji: '🤸' },
-  { id: 'petto', label: 'Petto', emoji: '🛡️' },
-  { id: 'schiena', label: 'Schiena', emoji: '🧗' },
-  { id: 'core', label: 'Core / Addome', emoji: '🍫' },
-  { id: 'gambe_sup', label: 'Gambe', emoji: '🦵' },
-  { id: 'gambe_inf', label: 'Polpacci', emoji: '🦶' },
-  { id: 'cardio', label: 'Cardio', emoji: '❤️' },
-  { id: 'collo', label: 'Collo', emoji: '🦒' },
+  { id: 'braccia_sup', label: 'Braccia', icona: 'catBraccia' },
+  { id: 'braccia_inf', label: 'Avambracci', icona: 'catAvambracci' },
+  { id: 'spalle', label: 'Spalle', icona: 'catSpalle' },
+  { id: 'petto', label: 'Petto', icona: 'catPetto' },
+  { id: 'schiena', label: 'Schiena', icona: 'catSchiena' },
+  { id: 'core', label: 'Core / Addome', icona: 'catCore' },
+  { id: 'gambe_sup', label: 'Gambe', icona: 'catGambe' },
+  { id: 'gambe_inf', label: 'Polpacci', icona: 'catPolpacci' },
+  { id: 'cardio', label: 'Cardio', icona: 'catCardio' },
+  { id: 'collo', label: 'Collo', icona: 'catCollo' },
 ]
 
-export const categoryById = (id) => CATEGORIES.find((c) => c.id === id) || { id, label: id, emoji: '🏋️' }
+export const categoryById = (id) => CATEGORIES.find((c) => c.id === id) || { id, label: id, icona: 'allenamento' }
 
 export const EQUIPMENT_LABELS = {
   'body only': 'corpo libero',

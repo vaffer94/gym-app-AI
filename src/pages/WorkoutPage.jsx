@@ -189,7 +189,7 @@ export default function WorkoutPage() {
       {paused && (
         <div className="sheet-backdrop">
           <div className="sheet center stack" style={{ padding: 32 }}>
-            <span className="emoji-xl">⏸️</span>
+            <Icona nome="pausa" size="2.4rem" />
             <h2>In pausa</h2>
             <p className="small muted">Il tempo di pausa non conta nelle statistiche</p>
             <button className="btn btn--primary btn--big" onClick={handlePause}>Riprendi</button>
@@ -223,7 +223,7 @@ export default function WorkoutPage() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h2>{curr.name}</h2>
                 <p className="small muted">
-                  {categoryById(curr.category).emoji} {categoryById(curr.category).label}
+                  <Icona nome={categoryById(curr.category).icona} /> {categoryById(curr.category).label}
                   {curr.mode === 'duration'
                     ? ` · ${Math.round(curr.durationSec / 60)} min`
                     : `${curr.hasWeight ? ` · target ${curr.weightKg} kg` : ''} · ${curr.reps} ripetizioni`}
@@ -566,7 +566,7 @@ function Summary({ stats, prev, planName, session, onHome }) {
   return (
     <div className="page">
       <div className="center stack" style={{ paddingTop: 16 }}>
-        <span className="emoji-xl">🎉</span>
+        <Icona nome="festa" size="2.4rem" />
         <h1>Fatto!</h1>
         <p className="muted">{planName}</p>
       </div>
@@ -592,7 +592,7 @@ function Summary({ stats, prev, planName, session, onHome }) {
         <div className="card card--flat stack">
           <span className="label" style={{ margin: 0 }}>Serie per categoria</span>
           {Object.entries(stats.byCategory).map(([cat, n]) => (
-            <StatRow key={cat} label={`${categoryById(cat).emoji} ${categoryById(cat).label}`} value={`${Math.round((n / stats.doneSeries) * 100)}%`} />
+            <StatRow key={cat} label={<><Icona nome={categoryById(cat).icona} /> {categoryById(cat).label}</>} value={`${Math.round((n / stats.doneSeries) * 100)}%`} />
           ))}
         </div>
       )}
