@@ -103,7 +103,13 @@ export function longestAppDayStreak(sessions) {
   return longestRun(new Set(sessions.filter((s) => s.startedAt).map((s) => dayStart(s.startedAt))))
 }
 
-/** Record del mese corrente: giorni consecutivi con attività, app + rilevati da Google */
+/**
+ * Record del mese corrente: giorni consecutivi con attivita'.
+ *
+ * `workoutDaysISO` sono i giorni delle sole attivita' che l'utente ha scelto di far
+ * contare, non tutte quelle che Google riconosce: prima bastava una camminata al giorno
+ * per costruire una striscia che non corrispondeva a nessun allenamento.
+ */
 export function longestActivityStreakThisMonth(sessions, workoutDaysISO = []) {
   const now = new Date()
   const m = now.getMonth()

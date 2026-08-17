@@ -18,6 +18,7 @@ const LS = {
   steps: 'gym.health.stepsGoal',
   workouts: 'gym.goal.workouts',
   kcal: 'gym.goal.kcal',
+  activities: 'gym.goal.activityTypes',
 }
 
 /* ---------- passi ---------- */
@@ -66,14 +67,55 @@ export const setKcalGoal = (goal) => localStorage.setItem(LS.kcal, JSON.stringif
 export const cartKcal = (cart) =>
   (cart || []).reduce((a, i) => a + (foodById(i.id)?.kcal || 0) * i.qty, 0)
 
+/* ---------- attivita' di Google che valgono come allenamento ---------- */
+
+/**
+ * I tipi di attivita' che Google riconosce da solo (nuoto, bici, camminata...) e che
+ * l'utente ha deciso di far contare fra i propri allenamenti.
+ *
+ * Vuoto di default, e non e' pigrizia: la bici usata per andare al lavoro e le
+ * camminate arrivano comunque, e se contassero senza che nessuno l'abbia chiesto la
+ * settimana si chiuderebbe spostandosi. Quello che vale lo si sceglie una volta, e da
+ * quel momento vale davvero — chi va in piscina due volte a settimana si sta allenando
+ * quanto chi va in palestra, e fingere di non saperlo sarebbe altrettanto falso.
+ *
+ * Impostazione locale al dispositivo come gli altri obiettivi: sta qui e non fra le
+ * integrazioni perche' non cambia quali dati arrivano, cambia quali contano.
+ */
+export function getTrackedActivityTypes() {
+  try {
+    const v = JSON.parse(localStorage.getItem(LS.activities) || '[]')
+    return Array.isArray(v) ? v.filter((t) => typeof t === 'string') : []
+  } catch {
+    return [] // impostazione corrotta: meglio non contare niente che contare a caso
+  }
+}
+
+export const setTrackedActivityTypes = (types) =>
+  localStorage.setItem(LS.activities, JSON.stringify([...new Set(types)]))
+
+/**
+ * Predicato pronto da passare a un filtro. Legge localStorage una volta sola: fatto
+ * dentro il filtro, lo rileggerebbe per ogni riga dell'elenco.
+ */
+export function trackedActivityFilter() {
+  const set = new Set(getTrackedActivityTypes())
+  return (w) => set.has(w?.type)
+}
+
 /* ---------- avanzamento ---------- */
 
 /**
- * Contano SOLO gli allenamenti registrati dall'app, non quelli rilevati da Google.
+ * Le attivita' di questa settimana, da lunedi'.
  *
- * Non e' un limite tecnico ma il senso dell'obiettivo: se valessero anche le camminate
- * che l'orologio riconosce da solo, la settimana si chiuderebbe stando in piedi, e il
- * numero smetterebbe di dire qualcosa su quanto ti sei allenata.
+ * Prima qui contavano solo gli allenamenti registrati dall'app, per non far chiudere la
+ * settimana a forza di camminate riconosciute dall'orologio. Il motivo era giusto ma la
+ * regola era troppo larga: chi va in piscina due volte a settimana si sta allenando, e
+ * far finta di non saperlo era falso quanto contare le scale.
+ *
+ * Ora la distinzione la fa l'utente una volta sola (vedi getTrackedActivityTypes) e
+ * questa funzione non se ne occupa: riceve gia' l'elenco di cio' che conta, costruito da
+ * allActivities in data/activities.js.
  */
 export function weekSessions(sessions, now = Date.now()) {
   const start = mondayOf(now)
@@ -115,11 +157,16 @@ export function weeksInLine(sessions, goal, now = Date.now()) {
 
 /**
  * Le ultime `quante` settimane, dalla piu' vecchia alla settimana in corso, con quanti
- * allenamenti in ognuna e se l'obiettivo e' stato raggiunto. Piu' il totale storico
- * delle settimane in linea, che e' il numero che dice se e' un'abitudine o un caso.
+ * allenamenti in ognuna e se l'obiettivo e' stato raggiunto. Piu' il totale delle
+ * settimane a obiettivo, che e' il numero che dice se e' un'abitudine o un caso.
  *
  * "3 settimane di fila" da solo non diceva molto: non si vedeva ne' quali, ne' quante
  * ne erano state saltate, ne' se prima era andata meglio.
+ *
+ * Il totale copre esattamente il periodo che gli si passa, e non "sempre": da quando
+ * contano anche le attivita' scelte su Google, chi chiama deve dare solo la finestra in
+ * cui entrambe le fonti hanno dati. Un totale piu' lungo sommerebbe settimane misurate
+ * con due metri diversi.
  *
  * @returns {{settimane: {monday:number, count:number, hit:boolean, corrente:boolean}[], totale:number}}
  */

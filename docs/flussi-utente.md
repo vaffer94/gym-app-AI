@@ -167,6 +167,114 @@ Due punti dove il tocco non dava segno di essere arrivato.
 - **Pulsanti di Google Health**: sincronizzare vuol dire aspettare la rete, e senza stato visibile si preme, non succede niente, e si ripreme. Il pulsante si disabilita e dice cosa sta facendo
 - Con `prefers-reduced-motion` resta il lampo di colore e sparisce il movimento
 
+## F7 — Le attivita' importate da Google che contano davvero (17/08/2026)
+
+L'app non e' solo un registratore di palestra: e' anche un tracciatore delle abitudini di
+movimento. Google riconosce da solo nuotate, uscite in bici e camminate, ma finora
+finivano tutte nello stesso mucchio, viste ma mai conteggiate.
+
+### F7.1 La scelta e' dell'utente, una volta sola
+
+In **Integrazioni** compare "Attivita' da conteggiare": l'elenco dei tipi che Google
+riconosce, **tutti spenti di default**, e quelli spuntati valgono come allenamento.
+
+Perche' cosi' e non con una regola automatica: non esiste una regola che valga per due
+persone. La stessa bici e' allenamento per chi esce la domenica e trasporto per chi va al
+lavoro; la stessa camminata e' un obiettivo per uno e il tragitto alla fermata per un
+altro. Prima la regola era "nessuna attivita' di Google conta", che era giusta contro le
+camminate e falsa contro le nuotate.
+
+Decisioni prese:
+
+- **L'elenco e' l'unione** fra i tipi che sappiamo nominare e quelli comparsi davvero nei
+  dati. Solo i primi lascerebbero fuori un tipo che Google usa e noi non conosciamo; solo
+  i secondi obbligherebbero a nuotare una volta prima di poter dire che il nuoto conta.
+- **Raggruppati per etichetta**: `CYCLING` e `BIKING` sono un chip solo, se no si vedono
+  due voci "Bici" identiche e sembra un difetto.
+- **Sta in Integrazioni e non in Obiettivi**, al contrario dell'obiettivo passi che da
+  li' era stato spostato: la domanda non e' "quanto voglio fare" ma "di questo servizio,
+  cosa mi interessa", e si risponde guardando l'elenco di cio' che l'orologio ha visto.
+- **Nessun pulsante Salva**: la spunta e' gia' la conferma.
+
+### F7.2 I doppioni: l'app che si conta due volte
+
+L'app del watch registra con Health Services, e quella sessione **ricompare dentro Google
+Health come "esercizio"**. Senza filtro, chi spunta "Pesi" vedrebbe ogni allenamento in
+palestra valere due volte sull'obiettivo, con le kcal sommate a se stesse.
+
+Un'attivita' di Google si scarta quando si sovrappone a una sessione dell'app per **almeno
+meta' della propria durata**. Non basta un istante in comune: una camminata cominciata
+mentre l'allenamento finiva condivide qualche secondo e non e' lo stesso allenamento.
+Le attivita' senza orario di fine si giudicano sull'unica cosa osservabile, cioe' se
+cominciano dentro l'allenamento.
+
+Lo scarto **si vede**: la riga resta in elenco con scritto "Non conteggiata: e'
+l'allenamento che hai gia' registrato con l'app". Se un giorno il filtro sbagliasse, una
+riga scomparsa non lo direbbe a nessuno.
+
+### F7.3 La finestra dei 3 mesi
+
+I conteggi misti (app + Google) valgono solo dove **entrambe le fonti hanno dati**: prima
+di allora l'app sa tutto e Google non sa niente, e le settimane vecchie risulterebbero
+sistematicamente piu' magre di quelle recenti. Il confronto fra settimane — che e' tutto
+il senso di una medaglia — sarebbe truccato.
+
+Misurato il 17/08/2026 sui dati veri: Google ha **almeno un anno** di storico (300
+attivita' fino al 25/08/2025, paginato), e il taglio a 28 giorni che c'era prima era
+**nostro**, non suo. La finestra e' stata portata a **90 giorni**, che coincide col
+"Trimestre" del selettore di periodo, cioe' il periodo piu' lungo che una schermata
+guardi. Piu' indietro il dato non servirebbe a niente e renderebbe l'elenco dispersivo.
+
+Due finestre diverse, ed e' voluto:
+
+| dove | finestra | perche' |
+|---|---|---|
+| conteggi (obiettivi, medaglie, record) | 90 giorni | e' il periodo confrontabile |
+| elenco "Allenamenti" | 4 settimane | ogni riga costa due chiamate all'API per le kcal |
+
+La differenza e' dichiarata in fondo all'elenco, se no sembra un difetto.
+
+Conseguenza accettata: il totale delle medaglie non dice piu' "in tutto" ma **"in 3
+mesi"**. Era una promessa che il dato non puo' piu' mantenere — meglio dichiarare il
+periodo che dire "sempre" contando tre mesi. Il **record di giorni di fila (app)** resta
+invece su tutto lo storico e app-only: e' un primato gia' conquistato, e troncarlo per
+simmetria significherebbe cancellarlo.
+
+### F7.4 Tre stati, riconoscibili senza leggere
+
+| cosa | come si vede |
+|---|---|
+| allenamento registrato dall'app | card col colore della scheda, ombra, si apre al tocco |
+| attivita' di Google conteggiata | riquadro a fondo teal chiaro, bordo pieno, niente ombra |
+| attivita' vista ma non conteggiata | bordo tratteggiato, fondo spento, testo attenuato |
+
+Il fondo a righe era stato valutato e scartato: DESIGN.md esclude i gradienti, e le righe
+si fanno con `repeating-linear-gradient`.
+
+Nel **calendario** l'attivita' conteggiata e' una **cornice dentro la cella**, non un
+secondo fondo: cosi' convive con l'arancione dell'allenamento registrato dall'app invece
+di sostituirlo, e in una giornata si vedono tutte e due le cose. E' un `::after` e non un
+`box-shadow: inset` perche' `.cal-cell--today` usa gia' `box-shadow` per la sua ombra, e
+la seconda regola cancellerebbe la prima.
+
+Il cuoricino resta, ma cambia significato: ora dice "vista e non conteggiata". Un giorno
+con la cornice non lo mostra, se no direbbe due volte la stessa cosa con due significati
+diversi.
+
+### F7.5 Come si dividono le ultime 4 settimane
+
+"Ti sei allenata sette volte" non dice se sono sette volte la stessa scheda o quattro
+schede diverse piu' tre nuotate. Nel riepilogo compare la divisione: da una parte i nomi
+delle schede, dall'altra i tipi di attivita' conteggiati, ognuno con **contatore e tempo
+medio** — due voci con lo stesso contatore possono essere mezz'ora e due ore.
+
+- **Quattro settimane e non "il mese"**: i mesi sono lunghi diversi, e il confronto fra un
+  febbraio e un marzo non e' un confronto.
+- **I due elenchi uno sopra l'altro, non affiancati**: a 320px due colonne di nomi mandano
+  a capo ogni riga.
+- Le attivita' senza orario di fine si contano nel contatore ma **non nella media**:
+  sommarle come zero abbasserebbe il tempo medio di un allenamento che c'e' stato.
+
 ## Fuori scope v1 (idee registrate)
 
 - **Gruppi di utenti**: condivisione schede, sfide — dopo web app + watch + pagamenti

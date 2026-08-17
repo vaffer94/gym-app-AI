@@ -389,6 +389,18 @@ p { margin: 0; }
 }
 .tile--ghost .tile-title { color: var(--muted); }
 
+/* Attivita' di Google che l'utente ha scelto di conteggiare.
+   Bordo pieno perche' conta, come tutto il resto che conta; fondo teal chiaro e niente
+   ombra perche' non e' un allenamento registrato qui e non si puo' aprire. Tre stati
+   distinguibili senza leggere: card colorata con ombra = tuo, teal piatto = conta,
+   tratteggiato spento = visto e basta.
+   Era stato valutato un fondo a righe, scartato: DESIGN.md esclude i gradienti, e le
+   righe si fanno con repeating-linear-gradient. */
+.tile--counted {
+  background: var(--teal-soft);
+  box-shadow: none;
+}
+
 .btn--sm {
   padding: 6px 10px;
   font-size: 0.9rem;
@@ -518,6 +530,20 @@ p { margin: 0; }
   color: #fff;
 }
 .cal-cell--today { box-shadow: var(--shadow-sm); }
+
+/* Giorno con un'attivita' conteggiata da Google: una cornice dentro la cella, non un
+   secondo fondo. Cosi' convive con l'arancione dell'allenamento registrato dall'app
+   invece di sostituirlo — in una giornata si vedono tutte e due le cose.
+   E' un ::after e non un box-shadow inset perche' .cal-cell--today usa gia' box-shadow
+   per la sua ombra, e la seconda regola cancellerebbe la prima. */
+.cal-cell--activity::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 2px solid var(--teal);
+  border-radius: 6px;
+  pointer-events: none;
+}
 .cal-cell--future { opacity: 0.35; border-style: dashed; }
 
 /* ---------- Barre andamento (storico) ---------- */
