@@ -11,6 +11,9 @@ import HistoryListPage from './pages/HistoryListPage'
 import SessionDetailPage from './pages/SessionDetailPage'
 import ParamsPage from './pages/ParamsPage'
 import GoalsPage from './pages/GoalsPage'
+import IntegrationsPage from './pages/IntegrationsPage'
+import FeedbackPage from './pages/FeedbackPage'
+import WatchPage from './pages/WatchPage'
 
 function Protected({ children }) {
   const { user, loading } = useAuth()
@@ -38,6 +41,9 @@ export default function App() {
       <Route path="/storico/:id" element={<Protected><SessionDetailPage /></Protected>} />
       <Route path="/obiettivi" element={<Protected><GoalsPage /></Protected>} />
       <Route path="/parametri" element={<Protected><ParamsPage /></Protected>} />
+      <Route path="/integrazioni" element={<Protected><IntegrationsPage /></Protected>} />
+      <Route path="/scrivimi" element={<Protected><FeedbackPage /></Protected>} />
+      <Route path="/watch" element={<Protected><WatchPage /></Protected>} />
       <Route path="/allenamento" element={<Protected><StartWorkoutPage /></Protected>} />
       <Route path="/allenamento/attivo" element={<Protected><WorkoutPage /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />

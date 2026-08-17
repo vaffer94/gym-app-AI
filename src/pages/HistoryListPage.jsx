@@ -9,12 +9,8 @@ import {
 import { computeStats } from '../workout/sessionEngine'
 import { formatClock } from '../workout/activeSession'
 import TrendChart from '../components/TrendChart'
-import {
-  isHealthConfigured, isHealthConnected, connectHealth, disconnectHealth,
-  getHealthSummary, clearHealthCache, localISO, exerciseTypeInfo,
-  connectHealthZones, hasZonesScope,
-} from '../data/health'
-import { getStepsGoal, getTrackedActivityTypes, syncGoals, pushGoals } from '../data/goals'
+import { isHealthConnected, getHealthSummary, localISO, exerciseTypeInfo } from '../data/health'
+import { getTrackedActivityTypes, syncGoals } from '../data/goals'
 import {
   allActivities, trackedActivities, activityDaysISO, dentroFinestra,
   inizioFinestra, isDoppione, FINESTRA_GIORNI,
@@ -27,8 +23,6 @@ import { getWorkoutEnergy } from '../data/health'
 import { KcalChip } from '../components/KcalRow'
 import ExerciseStats from '../components/ExerciseStats'
 import { exerciseIndex } from '../data/exerciseStats'
-import KcalDiagnostics from '../components/KcalDiagnostics'
-import TrackedActivities from '../components/TrackedActivities'
 
 const PERIODS = [
   { id: 'week', label: 'Settimana' },
@@ -42,7 +36,7 @@ export default function HistoryListPage() {
   const repo = getRepo(user)
 
   const [sessions, setSessions] = useState(null)
-  const [tab, setTab] = useState('trends') // trends (default) | list | exercises | integrations
+  const [tab, setTab] = useState('trends') // trends (default) | list | exercises
   const [openExercise, setOpenExercise] = useState(null)
   // Cambiare scheda azzera l'esercizio aperto: se no si torna su "Esercizi" e ci si
   // ritrova dentro la Cyclette visitata dieci minuti prima, senza sapere perche'.
@@ -51,8 +45,9 @@ export default function HistoryListPage() {
   const [fitbit, setFitbit] = useState(null) // {stepsByDay, stepsGoal, workoutDays}
   const [fitbitError, setFitbitError] = useState(null)
   const [kcalMap, setKcalMap] = useState(new Map())
-  // I tipi scelti stanno in localStorage, ma serve anche in stato: spuntare un chip in
-  // Integrazioni deve ricalcolare obiettivi e medaglie subito, non al prossimo ingresso
+  // I tipi scelti stanno in localStorage, ma servono anche in stato: la
+  // sincronizzazione col profilo puo' cambiarli mentre la pagina e' aperta, e
+  // obiettivi e medaglie vanno ricalcolati subito, non al prossimo ingresso
   const [tracked, setTracked] = useState(getTrackedActivityTypes)
   const [, setObiettiviAllineati] = useState(0) // solo per ridisegnare dopo la sincronizzazione
 
@@ -68,7 +63,6 @@ export default function HistoryListPage() {
     }).catch((e) => console.warn('Obiettivi non allineati col profilo:', e.message))
     return () => { vivo = false }
   }, [repo])
-  const [, setZonesOn] = useState(hasZonesScope()) // solo per ridisegnare dopo il consenso
 
   useEffect(() => {
     repo.listSessions().then(setSessions)
@@ -134,28 +128,6 @@ export default function HistoryListPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /**
-   * Quale operazione e' in corso, per dare al pulsante premuto uno stato visibile.
-   * Sincronizzare vuol dire aspettare la rete: senza, si preme, non succede niente
-   * per qualche secondo, e l'unica reazione sensata e' premere di nuovo.
-   */
-  const [busy, setBusy] = useState(null) // 'connect' | 'refresh' | 'zones' | null
-  const conAttesa = async (nome, fn) => {
-    setBusy(nome)
-    try {
-      await fn()
-    } catch (e) {
-      setFitbitError(e.message)
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  const connect = () => conAttesa('connect', async () => {
-    await connectHealth()
-    await loadHealth()
-  })
-
   const trends = useMemo(
     () => (sessions ? aggregateSessions(sessions, period) : []),
     [sessions, period]
@@ -190,14 +162,19 @@ export default function HistoryListPage() {
         <button className={`btn ${tab === 'exercises' ? 'btn--teal' : ''}`} onClick={() => goTab('exercises')}>
           Esercizi
         </button>
-        <button className={`btn ${tab === 'integrations' ? 'btn--teal' : ''}`} onClick={() => goTab('integrations')}>
-          Integrazioni
-        </button>
       </div>
 
       {sessions === null && <p className="center muted">Carico…</p>}
 
-      {sessions?.length === 0 && tab !== 'integrations' && (
+      {/* Se i dati di Google non arrivano, il calendario e i conteggi restano zoppi
+          senza dirlo: qui si dice, e si manda dove si aggiusta */}
+      {fitbitError && (
+        <p className="small center" style={{ color: 'var(--danger)' }}>
+          Google Health: {fitbitError} — vedi <a href="/integrazioni" onClick={(e) => { e.preventDefault(); navigate('/integrazioni') }}>Integrazioni</a>
+        </p>
+      )}
+
+      {sessions?.length === 0 && (
         <div className="card center stack" style={{ padding: '40px 20px' }}>
           <span className="emoji-xl">🏋️</span>
           <p className="muted">Nessun allenamento ancora. Il primo è il più importante!</p>
@@ -231,128 +208,6 @@ export default function HistoryListPage() {
             ))}
           </div>
         )
-      )}
-
-      {tab === 'integrations' && (
-        <div className="stack">
-          <div className="card stack">
-            <div className="row">
-              <span className="emoji-lg">⌚</span>
-              <div style={{ flex: 1 }}>
-                <h3>Google Health</h3>
-                <p className="small muted">Passi e allenamenti rilevati dal tuo Pixel Watch (ecosistema Fitbit)</p>
-              </div>
-              {isHealthConnected() && <span className="chip"><i className="fa-solid fa-circle-check" /> collegato</span>}
-            </div>
-
-            {!isHealthConfigured && (
-              <p className="small">
-                Per attivare l'integrazione serve un Client ID OAuth di Google Cloud in{' '}
-                <code>.env.local</code> — i passaggi sono nel README (sezione "Integrazione Google Health").
-              </p>
-            )}
-
-            {isHealthConfigured && !isHealthConnected() && (
-              <button className="btn btn--primary btn--big" onClick={connect} disabled={busy === 'connect'}>
-                {busy === 'connect'
-                  ? <><i className="fa-solid fa-rotate fa-spin" /> Collego…</>
-                  : 'Collega Google Health'}
-              </button>
-            )}
-
-            {isHealthConnected() && (
-              <>
-                <p className="small muted">
-                  I dati compaiono nel calendario dell'Andamento (icone sui giorni) e nel grafico dei passi.
-                  Aggiornati al massimo ogni 30 minuti.
-                </p>
-                {/* Quanto indietro arrivano i dati: serve a sapere fin dove i conteggi
-                    misti (app + Google) hanno davvero entrambe le fonti, invece di
-                    darlo per scontato */}
-                {fitbit?.detectedRaw && (
-                  <p className="small muted">
-                    <i className="fa-solid fa-clock-rotate-left" />{' '}
-                    {fitbit.detectedRaw.count} attività negli ultimi {fitbit.detectedRaw.giorni} giorni
-                    {fitbit.detectedRaw.since
-                      ? `, dal ${new Date(fitbit.detectedRaw.since).toLocaleDateString('it-IT')}`
-                      : ''}
-                    {fitbit.detectedRaw.completa
-                      ? '. Più indietro Google ne ha ancora, ma ci fermiamo qui.'
-                      : '. È tutto lo storico che Google ha: la finestra vera è più corta.'}
-                  </p>
-                )}
-                {/* L'obiettivo passi e' un obiettivo, non un'impostazione della
-                    connessione: sta in Obiettivi insieme agli altri due */}
-                <button className="btn" onClick={() => navigate('/obiettivi')}>
-                  🎯 Obiettivo passi: {getStepsGoal().toLocaleString('it-IT')}
-                </button>
-              </>
-            )}
-
-            {/* Consenso separato: le zone stanno sotto uno scope diverso da passi e
-                allenamenti. Chiederlo a tutti in blocco significherebbe che un rifiuto
-                fa saltare anche cio' che gia' funziona. */}
-            {isHealthConnected() && !hasZonesScope() && (
-              <button
-                className="btn"
-                disabled={busy === 'zones'}
-                onClick={() => conAttesa('zones', async () => {
-                  await connectHealthZones()
-                  setZonesOn(true)
-                })}
-              >
-                {busy === 'zones'
-                  ? <><i className="fa-solid fa-rotate fa-spin" /> Chiedo il permesso…</>
-                  : <><i className="fa-solid fa-heart-pulse" /> Usa le mie zone cardiache vere</>}
-              </button>
-            )}
-            {isHealthConnected() && hasZonesScope() && (
-              <p className="small muted">
-                <i className="fa-solid fa-circle-check" /> Zone cardiache personalizzate attive
-                (età e battito a riposo, non “220 meno l’età”).
-              </p>
-            )}
-
-            {isHealthConnected() && (
-              <>
-                <button
-                  className="btn"
-                  disabled={busy === 'refresh'}
-                  onClick={() => conAttesa('refresh', async () => {
-                    clearHealthCache()
-                    await loadHealth()
-                  })}
-                >
-                  {busy === 'refresh'
-                    ? <><i className="fa-solid fa-rotate fa-spin" /> Aggiorno…</>
-                    : <><i className="fa-solid fa-rotate" /> Aggiorna dati adesso</>}
-                </button>
-                <button
-                  className="btn"
-                  style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
-                  onClick={() => { disconnectHealth(); setFitbit(null) }}
-                >
-                  Scollega
-                </button>
-              </>
-            )}
-
-            {fitbitError && <p className="small" style={{ color: 'var(--danger)' }}>{fitbitError}</p>}
-          </div>
-
-          {isHealthConnected() && (
-            <TrackedActivities
-              detectedWorkouts={fitbit?.detectedWorkouts}
-              onChange={(types) => { setTracked(types); pushGoals(repo) }}
-            />
-          )}
-
-          <KcalDiagnostics sessions={sessions} />
-
-          <div className="card card--flat center" style={{ padding: '28px 20px' }}>
-            <p className="small muted">Altre integrazioni arriveranno qui 🔌</p>
-          </div>
-        </div>
       )}
 
       {tab === 'list' && sessions?.length > 0 && (

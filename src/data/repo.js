@@ -5,7 +5,7 @@
  *  - localStorage (modalità demo)
  */
 import {
-  collection, doc, getDocs, setDoc, deleteDoc, getDoc,
+  collection, doc, getDocs, setDoc, deleteDoc, getDoc, addDoc,
 } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 
@@ -24,7 +24,7 @@ const ls = {
 function makeLocalRepo() {
   const K = {
     plans: 'gym.plans', custom: 'gym.customExercises', labels: 'gym.labels',
-    sessions: 'gym.sessions', goals: 'gym.goals',
+    sessions: 'gym.sessions', goals: 'gym.goals', feedback: 'gym.feedback',
   }
   return {
     // In demo il "profilo remoto" e' un'altra chiave dello stesso localStorage: non
@@ -36,6 +36,14 @@ function makeLocalRepo() {
     async saveGoals(goals) {
       localStorage.setItem(K.goals, JSON.stringify(goals))
       return goals
+    },
+    // In demo la segnalazione non parte: resta qui, e la pagina lo dice invece di
+    // mostrare un "inviato" che non e' vero
+    async sendFeedback(feedback) {
+      const tutte = ls.read(K.feedback)
+      tutte.push({ ...feedback, id: newId() })
+      ls.write(K.feedback, tutte)
+      return { recapitata: false }
     },
     async listPlans() {
       return ls.read(K.plans).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
@@ -123,6 +131,19 @@ function makeFirestoreRepo(uid) {
     async saveGoals(goals) {
       await setDoc(goalsDoc(), goals)
       return goals
+    },
+    /**
+     * Le segnalazioni vanno in una collezione fuori da `users/`, e non e' un dettaglio:
+     * qui dentro sono l'unica cosa che non appartiene a chi la scrive. Servono a chi
+     * mantiene l'app, quindi stanno dove le si legge tutte insieme.
+     *
+     * Non le rilegge nessuno dall'app (le regole vietano la lettura): si guardano dalla
+     * console Firebase, che le regole non le applica. Cosi' l'indirizzo di posta di chi
+     * riceve non finisce nel bundle, che e' pubblico anche senza login.
+     */
+    async sendFeedback(feedback) {
+      await addDoc(collection(db, 'feedback'), feedback)
+      return { recapitata: true }
     },
     async listPlans() {
       const snap = await getDocs(plansCol())

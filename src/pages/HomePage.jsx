@@ -13,6 +13,7 @@ const SECTIONS = [
     title: 'Avvia allenamento',
     text: 'Scegli la scheda e parti',
     variant: 'card--primary',
+    watch: true,
   },
   {
     to: '/schede',
@@ -39,10 +40,16 @@ const SECTIONS = [
     to: '/parametri',
     emoji: '⚖️',
     title: 'Parametri',
-    // Corto: piu' lungo di cosi' e la riga spinge la freccia a capo
     text: 'Peso, altezza, età',
-    // Bianco e non un quarto colore: la palette e' volutamente corta, e questa e'
-    // l'unica voce che non si apre tutti i giorni
+    // Bianco e non un quarto colore: la palette e' volutamente corta, e queste sono
+    // le voci che non si aprono tutti i giorni
+    variant: '',
+  },
+  {
+    to: '/integrazioni',
+    emoji: '🔌',
+    title: 'Integrazioni',
+    text: 'Google Health e attività da conteggiare',
     variant: '',
   },
 ]
@@ -60,11 +67,24 @@ export default function HomePage() {
         ) : (
           <div className="avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>💪</div>
         )}
-        <div>
+        {/* minWidth:0 perche' a 320 px il saluto, non potendo restringersi, spingeva
+            fuori i pulsanti a destra */}
+        <div style={{ minWidth: 0 }}>
           <h2>Ciao, {firstName}!</h2>
           <p className="small muted">Pronta ad allenarti?</p>
         </div>
         <div className="spacer" />
+        {/* Solo icona: e' l'unico posto da cui si scrive a chi mantiene l'app, ma non
+            e' una cosa che si fa spesso, e con l'etichetta accanto a "Esci" la barra
+            sui telefoni stretti non ci sta */}
+        <button
+          className="btn"
+          onClick={() => navigate('/scrivimi')}
+          aria-label="Segnala un problema o proponi un’idea"
+          title="Segnala un problema o proponi un’idea"
+        >
+          <i className="fa-solid fa-comment-dots" />
+        </button>
         <button className="btn" onClick={signOut}>
           <i className="fa-solid fa-right-from-bracket" /> Esci
         </button>
@@ -73,13 +93,32 @@ export default function HomePage() {
       <div className="stack">
         {SECTIONS.map((s) => (
           <div key={s.to} className={`card card--tap ${s.variant}`} onClick={() => navigate(s.to)}>
-            <div className="row">
+            <div className="row" style={{ flexWrap: 'nowrap' }}>
               <span className="emoji-xl">{s.emoji}</span>
-              <div>
+              {/* flex:1 + minWidth:0 e non uno .spacer: con lo spacer il testo lungo
+                  spingeva la freccia a capo, e sui 320 px finiva da sola su una riga
+                  vuota. Cosi' e' il testo ad andare a capo dentro il suo spazio */}
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <h3>{s.title}</h3>
                 <p className="small muted">{s.text}</p>
               </div>
-              <div className="spacer" />
+              {/* Il secondo modo di allenarsi sta accanto al primo, non in fondo a una
+                  pagina di impostazioni: chi installa solo la PWA non ha nessun motivo
+                  di sospettare che esista anche l'app da polso, e viceversa */}
+              {s.watch && (
+                <button
+                  className="btn btn--sm"
+                  aria-label="Allenarsi dall’orologio"
+                  title="Allenarsi dall’orologio"
+                  onClick={(e) => { e.stopPropagation(); navigate('/watch') }}
+                >
+                  {/* Emoji e non Font Awesome, che nella versione gratuita l'orologio
+                      da polso non ce l'ha: il cronometro si legge come "durata" e il
+                      quadrante come "orario". ⌚ e' gia' il segno del watch in
+                      Integrazioni, e vale la pena restare coerenti con quello */}
+                  <span aria-hidden="true">⌚</span>
+                </button>
+              )}
               <i className="fa-solid fa-arrow-right" aria-hidden="true" />
             </div>
           </div>

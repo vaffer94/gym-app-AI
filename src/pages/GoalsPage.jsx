@@ -100,7 +100,7 @@ export default function GoalsPage() {
         <p className="small muted">
           Nello Storico vedi le <strong>settimane</strong> in cui l’hai rispettato. Contano
           gli allenamenti registrati dall’app più le attività che hai scelto di conteggiare
-          in Storico → Integrazioni.
+          in Integrazioni.
         </p>
       </div>
 
@@ -123,7 +123,7 @@ export default function GoalsPage() {
         {!isHealthConnected() && (
           <p className="small muted">
             I passi arrivano dall’orologio: finché Google Health non è collegato
-            (Storico → Integrazioni) questo obiettivo resta lì senza fare niente.
+            (Integrazioni, dalla home) questo obiettivo resta lì senza fare niente.
           </p>
         )}
       </div>

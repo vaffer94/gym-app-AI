@@ -309,6 +309,98 @@ schermate leggono gli obiettivi mentre disegnano e non possono aspettare la rete
 - Il **profilo** (eta', peso, altezza) ha lo stesso problema e non e' stato ancora
   spostato: e' il candidato successivo.
 
+## F8 — Integrazioni fuori dallo Storico (17/08/2026)
+
+Le integrazioni erano la quarta scheda dello Storico, insieme a Andamento, Allenamenti
+ed Esercizi. Ma le prime tre rispondono a "come sto andando", e questa risponde a "da
+dove arrivano i dati": per collegare l'orologio bisognava entrare in una pagina di
+statistiche e cercare una scheda, cioe' passare dai risultati per arrivare alla loro
+causa.
+
+Ora e' una voce della home, l'**ultima**: si tocca il giorno che si collega Google e poi
+quasi mai, come Parametri. Bianca come Parametri per lo stesso motivo — la palette e'
+corta e questi due non sono gesti quotidiani.
+
+Conseguenza da non perdere: se Google Health smette di rispondere, l'errore compariva
+solo dentro quella scheda. Ora lo Storico mostra una riga rossa con il motivo e il
+rimando a Integrazioni, perche' un calendario a cui mancano meta' dei dati, se sta
+zitto, sembra semplicemente un calendario vuoto.
+
+La freccia delle schede della home andava a capo da sola sui 320 px, su una riga tutta
+sua. Non era il testo nuovo a essere troppo lungo: la riga era `.row` (che va a capo) con
+uno `.spacer` in mezzo, quindi il testo spingeva finche' la freccia cadeva sotto. Ora il
+testo sta in un blocco `flex: 1; min-width: 0` e va a capo dentro il suo spazio. Il
+commento su Parametri che diceva "tienilo corto o la freccia va a capo" e' stato tolto:
+difendeva un vincolo che non c'e' piu'.
+
+### F8.1 Scrivere a chi mantiene l'app
+
+Un pulsante 💬 nella barra della home apre una pagina dove si segnala un difetto o si
+propone un'idea. Serviva soprattutto per chi non e' Vania: chi trova un problema, oggi,
+non ha nessun modo di dirlo.
+
+**Perche' non un `mailto:`**, che era la strada ovvia: un link di posta mette
+l'indirizzo in chiaro dentro il bundle JavaScript, che su Hosting si scarica **senza
+login** e lo leggono anche i raccoglitori di indirizzi. Il messaggio finisce invece in
+`feedback/` su Firestore, che di indirizzi non ne espone nessuno.
+
+**Perche' nessun CAPTCHA**, che era la domanda di partenza: un CAPTCHA protegge un
+endpoint pubblico e anonimo, e qui non ce n'e' uno — tutta l'app sta dietro il login
+Google, quindi per scrivere una riga un bot dovrebbe prima farsi un account e
+autenticarsi. **L'autenticazione e' gia' la scrematura**; un CAPTCHA in piu' fermerebbe
+solo le persone. L'unico freno nelle regole e' il tetto di 2000 caratteri sul testo:
+non contro i bot, contro un singolo messaggio che riempie il database.
+
+Insieme al testo partono nome, indirizzo dell'account, `userAgent` e **la data della
+build** — e la pagina lo dice prima, non dopo, perche' sono dati di chi scrive. La build
+serve per la trappola gia' pagata due volte: il service worker puo' servire il bundle
+vecchio per un po' dopo un aggiornamento, e senza quel dato si cerca nel codice di oggi
+un difetto di quello di ieri.
+
+Le segnalazioni non le rilegge nessuno dall'app (le regole vietano la lettura): si
+guardano dalla console Firebase. Una pagina di lettura dentro l'app avrebbe voluto dire
+distinguere chi mantiene l'app da chi la usa, e non c'e' ancora niente che lo faccia.
+
+### F8.2 Le due modalita' si presentano a vicenda
+
+Ci si puo' allenare dalla PWA o dall'app da polso, e **nessuna delle due dice che
+esiste l'altra**. Finche' gli utenti siamo noi non e' un problema; il giorno che l'app
+sta sul Play Store, chi la scarica da li' non sa che c'e' il resto, e chi installa la
+PWA non sa che puo' lasciare il telefono a casa.
+
+Accanto ad "Avvia allenamento" c'e' un pulsante ⌚ che porta a una paginetta: cosa fa
+l'app da polso, se risulta collegata, e il link al Play Store.
+
+Cosa **non** facciamo, ed e' la parte importante: non rileviamo niente. Un browser non
+vede i dispositivi accoppiati e nessuna API glielo permette; le API Wearable
+(`NodeClient`, `CapabilityClient`) risponderebbero a "sull'altro dispositivo c'e' la
+nostra app?", ma vivono dentro un'app Android che non esiste e che non serve. L'unica
+prova vera che abbiamo e' **un allenamento arrivato dal polso** (`origine: 'watch'`, che
+il watch scrive gia' dallo Step 5): se c'e', il collegamento funziona di sicuro.
+
+E' una prova che vale in un verso solo. Dice "c'e'", non sa dire "non c'e'": chi ha
+appena installato l'app al polso non ha ancora fatto nessun allenamento. Per questo il
+messaggio negativo e' *"non risulta ancora nessun allenamento fatto dall'orologio"* e
+non *"orologio non collegato"* — la seconda sarebbe una diagnosi, e noi non l'abbiamo.
+
+Il link al Play Store e' una costante vuota (`PLAY_URL` in `WatchPage.jsx`) finche' l'app
+non e' pubblicata, e con la costante vuota la pagina scrive "non e' ancora sul Play
+Store" invece di offrire un pulsante che porta a un 404.
+
+Nella stessa pagina c'e' la **versione della web app** con la data della build. Non e'
+curiosita': dopo un deploy il service worker puo' servire ancora il bundle vecchio, e
+senza una data visibile "l'ho gia' aggiornata" e "sto guardando quella di ieri" sono
+indistinguibili — e' costato una serata. Il pulsante non promette "sei aggiornata":
+chiede l'aggiornamento al service worker, ricarica, e lascia che sia la data a dire come
+e' andata.
+
+**Non fatto, e perche'**: un registro dei dispositivi (`users/{uid}/devices/{id}`) in cui
+il watch scrive versione e ultimo contatto. Direbbe *quale APK* sta girando al polso, che
+e' l'unico modo per vedere la trappola del §6 di CLAUDE.md (l'APK non si aggiorna da
+solo). Richiede pero' di toccare `watch/` e di reinstallare l'APK a mano, quindi vale
+come punto a se' — con l'ironia che il primo APK che scrive la sua versione e' anche
+l'ultimo di cui non la sappiamo.
+
 ## Fuori scope v1 (idee registrate)
 
 - **Gruppi di utenti**: condivisione schede, sfide — dopo web app + watch + pagamenti

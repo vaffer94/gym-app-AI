@@ -73,10 +73,21 @@ esercizio, e tre copie divergono al primo ritocco.
 
 ### `pages/` — le schermate
 
-`HomePage` (5 sezioni) · `SchedeListPage` / `PlanEditorPage` / `PlanDetailPage` ·
+`HomePage` (6 sezioni) · `SchedeListPage` / `PlanEditorPage` / `PlanDetailPage` ·
 `StartWorkoutPage` → `WorkoutPage` (la piu' grossa: e' l'allenamento) ·
-`HistoryListPage` (elenco + Andamento + Esercizi + Integrazioni) → `SessionDetailPage` ·
-`GoalsPage` · `ParamsPage` · `LoginPage`.
+`HistoryListPage` (elenco + Andamento + Esercizi) → `SessionDetailPage` ·
+`GoalsPage` · `IntegrationsPage` · `FeedbackPage` · `WatchPage` · `ParamsPage` ·
+`LoginPage`.
+
+`WatchPage` (`/watch`, dal pulsante ⌚ accanto ad "Avvia allenamento") presenta l'app da
+polso e mostra la versione della web app. Il "collegato" non e' un rilevamento: e'
+dedotto dall'esistenza di sessioni con `origine: 'watch'`, l'unica prova che il browser
+puo' avere. `PLAY_URL` in cima al file e' vuota finche' l'app non e' pubblicata.
+
+`IntegrationsPage` (`/integrazioni`) e' la connessione a Google Health piu' la scelta
+delle attivita' da conteggiare: era una scheda dello Storico, ma non parla di
+allenamenti passati. Chi ci arriva vuole collegare l'orologio, non guardare le
+statistiche. Legge le sessioni solo per la diagnostica kcal.
 
 ### `components/` — riusabili
 
@@ -97,7 +108,12 @@ users/{uid}/
   meta/labels                  { values: [...] } le finalita' personali
   meta/goals                   obiettivi + attivita' Google conteggiate + updatedAt
   sessions/{sessionId}         una sessione = un documento (regola anti-costi)
+feedback/{id}                  segnalazioni e idee: scrittura da loggati, lettura vietata
 ```
+
+`feedback/` sta **fuori** da `users/` perche' e' l'unica cosa qui dentro che non
+appartiene a chi la scrive: serve a chi mantiene l'app, e la si legge tutta insieme
+dalla console Firebase (che le regole non le applica). Dall'app non la rilegge nessuno.
 
 Le regole di sicurezza (`firestore.rules`, nella root) valgono per web e watch
 insieme, e vanno **pubblicate a mano** dalla console Firebase quando cambiano.
@@ -145,7 +161,7 @@ sincronizzazione e' nata.
 | `gym.health.token`, `gym.health.cache` | token OAuth e riepilogo Google Health |
 | `gym.kcal3.` (prefisso) | kcal misurate per sessione. Il numero e' la **versione**: si incrementa per invalidare |
 | `gym.activeSession` | sessione in corso, per riprendere dopo la chiusura del browser |
-| `gym.plans`, `gym.sessions`, `gym.customExercises`, `gym.labels` | dati della **sola modalita' demo** |
+| `gym.plans`, `gym.sessions`, `gym.customExercises`, `gym.labels`, `gym.feedback` | dati della **sola modalita' demo** |
 
 ## 5. Contratto web ↔ watch
 
