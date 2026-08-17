@@ -47,13 +47,15 @@ import { CommentText } from 'pixelarticons/react/CommentText'
 import { Google } from 'pixelarticons/react/Google'
 import { Music } from 'pixelarticons/react/Music'
 import { Human } from 'pixelarticons/react/Human'
-import { HumanArmsUp } from 'pixelarticons/react/HumanArmsUp'
 import { SpeedFast } from 'pixelarticons/react/SpeedFast'
 import { SpeedMedium } from 'pixelarticons/react/SpeedMedium'
 import { Waves } from 'pixelarticons/react/Waves'
 import { TreePine } from 'pixelarticons/react/TreePine'
 import { Leaf } from 'pixelarticons/react/Leaf'
 import { Flag } from 'pixelarticons/react/Flag'
+
+// Disegnate a mano (nessun vincolo di licenza)
+import Pesi from './mie/Pesi'
 
 // Derivate dalle emoji che l'app usava — vedi src/icons/CREDITI.md
 import Allenamento from './da-emoji/Allenamento'
@@ -133,9 +135,13 @@ export const ICONE = {
   attesa: Hourglass,
 
   // --- allenamento e risultati ---
-  // Sostituisce fa-dumbbell: la libreria non ha manubri, e la figura che
-  // solleva dice il gesto invece dell'attrezzo.
-  pesi: HumanArmsUp,
+  // Disegnata a mano perche' pixelarticons non ha manubri. La figura che
+  // solleva (HumanArmsUp) era il ripiego, ma nel calendario si legge male: la
+  // cella di un giorno allenato e' un quadrato da 40px, e un omino li' dentro
+  // diventa uno scarabocchio mentre un manubrio si riconosce dalla sagoma.
+  // Monocromatica apposta: quella cella ha lo sfondo arancione e il testo
+  // bianco, quindi l'icona deve seguire currentColor.
+  pesi: Pesi,
   battito: Heart,
   medaglia: Star,
   trofeo: Trophy,
