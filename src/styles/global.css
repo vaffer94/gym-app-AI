@@ -8,7 +8,7 @@
 :root {
   /* Palette */
   --ink: #2b2b3c;          /* contorni e testo */
-  --paper: #fdf6ec;        /* sfondo crema */
+  --paper: #fdf6ec;        /* crema di base, sotto le righe */
   --card: #ffffff;
   --primary: #ff6b35;      /* arancio energia */
   --primary-soft: #ffe1d3;
@@ -41,7 +41,16 @@ html, body, #root { min-height: 100%; }
 
 body {
   margin: 0;
-  background: var(--paper);
+  /* Righe diagonali arcobaleno, a scaletta di pixel.
+     La piastrella e' un SVG generato da scripts/genera-sfondo.py, non un
+     repeating-linear-gradient: il gradiente disegna diagonali LISCE e
+     antialiasate, e accanto a icone su griglia 24x24 stonano. I colori stanno
+     dentro l'SVG, quindi si cambiano nello script e si rigenera.
+     --paper resta sotto: se l'SVG non arriva (primo caricamento senza cache)
+     lo sfondo e' crema e non bianco accecante.
+     `fixed` evita che le righe scorrano col contenuto: con una diagonale in
+     movimento sotto le card viene il mal di mare. */
+  background: var(--paper) url('/sfondo-righe.svg') repeat fixed;
   color: var(--ink);
   font-family: var(--font-body);
   font-size: 16px;
@@ -423,8 +432,10 @@ p { margin: 0; }
    ombra perche' non e' un allenamento registrato qui e non si puo' aprire. Tre stati
    distinguibili senza leggere: card colorata con ombra = tuo, teal piatto = conta,
    tratteggiato spento = visto e basta.
-   Era stato valutato un fondo a righe, scartato: DESIGN.md esclude i gradienti, e le
-   righe si fanno con repeating-linear-gradient. */
+   Un fondo a righe per questa tile resta escluso, ma non piu' per il motivo scritto
+   qui prima ("DESIGN.md esclude i gradienti"): le righe ora esistono, sono lo sfondo
+   della pagina, e si fanno con una piastrella SVG. Il motivo vero e' un altro — righe
+   dentro una tile che sta gia' sopra un fondo a righe diventano illeggibili. */
 .tile--counted {
   background: var(--teal-soft);
   box-shadow: none;

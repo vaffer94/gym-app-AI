@@ -606,6 +606,35 @@ Le pastiglie che invece erano **rettangoli disegnati come pillole** (chip, badge
 calendario, barre di avanzamento) sono scese a 4-7px: a 999px accanto a card da 10
 stonavano piu' di prima.
 
+### F9.6 Lo sfondo a righe, e la regola che ne aveva impedito una prima
+
+Terzo passo. Lo sfondo crema diventa **righe diagonali arcobaleno a scaletta di pixel**,
+nei colori dell'app schiariti fin quasi al bianco.
+
+**La regola andava corretta, non aggirata.** In `global.css` c'era scritto che un fondo a
+righe era gia' stato valutato e scartato "perche' DESIGN.md esclude i gradienti, e le
+righe si fanno con repeating-linear-gradient". Quella motivazione confondeva il nome della
+funzione CSS col risultato: l'anti-pattern elenca gradienti, glassmorphism, blur e ombre
+sfumate, cioe' cose che **sfumano** contro lo stile piatto. Bande a stop netti non sfumano
+niente. La regola ora dice "gradienti **sfumati**", e il commento vecchio e' stato riscritto
+invece di lasciarlo li' a difendere una decisione morta.
+
+**Ma alla fine il gradiente non serviva comunque**, e per un motivo migliore: a 45 gradi un
+gradiente CSS disegna diagonali **lisce e antialiasate**, che accanto a icone su griglia
+24×24 stonano. Le scalette di pixel richiedono blocchi quadrati, quindi una piastrella —
+`public/sfondo-righe.svg`, 240×240, blocchi da 8px e bande da 48px, generata da
+`scripts/genera-sfondo.py`.
+
+I colori stanno **nello script e non in variabili CSS**: finiscono dentro l'SVG, e una
+variabile senza effetto sarebbe peggio che non averla.
+
+Due dettagli pagati subito:
+- `background-attachment: fixed`, se no le diagonali scorrono sotto le card e viene il mal
+  di mare.
+- La piastrella e' stata aggiunta a `includeAssets` in `vite.config.js`: senza, non entrava
+  nel precache del service worker e offline lo sfondo tornava crema — cioe' proprio in
+  palestra, che e' dove la connessione non c'e'.
+
 ## Fuori scope v1 (idee registrate)
 
 - **Gruppi di utenti**: condivisione schede, sfide — dopo web app + watch + pagamenti

@@ -16,7 +16,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/icon.svg'],
+      // Senza elencarli qui non finiscono nel precache e offline mancano: lo
+      // sfondo a righe tornerebbe crema in palestra, che e' esattamente dove
+      // la connessione non c'e'.
+      includeAssets: ['icons/icon.svg', 'sfondo-righe.svg'],
       manifest: {
         name: 'Gym App',
         short_name: 'GymApp',
