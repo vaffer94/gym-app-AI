@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Stepper from '../components/Stepper'
 import { getProfileDraft, setProfile, getWeightLog } from '../data/kcal'
+import Icona from '../icons'
 
 /**
  * Parametri personali: pagina a se' e non piu' un riquadro aperto in home.
@@ -35,7 +36,7 @@ export default function ParamsPage() {
     <div className="page">
       <header className="appbar">
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
-          <i className="fa-solid fa-arrow-left" />
+          <Icona nome="indietro" />
         </button>
         <h2>⚖️ Parametri</h2>
       </header>

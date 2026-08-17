@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import Icona from '../icons'
 
 export default function PlaceholderPage({ emoji, title, text }) {
   const navigate = useNavigate()
@@ -6,7 +7,7 @@ export default function PlaceholderPage({ emoji, title, text }) {
     <div className="page">
       <header className="appbar">
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
-          <i className="fa-solid fa-arrow-left" />
+          <Icona nome="indietro" />
         </button>
         <h2>{title}</h2>
       </header>

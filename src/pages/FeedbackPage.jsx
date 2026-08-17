@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { getRepo } from '../data/repo'
+import Icona from '../icons'
 
 const MAX = 2000
 
 const TIPI = [
-  { id: 'bug', icon: 'fa-bug', label: 'Qualcosa non va' },
-  { id: 'idea', icon: 'fa-lightbulb', label: 'Ho un’idea' },
+  { id: 'bug', icon: 'problema', label: 'Qualcosa non va' },
+  { id: 'idea', icon: 'idea', label: 'Ho un’idea' },
 ]
 
 /**
@@ -67,7 +68,7 @@ export default function FeedbackPage() {
     <div className="page">
       <header className="appbar">
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
-          <i className="fa-solid fa-arrow-left" />
+          <Icona nome="indietro" />
         </button>
         <h2>💬 Scrivimi</h2>
       </header>
@@ -88,7 +89,7 @@ export default function FeedbackPage() {
               className={`chip chip--select ${tipo === t.id ? 'chip--on' : ''}`}
               onClick={() => setTipo(t.id)}
             >
-              <i className={`fa-solid ${t.icon}`} /> {t.label}
+              <Icona nome={t.icon} /> {t.label}
             </button>
           ))}
         </div>
@@ -114,8 +115,8 @@ export default function FeedbackPage() {
           onClick={invia}
         >
           {inviando
-            ? <><i className="fa-solid fa-rotate fa-spin" /> Invio…</>
-            : <><i className="fa-solid fa-paper-plane" /> Invia</>}
+            ? <><Icona nome="ricarica" className="icona--gira" /> Invio…</>
+            : <><Icona nome="invia" /> Invia</>}
         </button>
 
         {errore && (
@@ -127,7 +128,7 @@ export default function FeedbackPage() {
 
         {esito && (
           <p className="small" style={{ margin: 0, color: 'var(--teal)' }}>
-            <i className="fa-solid fa-circle-check" />{' '}
+            <Icona nome="fatto" />{' '}
             {esito.recapitata
               ? 'Ricevuto, grazie. Se serve ti rispondo all’indirizzo del tuo account.'
               : 'Modalità demo: il messaggio è rimasto su questo dispositivo, non è stato inviato.'}

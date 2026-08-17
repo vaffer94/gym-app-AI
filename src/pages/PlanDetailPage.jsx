@@ -6,6 +6,7 @@ import ExerciseThumb from '../components/ExerciseThumb'
 import { categoryById } from '../data/catalog'
 import { formatEntryTarget } from '../data/format'
 import { ConfirmDialog, PromptDialog } from '../components/Dialog'
+import Icona from '../icons'
 
 export default function PlanDetailPage() {
   const { user } = useAuth()
@@ -35,7 +36,7 @@ export default function PlanDetailPage() {
   return (
     <div className="page">
       <header className="appbar">
-        <button className="btn" onClick={() => navigate('/schede')} aria-label="Indietro"><i className="fa-solid fa-arrow-left" /></button>
+        <button className="btn" onClick={() => navigate('/schede')} aria-label="Indietro"><Icona nome="indietro" /></button>
         <div
           className="card card--flat"
           style={{ flex: 1, padding: '12px 16px', background: plan.color || 'var(--card)' }}

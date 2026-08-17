@@ -1,4 +1,5 @@
 import { getWorkoutGoal, getKcalGoal, weekSessions, weekKcal, fillCart } from '../data/goals'
+import Icona from '../icons'
 
 /**
  * Come sta andando la settimana rispetto agli obiettivi.
@@ -36,7 +37,7 @@ export default function WeekGoals({ activities, kcalById, onOpenGoals }) {
           <p className="small muted">Da lunedì</p>
         </div>
         <button className="btn btn--sm" onClick={onOpenGoals} aria-label="Modifica gli obiettivi">
-          <i className="fa-solid fa-pen" />
+          <Icona nome="modifica" />
         </button>
       </div>
 

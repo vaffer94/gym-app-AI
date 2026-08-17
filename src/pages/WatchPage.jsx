@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { getRepo } from '../data/repo'
+import Icona from '../icons'
 
 /**
  * Quando l'app del watch sara' pubblicata, qui va il suo indirizzo sul Play Store.
@@ -41,7 +42,7 @@ export default function WatchPage() {
     <div className="page">
       <header className="appbar">
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
-          <i className="fa-solid fa-arrow-left" />
+          <Icona nome="indietro" />
         </button>
         <h2>⌚ Dal polso</h2>
       </header>
@@ -65,7 +66,7 @@ export default function WatchPage() {
           <p className="small muted" style={{ margin: 0 }}>Controllo…</p>
         ) : ultima ? (
           <p className="small" style={{ margin: 0, color: 'var(--teal)' }}>
-            <i className="fa-solid fa-circle-check" />{' '}
+            <Icona nome="fatto" />{' '}
             Funziona: {daWatch.length} allenament{daWatch.length === 1 ? 'o arrivato' : 'i arrivati'} dall’orologio,
             l’ultimo il {new Date(ultima.startedAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })}.
           </p>
@@ -74,7 +75,7 @@ export default function WatchPage() {
             {/* "Non risulta" e non "non ce l'hai": l'unica prova che abbiamo e' un
                 allenamento arrivato dal polso, e chi ha appena installato l'app non ne
                 ha ancora fatto nessuno */}
-            <i className="fa-solid fa-circle-info" /> Non risulta ancora nessun allenamento
+            <Icona nome="info" /> Non risulta ancora nessun allenamento
             fatto dall’orologio. Se hai appena installato l’app, è normale: si vede da qui
             dopo il primo.
           </p>
@@ -88,11 +89,11 @@ export default function WatchPage() {
             rel="noreferrer"
             style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}
           >
-            <i className="fa-brands fa-google-play" /> Scarica l’app per l’orologio
+            <Icona nome="googlePlay" /> Scarica l’app per l’orologio
           </a>
         ) : (
           <p className="small muted" style={{ margin: 0 }}>
-            <i className="fa-solid fa-hourglass-half" /> L’app per l’orologio non è ancora
+            <Icona nome="attesa" /> L’app per l’orologio non è ancora
             sul Play Store: quando ci sarà, il pulsante per scaricarla compare qui.
           </p>
         )}
@@ -141,13 +142,13 @@ function VersioneApp() {
       {controllo !== 'fatto' ? (
         <button className="btn" onClick={controlla} disabled={controllo === 'in-corso'}>
           {controllo === 'in-corso'
-            ? <><i className="fa-solid fa-rotate fa-spin" /> Controllo…</>
-            : <><i className="fa-solid fa-rotate" /> Controlla se c’è una versione più recente</>}
+            ? <><Icona nome="ricarica" className="icona--gira" /> Controllo…</>
+            : <><Icona nome="ricarica" /> Controlla se c’è una versione più recente</>}
         </button>
       ) : (
         <>
           <button className="btn btn--teal" onClick={() => window.location.reload()}>
-            <i className="fa-solid fa-arrow-rotate-right" /> Ricarica
+            <Icona nome="ricarica" /> Ricarica
           </button>
           {/* Non promettiamo "aggiornato": il ricaricamento e' l'unica cosa che
               possiamo garantire, il resto lo dice la data qui sopra */}

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import Icona from '../icons'
 
 /**
  * La home e' un indice: una riga per posto dove andare, nient'altro. I parametri erano
@@ -83,10 +84,10 @@ export default function HomePage() {
           aria-label="Segnala un problema o proponi un’idea"
           title="Segnala un problema o proponi un’idea"
         >
-          <i className="fa-solid fa-comment-dots" />
+          <Icona nome="commento" />
         </button>
         <button className="btn" onClick={signOut}>
-          <i className="fa-solid fa-right-from-bracket" /> Esci
+          <Icona nome="esci" /> Esci
         </button>
       </header>
 
@@ -119,7 +120,7 @@ export default function HomePage() {
                   <span aria-hidden="true">⌚</span>
                 </button>
               )}
-              <i className="fa-solid fa-arrow-right" aria-hidden="true" />
+              <Icona nome="avanti" />
             </div>
           </div>
         ))}

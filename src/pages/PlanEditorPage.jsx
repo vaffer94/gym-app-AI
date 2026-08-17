@@ -8,6 +8,7 @@ import { PLAN_COLORS, pickDefaultColor } from '../data/planColors'
 import { formatEntryTarget } from '../data/format'
 import { AlertDialog } from '../components/Dialog'
 import Stepper from '../components/Stepper'
+import Icona from '../icons'
 
 export default function PlanEditorPage() {
   const { user } = useAuth()
@@ -94,7 +95,7 @@ export default function PlanEditorPage() {
   return (
     <div className="page">
       <header className="appbar">
-        <button className="btn" onClick={() => navigate(-1)} aria-label="Indietro"><i className="fa-solid fa-arrow-left" /></button>
+        <button className="btn" onClick={() => navigate(-1)} aria-label="Indietro"><Icona nome="indietro" /></button>
         <h2>{id ? 'Modifica scheda' : 'Nuova scheda'}</h2>
       </header>
 
@@ -148,7 +149,7 @@ export default function PlanEditorPage() {
                     onClick={() => setPicking(i)}
                     aria-label={`Aggiungi un esercizio tra ${plan.exercises[i - 1].name} e ${e.name}`}
                   >
-                    <i className="fa-solid fa-plus" />
+                    <Icona nome="aggiungi" />
                   </button>
                 </div>
               )}
@@ -161,10 +162,10 @@ export default function PlanEditorPage() {
                   </div>
                 </div>
                 <div className="stack" style={{ gap: 4 }}>
-                  <button className="btn btn--sm" onClick={() => move(i, -1)} disabled={i === 0}><i className="fa-solid fa-arrow-up" /></button>
-                  <button className="btn btn--sm" onClick={() => move(i, 1)} disabled={i === plan.exercises.length - 1}><i className="fa-solid fa-arrow-down" /></button>
+                  <button className="btn btn--sm" onClick={() => move(i, -1)} disabled={i === 0}><Icona nome="su" /></button>
+                  <button className="btn btn--sm" onClick={() => move(i, 1)} disabled={i === plan.exercises.length - 1}><Icona nome="giu" /></button>
                 </div>
-                <button className="btn btn--sm" onClick={() => removeExercise(e.key)} aria-label="Rimuovi"><i className="fa-solid fa-xmark" /></button>
+                <button className="btn btn--sm" onClick={() => removeExercise(e.key)} aria-label="Rimuovi"><Icona nome="chiudi" /></button>
               </div>
             </Fragment>
           ))}
@@ -238,13 +239,13 @@ function EditEntrySheet({ entry, onClose, onSave }) {
           <h2 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
             {entry.name}
           </h2>
-          <button className="btn btn--sm" onClick={onClose}><i className="fa-solid fa-xmark" /></button>
+          <button className="btn btn--sm" onClick={onClose}><Icona nome="chiudi" /></button>
         </div>
 
         {isDuration ? (
           <div className="card card--flat row">
             <span className="label" style={{ margin: 0, flex: 1 }}>
-              <i className="fa-solid fa-stopwatch" /> Durata
+              <Icona nome="durata" /> Durata
             </span>
             <Stepper value={durationMin} onChange={setDurationMin} min={1} max={240} step={1} suffix=" min" />
           </div>
@@ -312,7 +313,7 @@ function FinalitaDropdown({ allLabels, selected, onToggle, onAddNew, onDelete })
                 aria-label={`Elimina finalità ${l}`}
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(l) }}
               >
-                <i className="fa-solid fa-xmark" />
+                <Icona nome="chiudi" />
               </button>
             </label>
           ))}

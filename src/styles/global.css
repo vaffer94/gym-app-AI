@@ -207,6 +207,33 @@ p { margin: 0; }
 .emoji-xl { font-size: 2.4rem; line-height: 1; }
 .emoji-lg { font-size: 1.8rem; line-height: 1; }
 
+/* ---------- Icone ---------- */
+
+/* Le icone sono SVG a pixel su griglia 24x24 (pixelarticons + le nostre, in
+   src/icons/). Si dimensionano in em per crescere col testo che accompagnano.
+   L'allineamento e' il motivo per cui questa regola esiste: un <svg> in linea si
+   appoggia alla base del testo e sporge sotto, mentre le icone di Font Awesome
+   erano glifi e si allineavano da sole. Il ritocco di -0.125em rimette il
+   centro dell'icona all'altezza del centro della minuscola. */
+.icona {
+  display: inline-block;
+  vertical-align: -0.125em;
+  flex-shrink: 0;
+}
+
+/* Sostituisce fa-spin. Il passo di 90 gradi invece della rotazione continua non
+   e' un vezzo: un disegno a pixel ruotato di 37 gradi diventa una macchia di
+   antialiasing, e i quarti di giro sono le uniche posizioni in cui la griglia
+   resta griglia. */
+@keyframes icona-gira {
+  to { transform: rotate(360deg); }
+}
+.icona--gira { animation: icona-gira 1s steps(4, end) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .icona--gira { animation-duration: 2.4s; }
+}
+
 /* ---------- Header app ---------- */
 
 .appbar {

@@ -444,8 +444,102 @@ dire un server che tiene il refresh token, cioe' un backend che questo progetto 
 sono un'altra cosa — dipendono dalla verifica della schermata di consenso su Google
 Cloud, e diventeranno un problema quando l'app la useranno persone diverse da Vania.
 
+## F9 — Icone a pixel (17/08/2026)
+
+Primo passo di un cambio di stile piu' largo verso il retro' anni 80. Si e' scelto di
+cominciare **dalle icone** e non dai font o dal colore: sono il pezzo piu' visibile che
+si puo' cambiare senza toccare la disposizione di nessuna schermata.
+
+### F9.1 Perche' pixelarticons, e perche' gli SVG e non il webfont
+
+Il font delle icone (Font Awesome) e' sostituito da [pixelarticons](https://pixelarticons.com/),
+MIT, 1.036 icone su griglia 24×24. Valutato e scartato **NES.css**: fermo dal 2022, 282 KB,
+ha 21 icone che sono quasi tutte loghi social, e contiene sprite di Mario e Pokémon che la
+licenza MIT del codice non copre come marchi.
+
+pixelarticons offre anche un webfont, che avrebbe reso la migrazione un cambio di classe
+CSS. **E' stato scartato lo stesso**: un glifo di un font ha un colore solo, e le icone che
+Vania disegnera' devono poter essere multicolore. Si usano quindi gli SVG, che pesano 262
+byte l'uno.
+
+Effetto collaterale gradito: sparisce l'import di tutto Font Awesome per usarne 44, e nel
+bundle non ci sono piu' webfont.
+
+### F9.2 Il registro: nomi che dicono il significato, non il disegno
+
+Le pagine chiedono `<Icona nome="pesi" />`, mai il nome della libreria. La corrispondenza
+fra significato e disegno sta in un unico file, `src/icons/registry.js`.
+
+Non e' un vezzo architetturale: **serve a poter sostituire un'icona alla volta**. Il piano
+e' che Vania ne ridisegni una ogni tanto, la sera; con i nomi della libreria sparsi nelle
+pagine, ogni sostituzione avrebbe voluto dire ripassare i 21 file che usano le icone. Cosi'
+si cambia una riga nel registro e nient'altro.
+
+### F9.3 Le dodici che non esistevano
+
+Font Awesome aveva dodici icone che pixelarticons non ha — quasi tutte le attivita'
+sportive. Si e' scelto di **sostituirle con icone esistenti che tengono il concetto**,
+invece di aspettare i disegni: meglio un'app coerente con qualche approssimazione che
+mezza a pixel e mezza no.
+
+| concetto | scelta | tenuta |
+|---|---|---|
+| pesi | figura che solleva | dice il gesto, non l'attrezzo |
+| camminata | figura in piedi | ok |
+| nuoto | onde | ok |
+| escursione | pino | il posto al posto della persona |
+| yoga / pilates | foglia | stesso registro |
+| medaglia | stella | premio, e resta distinta dal trofeo |
+| durata | orologio | ok |
+| passi | bersaglio | e' l'obiettivo, non il piede |
+| sport | bandiera | categoria, non disciplina |
+| **corsa** | tachimetro veloce | **debole** |
+| **bici** | tachimetro medio | **debole** |
+
+Le ultime due sono segnaposto dichiarati: leggono come tachimetri e si distinguono solo
+l'una dall'altra. Sono le prime due da ridisegnare, ed e' scritto sia nel registro sia in
+`src/icons/mie/LEGGIMI.md`.
+
+Undici delle dodici stanno nella tabella `EXERCISE_TYPES` di `data/health.js`, che ora
+contiene nomi del registro (`'corsa'`) e non piu' classi CSS (`'fa-person-running'`).
+
+### F9.4 Le emoji restano emoji
+
+Le emoji delle **categorie muscolari** e degli **equivalenti alimentari** non sono state
+toccate, per due motivi diversi.
+
+Sugli **alimenti** la sostituzione non e' proponibile: su 21 cibi la libreria copre mela,
+torta, caffe' e bottiglia. Pizza, birra, hamburger, sushi, ramen, patatine e gelato non
+esistono in nessuna libreria a pixel gratuita. Mostrare la stessa icona generica per cibi
+diversi toglierebbe al carrello l'unica cosa che lo rende leggibile a colpo d'occhio —
+e qui serve riconoscere *cosa* e', non *che tipo* di cosa e'.
+
+Sulle **categorie muscolari** ci sarebbero cinque equivalenti su dieci (braccia, avambracci,
+spalle, petto, cardio) e nessuno per schiena, addome, gambe, polpacci e collo. Cinque icone
+a pixel e cinque emoji a colori nella stessa lista starebbero peggio di dieci emoji: o si
+disegnano tutte e dieci, o si lasciano stare.
+
+### F9.5 Come si aggiunge un'icona disegnata a mano
+
+`scripts/png2icona.py` converte un PNG 24×24 in un componente React in cui **ogni colore
+diventa una variabile CSS** (`--ico-a`, `--ico-b`, ...), col colore disegnato come ripiego.
+Il primo colore ripiega su `currentColor`, cosi' l'icona segue il colore del testo come
+facevano quelle di Font Awesome.
+
+Si genera un `.jsx` e non si importa il `.svg` per non aggiungere `vite-plugin-svgr`: e'
+anche il formato in cui pixelarticons distribuisce le sue, quindi il registro non deve
+sapere quale delle due sta montando. Istruzioni in `src/icons/mie/LEGGIMI.md`.
+
+**Valutato e rimandato**: pubblicare le icone in un repo GitHub separato che l'app scarica.
+Scartato il **runtime** — questa e' una PWA che si usa in palestra, e le icone sarebbero
+l'unica parte dell'interfaccia capace di non comparire con la connessione ballerina. Se un
+giorno il repo separato si fara', le icone andranno prese **al momento della build**.
+Per ora stanno in `src/icons/mie/`: estrarle dopo e' banale, sono file.
+
 ## Fuori scope v1 (idee registrate)
 
 - **Gruppi di utenti**: condivisione schede, sfide — dopo web app + watch + pagamenti
 - Coach LLM (Step 7 del piano di sviluppo)
 - Eliminazione account (necessaria prima del Play Store)
+- Resto del cambio di stile retro': angoli a zero, sfondo, trattamento delle foto degli
+  esercizi (vedi F9 per il perche' si e' partiti dalle icone)

@@ -10,6 +10,7 @@ import {
 import { getStepsGoal, pushGoals } from '../data/goals'
 import TrackedActivities from '../components/TrackedActivities'
 import KcalDiagnostics from '../components/KcalDiagnostics'
+import Icona from '../icons'
 
 /**
  * Le integrazioni erano una scheda dello Storico, ma non parlano di allenamenti passati:
@@ -62,7 +63,7 @@ export default function IntegrationsPage() {
     <div className="page">
       <header className="appbar">
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
-          <i className="fa-solid fa-arrow-left" />
+          <Icona nome="indietro" />
         </button>
         <h2>🔌 Integrazioni</h2>
       </header>
@@ -76,8 +77,8 @@ export default function IntegrationsPage() {
               <p className="small muted">Passi e allenamenti rilevati dal tuo Pixel Watch (ecosistema Fitbit)</p>
             </div>
             {isHealthConnected() && (healthNeedsReconnect()
-              ? <span className="chip"><i className="fa-solid fa-triangle-exclamation" /> da ricollegare</span>
-              : <span className="chip"><i className="fa-solid fa-circle-check" /> collegato</span>)}
+              ? <span className="chip"><Icona nome="avviso" /> da ricollegare</span>
+              : <span className="chip"><Icona nome="fatto" /> collegato</span>)}
           </div>
 
           {!isHealthConfigured && (
@@ -97,7 +98,7 @@ export default function IntegrationsPage() {
               })}
             >
               {busy === 'connect'
-                ? <><i className="fa-solid fa-rotate fa-spin" /> Collego…</>
+                ? <><Icona nome="ricarica" className="icona--gira" /> Collego…</>
                 : 'Collega Google Health'}
             </button>
           )}
@@ -109,7 +110,7 @@ export default function IntegrationsPage() {
           {isHealthConnected() && healthNeedsReconnect() && (
             <>
               <p className="small" style={{ color: 'var(--danger)' }}>
-                <i className="fa-solid fa-triangle-exclamation" /> Il permesso di Google è
+                <Icona nome="avviso" /> Il permesso di Google è
                 scaduto e non si è rinnovato da solo. I passi e gli allenamenti che vedi in
                 giro per l’app sono gli ultimi arrivati prima di adesso.
               </p>
@@ -123,8 +124,8 @@ export default function IntegrationsPage() {
                 })}
               >
                 {busy === 'connect'
-                  ? <><i className="fa-solid fa-rotate fa-spin" /> Collego…</>
-                  : <><i className="fa-solid fa-rotate-right" /> Ricollega Google Health</>}
+                  ? <><Icona nome="ricarica" className="icona--gira" /> Collego…</>
+                  : <><Icona nome="ricarica" /> Ricollega Google Health</>}
               </button>
             </>
           )}
@@ -140,7 +141,7 @@ export default function IntegrationsPage() {
                   darlo per scontato */}
               {fitbit?.detectedRaw && (
                 <p className="small muted">
-                  <i className="fa-solid fa-clock-rotate-left" />{' '}
+                  <Icona nome="storico" />{' '}
                   {fitbit.detectedRaw.count} attività negli ultimi {fitbit.detectedRaw.giorni} giorni
                   {fitbit.detectedRaw.since
                     ? `, dal ${new Date(fitbit.detectedRaw.since).toLocaleDateString('it-IT')}`
@@ -171,13 +172,13 @@ export default function IntegrationsPage() {
               })}
             >
               {busy === 'zones'
-                ? <><i className="fa-solid fa-rotate fa-spin" /> Chiedo il permesso…</>
-                : <><i className="fa-solid fa-heart-pulse" /> Usa le mie zone cardiache vere</>}
+                ? <><Icona nome="ricarica" className="icona--gira" /> Chiedo il permesso…</>
+                : <><Icona nome="battito" /> Usa le mie zone cardiache vere</>}
             </button>
           )}
           {isHealthConnected() && hasZonesScope() && (
             <p className="small muted">
-              <i className="fa-solid fa-circle-check" /> Zone cardiache personalizzate attive
+              <Icona nome="fatto" /> Zone cardiache personalizzate attive
               (età e battito a riposo, non “220 meno l’età”).
             </p>
           )}
@@ -193,8 +194,8 @@ export default function IntegrationsPage() {
                 })}
               >
                 {busy === 'refresh'
-                  ? <><i className="fa-solid fa-rotate fa-spin" /> Aggiorno…</>
-                  : <><i className="fa-solid fa-rotate" /> Aggiorna dati adesso</>}
+                  ? <><Icona nome="ricarica" className="icona--gira" /> Aggiorno…</>
+                  : <><Icona nome="ricarica" /> Aggiorna dati adesso</>}
               </button>
               <button
                 className="btn"

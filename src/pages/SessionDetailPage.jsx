@@ -13,6 +13,7 @@ import EnergyBreakdown from '../components/EnergyBreakdown'
 import { zoneThresholds, timeInZones } from '../workout/hrAnalysis'
 import { getProfile } from '../data/kcal'
 import { getHeartRateZones } from '../data/health'
+import Icona from '../icons'
 
 export default function SessionDetailPage() {
   const { user } = useAuth()
@@ -55,7 +56,7 @@ export default function SessionDetailPage() {
     <div className="page">
       <header className="appbar">
         <button className="btn" onClick={() => navigate('/storico')} aria-label="Indietro">
-          <i className="fa-solid fa-arrow-left" />
+          <Icona nome="indietro" />
         </button>
         <div
           className="card card--flat"
@@ -143,7 +144,7 @@ export default function SessionDetailPage() {
         style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
         onClick={() => setConfirmDelete(true)}
       >
-        <i className="fa-solid fa-trash-can" /> Elimina sessione
+        <Icona nome="elimina" /> Elimina sessione
       </button>
 
       {confirmDelete && (

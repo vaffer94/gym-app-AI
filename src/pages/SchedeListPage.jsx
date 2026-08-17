@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { getRepo } from '../data/repo'
 import { formatDate } from '../data/planColors'
+import Icona from '../icons'
 
 export default function SchedeListPage() {
   const { user } = useAuth()
@@ -17,7 +18,7 @@ export default function SchedeListPage() {
   return (
     <div className="page">
       <header className="appbar">
-        <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home"><i className="fa-solid fa-arrow-left" /></button>
+        <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home"><Icona nome="indietro" /></button>
         <h2>📋 Le tue schede</h2>
       </header>
 

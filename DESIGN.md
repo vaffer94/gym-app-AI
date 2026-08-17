@@ -12,7 +12,7 @@ Obiettivo: moderno, semplice, giocoso. Mai più di 3-4 elementi importanti per s
    - Primary arancio `#FF6B35` (azione principale, una sola per schermata)
    - Teal `#2EC4B6` · Giallo `#FFD23F` (secondari) + versioni soft
 5. **Font**: Baloo 2 (titoli e bottoni), Nunito (testo)
-6. **Icone**: Font Awesome Free (`@fortawesome/fontawesome-free`, importato in main.jsx) per TUTTI i pulsanti: navigazione (`fa-arrow-left`, `fa-xmark`, `fa-arrow-up/down`), azioni (`fa-clock-rotate-left` Posticipa · `fa-forward` Salta · `fa-pen-to-square` Nota · `fa-pause`/`fa-play` · `fa-plus`/`fa-minus`). Sui pulsanti con testo l'icona accompagna il testo. Le emoji restano SOLO per sezioni (🔥 📋 📊) e categorie muscolari (💪 🦵 …)
+6. **Icone**: SVG a pixel su griglia 24×24, sempre via `<Icona nome="..." />` (`src/icons/`). Il nome dice il **significato** (`indietro`, `pesi`, `durata`), mai la libreria: la corrispondenza col disegno sta solo in `src/icons/registry.js`, ed e' cio' che permette di ridisegnarne una alla volta. Servono su TUTTI i pulsanti: navigazione (`indietro`, `chiudi`, `su`/`giu`), azioni (`posticipa` · `salta` · `nota` · `pausa`/`avvia` · `aggiungi`/`togli`). Sui pulsanti con testo l'icona accompagna il testo. Un nome nuovo si aggiunge **prima** al registro, poi lo si usa. Le emoji restano SOLO per sezioni (🔥 📋 📊), categorie muscolari (💪 🦵 …) ed equivalenti alimentari (🍕 🍺 …) — vedi `docs/flussi-utente.md` §F9.4 per il perche' non sono diventate icone
 7. **Layout**: colonna singola max 480px, spaziatura generosa (gap 12-20px), mobile-first
 
 ## Anti-pattern (vietati)
@@ -24,6 +24,6 @@ Obiettivo: moderno, semplice, giocoso. Mai più di 3-4 elementi importanti per s
 
 ## Componenti disponibili (`src/styles/global.css`)
 
-`.card` (+ `--primary/--teal/--yellow/--tap/--flat`) · `.btn` (+ `--primary/--teal/--yellow/--big`) · `.chip` · `.appbar` · `.page` · `.stack` / `.row` · `.emoji-xl/lg`
+`.card` (+ `--primary/--teal/--yellow/--tap/--flat`) · `.btn` (+ `--primary/--teal/--yellow/--big`) · `.chip` · `.appbar` · `.page` · `.stack` / `.row` · `.emoji-xl/lg` · `.icona` (+ `--gira` al posto del vecchio `fa-spin`)
 
 Ogni nuova schermata usa SOLO questi componenti; se serve qualcosa di nuovo, si aggiunge prima qui e al CSS.

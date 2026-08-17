@@ -505,31 +505,38 @@ export async function getHeartRateZones(dateMs) {
   }
 }
 
-/** Etichetta e icona Font Awesome per i tipi di allenamento rilevati */
+/**
+ * Etichetta e nome d'icona per i tipi di allenamento rilevati.
+ *
+ * I nomi sono quelli del registro (src/icons/registry.js), non di una libreria:
+ * qui si dice COSA e', il disegno lo sceglie il registro. Sono undici delle
+ * dodici icone che Font Awesome aveva e pixelarticons no, per questo stanno
+ * quasi tutte in questa tabella.
+ */
 const EXERCISE_TYPES = {
-  WALKING: ['Camminata', 'fa-person-walking'],
-  RUNNING: ['Corsa', 'fa-person-running'],
-  TREADMILL_RUNNING: ['Corsa su tapis roulant', 'fa-person-running'],
-  WEIGHTLIFTING: ['Pesi', 'fa-dumbbell'],
-  STRENGTH_TRAINING: ['Allenamento forza', 'fa-dumbbell'],
-  CYCLING: ['Bici', 'fa-person-biking'],
-  BIKING: ['Bici', 'fa-person-biking'],
-  SPINNING: ['Spinning', 'fa-person-biking'],
-  SWIMMING: ['Nuoto', 'fa-person-swimming'],
-  HIKING: ['Escursione', 'fa-person-hiking'],
-  YOGA: ['Yoga', 'fa-spa'],
-  PILATES: ['Pilates', 'fa-spa'],
-  ELLIPTICAL: ['Ellittica', 'fa-person-running'],
-  HIIT: ['HIIT', 'fa-fire'],
-  AEROBICS: ['Aerobica', 'fa-heart-pulse'],
-  DANCING: ['Ballo', 'fa-music'],
-  SPORT: ['Sport', 'fa-futbol'],
+  WALKING: ['Camminata', 'camminata'],
+  RUNNING: ['Corsa', 'corsa'],
+  TREADMILL_RUNNING: ['Corsa su tapis roulant', 'corsa'],
+  WEIGHTLIFTING: ['Pesi', 'pesi'],
+  STRENGTH_TRAINING: ['Allenamento forza', 'pesi'],
+  CYCLING: ['Bici', 'bici'],
+  BIKING: ['Bici', 'bici'],
+  SPINNING: ['Spinning', 'bici'],
+  SWIMMING: ['Nuoto', 'nuoto'],
+  HIKING: ['Escursione', 'escursione'],
+  YOGA: ['Yoga', 'yoga'],
+  PILATES: ['Pilates', 'yoga'],
+  ELLIPTICAL: ['Ellittica', 'corsa'],
+  HIIT: ['HIIT', 'energia'],
+  AEROBICS: ['Aerobica', 'battito'],
+  DANCING: ['Ballo', 'ballo'],
+  SPORT: ['Sport', 'sport'],
 }
 
 export function exerciseTypeInfo(type) {
   if (EXERCISE_TYPES[type]) return EXERCISE_TYPES[type]
   const label = (type || 'Attività').toLowerCase().replaceAll('_', ' ')
-  return [label.charAt(0).toUpperCase() + label.slice(1), 'fa-heart-pulse']
+  return [label.charAt(0).toUpperCase() + label.slice(1), 'battito']
 }
 
 /**

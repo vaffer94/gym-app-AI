@@ -1,4 +1,5 @@
 import { getWorkoutGoal, weeklyMedals } from '../data/goals'
+import Icona from '../icons'
 
 /**
  * Una medaglietta per settimana: piena quando l'obiettivo di allenamenti e' stato
@@ -35,11 +36,8 @@ export default function WeekMedals({ activities, mesiFinestra }) {
                 borderStyle: w.corrente && !w.hit ? 'dashed' : 'solid',
               }}
             >
-              <i
-                className="fa-solid fa-medal"
-                style={{ color: 'var(--ink)', opacity: w.hit ? 1 : 0.35 }}
-                aria-hidden="true"
-              />
+              <Icona nome="medaglia"
+                style={{ color: 'var(--ink)', opacity: w.hit ? 1 : 0.35 }} />
             </div>
             <span className="small muted" style={{ display: 'block', lineHeight: 1.2, fontSize: '0.72rem' }}>
               {fmt(w.monday)}

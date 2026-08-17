@@ -16,6 +16,7 @@ import ExerciseThumb from '../components/ExerciseThumb'
 import Stepper from '../components/Stepper'
 import { formatEntryTarget } from '../data/format'
 import KcalRow from '../components/KcalRow'
+import Icona from '../icons'
 
 const vibrate = (pattern = [300, 150, 300]) => navigator.vibrate?.(pattern)
 
@@ -171,10 +172,10 @@ export default function WorkoutPage() {
   return (
     <div className="page">
       <header className="appbar">
-        <span className="chip"><i className="fa-solid fa-stopwatch" /> {elapsed}</span>
+        <span className="chip"><Icona nome="durata" /> {elapsed}</span>
         <div className="spacer" />
         <button className="btn btn--sm" onClick={handlePause}>
-          <i className={`fa-solid ${paused ? 'fa-play' : 'fa-pause'}`} /> {paused ? 'Riprendi' : 'Pausa'}
+          <Icona nome={paused ? 'avvia' : 'pausa'} /> {paused ? 'Riprendi' : 'Pausa'}
         </button>
         <button
           className="btn btn--sm"
@@ -269,13 +270,13 @@ export default function WorkoutPage() {
 
           <div className="row">
             <button className="btn" style={{ flex: 1 }} onClick={() => update((st) => ({ ...st, session: postponeCurrent(st.session) }))}>
-              <i className="fa-solid fa-clock-rotate-left" /> Posticipa
+              <Icona nome="posticipa" /> Posticipa
             </button>
             <button className="btn" style={{ flex: 1 }} onClick={() => setDialog({ type: 'skip' })}>
-              <i className="fa-solid fa-forward" /> Salta
+              <Icona nome="salta" /> Salta
             </button>
             <button className="btn" onClick={() => setNoting(curr.key)}>
-              <i className="fa-solid fa-pen-to-square" /> Nota
+              <Icona nome="nota" /> Nota
             </button>
           </div>
 
@@ -385,7 +386,7 @@ function DurationRunner({ exercise, onStart, onFinish }) {
     return (
       <div className="center stack" style={{ marginTop: 12 }}>
         <p className="kpi" style={{ color: 'var(--teal)' }}>
-          <i className="fa-solid fa-circle-check" /> Fatto — {formatClock(actualSec)}
+          <Icona nome="fatto" /> Fatto — {formatClock(actualSec)}
         </p>
       </div>
     )
@@ -407,7 +408,7 @@ function DurationRunner({ exercise, onStart, onFinish }) {
   return (
     <div className="center stack" style={{ marginTop: 12 }}>
       <button className="btn btn--primary btn--big" onClick={onStart}>
-        <i className="fa-solid fa-stopwatch" /> START — {Math.round(exercise.durationSec / 60)} min
+        <Icona nome="durata" /> START — {Math.round(exercise.durationSec / 60)} min
       </button>
     </div>
   )

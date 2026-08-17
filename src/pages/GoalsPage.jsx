@@ -12,6 +12,7 @@ import {
 import { isHealthConnected } from '../data/health'
 import { useAuth } from '../auth/AuthContext'
 import { getRepo } from '../data/repo'
+import Icona from '../icons'
 
 /**
  * Gli obiettivi, tutti in un posto solo.
@@ -76,7 +77,7 @@ export default function GoalsPage() {
     <div className="page">
       <header className="appbar">
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
-          <i className="fa-solid fa-arrow-left" />
+          <Icona nome="indietro" />
         </button>
         <h2>🎯 Obiettivi</h2>
       </header>
@@ -162,7 +163,7 @@ function StatoProfilo({ sync }) {
 
   return (
     <p className="small muted center" style={{ margin: 0 }}>
-      <i className={`fa-solid ${sync.stato === 'errore' ? 'fa-triangle-exclamation' : 'fa-cloud'}`} />{' '}
+      <Icona nome={sync.stato === 'errore' ? 'avviso' : 'nuvola'} />{' '}
       {testo}
     </p>
   )
@@ -225,7 +226,7 @@ function EnergyGoalCard({ goal, onQty, onAdd, onSet }) {
       })}
 
       <button className="btn" onClick={() => setPicker(true)}>
-        <i className="fa-solid fa-plus" /> Aggiungi un alimento
+        <Icona nome="aggiungi" /> Aggiungi un alimento
       </button>
 
       <div className="row" style={{ borderTop: '2px dashed var(--paper)', paddingTop: 10 }}>

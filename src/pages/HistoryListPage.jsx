@@ -23,6 +23,7 @@ import { getWorkoutEnergy } from '../data/health'
 import { KcalChip } from '../components/KcalRow'
 import ExerciseStats from '../components/ExerciseStats'
 import { exerciseIndex } from '../data/exerciseStats'
+import Icona from '../icons'
 
 const PERIODS = [
   { id: 'week', label: 'Settimana' },
@@ -147,7 +148,7 @@ export default function HistoryListPage() {
     <div className="page">
       <header className="appbar">
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
-          <i className="fa-solid fa-arrow-left" />
+          <Icona nome="indietro" />
         </button>
         <h2>📊 Storico</h2>
       </header>
@@ -186,7 +187,7 @@ export default function HistoryListPage() {
         openExercise ? (
           <div className="stack">
             <button className="btn" onClick={() => setOpenExercise(null)}>
-              <i className="fa-solid fa-arrow-left" /> Tutti gli esercizi
+              <Icona nome="indietro" /> Tutti gli esercizi
             </button>
             <ExerciseStats sessions={sessions} name={openExercise.name} color={openExercise.color} />
           </div>
@@ -202,7 +203,7 @@ export default function HistoryListPage() {
                       {e.times} volt{e.times === 1 ? 'a' : 'e'} · {formatClock(e.totalSec)} in totale
                     </p>
                   </div>
-                  <i className="fa-solid fa-arrow-right" aria-hidden="true" />
+                  <Icona nome="avanti" />
                 </div>
               </div>
             ))}
@@ -232,7 +233,7 @@ export default function HistoryListPage() {
                       className="thumb"
                       style={{ background: 'transparent', borderStyle: conta ? 'solid' : 'dashed' }}
                     >
-                      <i className={`fa-solid ${icon}`} />
+                      <Icona nome={icon} />
                     </div>
                     <div className="tile-body">
                       <div className="tile-title">{label}</div>
@@ -250,7 +251,7 @@ export default function HistoryListPage() {
                       )}
                     </div>
                     <span className={`small ${conta ? '' : 'muted'}`}>
-                      <i className="fa-solid fa-heart-pulse" /> Google
+                      <Icona nome="battito" /> Google
                     </span>
                   </div>
                 )
@@ -277,7 +278,7 @@ export default function HistoryListPage() {
                   {!s.completedFully && <span className="chip">parziale</span>}
                 </div>
                 <p className="small muted" style={{ marginTop: 6 }}>
-                  <i className="fa-solid fa-stopwatch" /> {formatClock(st.durationSec)}
+                  <Icona nome="durata" /> {formatClock(st.durationSec)}
                   {' · '}{st.doneSeries}/{st.totalSeries} serie
                   {st.volumeKg > 0 ? ` · ${st.volumeKg} kg` : ''}
                   <KcalChip result={kcalMap.get(s.id)} />
@@ -377,11 +378,11 @@ export default function HistoryListPage() {
 
           <div className="row">
             <div className="card card--flat center" style={{ flex: 1, padding: '14px 8px' }}>
-              <div className="kpi"><i className="fa-solid fa-medal" style={{ color: 'var(--primary)' }} /> {longestAppDayStreak(sessions)}</div>
+              <div className="kpi"><Icona nome="medaglia" style={{ color: 'var(--primary)' }} /> {longestAppDayStreak(sessions)}</div>
               <p className="small muted">record giorni di fila (app)</p>
             </div>
             <div className="card card--flat center" style={{ flex: 1, padding: '14px 8px' }}>
-              <div className="kpi"><i className="fa-solid fa-trophy" style={{ color: 'var(--teal)' }} /> {longestActivityStreakThisMonth(sessions, giorniGoogle)}</div>
+              <div className="kpi"><Icona nome="trofeo" style={{ color: 'var(--teal)' }} /> {longestActivityStreakThisMonth(sessions, giorniGoogle)}</div>
               <p className="small muted">record del mese{giorniGoogle.length ? ' (app + Google)' : ''}</p>
             </div>
           </div>
@@ -400,7 +401,7 @@ export default function HistoryListPage() {
                     <div className="bar-fill" style={{ width: `${pct}%`, background: pct === 100 ? 'var(--teal)' : 'var(--yellow)' }} />
                   </div>
                   <span className="small" style={{ fontWeight: 800, width: 74, textAlign: 'right' }}>
-                    {pct === 100 ? <><i className="fa-solid fa-circle-check" style={{ color: 'var(--teal)' }} /> tutte</> : `${st.doneSeries}/${st.totalSeries}`}
+                    {pct === 100 ? <><Icona nome="fatto" style={{ color: 'var(--teal)' }} /> tutte</> : `${st.doneSeries}/${st.totalSeries}`}
                   </span>
                 </div>
               )
@@ -512,11 +513,11 @@ function StreakCard({ sessions, fitbit, navigate, medaglie, mesiFinestra, giorni
               onClick={() => c.trained && openDay(c.ts)}
               onKeyDown={(e) => c.trained && (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), openDay(c.ts))}
             >
-              {c.trained ? <i className="fa-solid fa-dumbbell" /> : c.dayNum}
+              {c.trained ? <Icona nome="pesi" /> : c.dayNum}
               {(goalHit || detected) && (
                 <span className="cal-badges">
-                  {goalHit && <i className="fa-solid fa-shoe-prints" title="Obiettivo passi raggiunto" />}
-                  {detected && <i className="fa-solid fa-heart-pulse" title="Allenamento rilevato da Google Health" />}
+                  {goalHit && <Icona nome="passi" title="Obiettivo passi raggiunto" />}
+                  {detected && <Icona nome="battito" title="Allenamento rilevato da Google Health" />}
                 </span>
               )}
             </div>
@@ -526,7 +527,7 @@ function StreakCard({ sessions, fitbit, navigate, medaglie, mesiFinestra, giorni
 
       {fitbit && (
         <p className="small muted">
-          <i className="fa-solid fa-dumbbell" /> allenamento registrato qui ·{' '}
+          <Icona nome="pesi" /> allenamento registrato qui ·{' '}
           <span
             style={{
               display: 'inline-block', width: 12, height: 12, verticalAlign: '-1px',
@@ -534,8 +535,8 @@ function StreakCard({ sessions, fitbit, navigate, medaglie, mesiFinestra, giorni
             }}
             aria-hidden="true"
           />{' '}
-          attività conteggiata da Google · <i className="fa-solid fa-shoe-prints" /> obiettivo
-          passi · <i className="fa-solid fa-heart-pulse" /> attività rilevata ma non conteggiata
+          attività conteggiata da Google · <Icona nome="passi" /> obiettivo
+          passi · <Icona nome="battito" /> attività rilevata ma non conteggiata
         </p>
       )}
     </div>

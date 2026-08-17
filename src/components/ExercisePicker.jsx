@@ -4,6 +4,7 @@ import { compressPhoto } from '../lib/image'
 import ExerciseThumb from './ExerciseThumb'
 import Stepper from './Stepper'
 import { AlertDialog } from './Dialog'
+import Icona from '../icons'
 
 /**
  * Popup "ricerca-o-crea":
@@ -48,7 +49,7 @@ export default function ExercisePicker({ repo, onAdd, onClose }) {
             <div className="row">
               <h2>Aggiungi esercizio</h2>
               <div className="spacer" />
-              <button className="btn btn--sm" onClick={onClose}><i className="fa-solid fa-xmark" /></button>
+              <button className="btn btn--sm" onClick={onClose}><Icona nome="chiudi" /></button>
             </div>
 
             <input
@@ -140,7 +141,7 @@ function ConfigStep({ exercise, onBack, onConfirm }) {
   return (
     <>
       <div className="row">
-        <button className="btn btn--sm" onClick={onBack}><i className="fa-solid fa-arrow-left" /></button>
+        <button className="btn btn--sm" onClick={onBack}><Icona nome="indietro" /></button>
         <h2 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exercise.name}</h2>
       </div>
 
@@ -178,7 +179,7 @@ export function DurationToggle({ isDuration, setIsDuration, durationMin, setDura
       <label className="toggle">
         <input type="checkbox" checked={isDuration} onChange={(e) => setIsDuration(e.target.checked)} />
         <span className="label" style={{ margin: 0 }}>
-          <i className="fa-solid fa-stopwatch" /> A tempo (solo durata)
+          <Icona nome="durata" /> A tempo (solo durata)
         </span>
       </label>
       {isDuration && (
@@ -243,7 +244,7 @@ function CustomForm({ initialName, initialCategory, repo, onBack, onDone }) {
   return (
     <>
       <div className="row">
-        <button className="btn btn--sm" onClick={onBack}><i className="fa-solid fa-arrow-left" /></button>
+        <button className="btn btn--sm" onClick={onBack}><Icona nome="indietro" /></button>
         <h2>Nuovo esercizio</h2>
       </div>
 

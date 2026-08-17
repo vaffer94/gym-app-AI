@@ -7,6 +7,7 @@ import { createSession } from '../workout/sessionEngine'
 import { loadActive, saveActive, clearActive } from '../workout/activeSession'
 import Stepper from '../components/Stepper'
 import { ConfirmDialog } from '../components/Dialog'
+import Icona from '../icons'
 
 export default function StartWorkoutPage() {
   const { user } = useAuth()
@@ -36,7 +37,7 @@ export default function StartWorkoutPage() {
   return (
     <div className="page">
       <header className="appbar">
-        <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home"><i className="fa-solid fa-arrow-left" /></button>
+        <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home"><Icona nome="indietro" /></button>
         <h2>🔥 Allenamento</h2>
       </header>
 
@@ -116,7 +117,7 @@ export default function StartWorkoutPage() {
             <div className="row">
               <h2>Scegli la scheda</h2>
               <div className="spacer" />
-              <button className="btn btn--sm" onClick={() => setChoosing(false)}><i className="fa-solid fa-xmark" /></button>
+              <button className="btn btn--sm" onClick={() => setChoosing(false)}><Icona nome="chiudi" /></button>
             </div>
             <div className="stack">
               {plans.map((p) => (
