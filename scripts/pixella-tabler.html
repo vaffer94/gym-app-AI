@@ -1,0 +1,59 @@
+<!doctype html><meta charset="utf-8"><title>pixella</title>
+<body style="font:13px/1.5 system-ui;background:#fdf6ec;padding:20px;max-width:820px;margin:auto">
+<h1 style="font-size:1.05rem">Da icona vettoriale a disegno a pixel</h1>
+<p>Prende le icone di <a href="https://tabler.io/icons">Tabler Icons</a> (MIT), le
+disegna su una tela grande otto volte e poi media ogni quadretto: dove il disegno
+copre piu' della soglia, il quadretto si accende. Serve un browser perche' i
+rasterizzatori SVG da riga di comando vogliono <code>cairo</code>, una libreria di
+sistema da installare a parte.</p>
+<p><b>Come si usa:</b> si apre questo file in un browser, si copia il blocco qui
+sotto e lo si incolla in <code>scripts/genera-sfondo.py</code>, dentro
+<code>ATTREZZI</code>. Per cambiare le icone si modifica la lista in cima al
+sorgente di questa pagina.</p>
+<p>Soglia: <input id="soglia" type="range" min="20" max="160" value="110"
+ oninput="rifai(this.value)"> <span id="val">110</span></p>
+<pre id="out" style="background:#fff;border:3px solid #2b2b3c;padding:14px;overflow:auto">lavoro…</pre>
+<div id="occhio" style="font:12px/1 monospace;white-space:pre"></div>
+<script>
+const ICONE = {"dumbbell": ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjIiPjxwYXRoIGQ9Im03LjAyNiA5LjYxbC0uOTUtNC4xOEEyIDIgMCAwIDEgOC4wMjYgM2g4YTIgMiAwIDAgMSAyIDIuNDNsLTEgNC4ybS04IDcuMzcxaDYiLz48cGF0aCBkPSJNMTguOTA2IDIwLjA2YTcuOTIgNy45MiAwIDAgMCAxLTUuMzNhOCA4IDAgMSAwLTE0Ljc3IDUuMzNhMiAyIDAgMCAwIDEuNzEuOTRoMTAuMzZhMiAyIDAgMCAwIDEuNy0uOTQiLz48L2c+PC9zdmc+", 1.0], "barbell": ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjIiIGQ9Ik0yIDEyaDFtMy00SDRhMSAxIDAgMCAwLTEgMXY2YTEgMSAwIDAgMCAxIDFoMm0wLTl2MTBhMSAxIDAgMCAwIDEgMWgxYTEgMSAwIDAgMCAxLTFWN2ExIDEgMCAwIDAtMS0xSDdhMSAxIDAgMCAwLTEgMW0zIDVoNm0wLTV2MTBhMSAxIDAgMCAwIDEgMWgxYTEgMSAwIDAgMCAxLTFWN2ExIDEgMCAwIDAtMS0xaC0xYTEgMSAwIDAgMC0xIDFtMyAxaDJhMSAxIDAgMCAxIDEgMXY2YTEgMSAwIDAgMS0xIDFoLTJtNC00aC0xIi8+PC9zdmc+", 1.0], "jump-rope": ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjIiPjxwYXRoIGQ9Ik02IDE0VjhhMyAzIDAgMSAxIDYgMHY4YTMgMyAwIDAgMCA2IDB2LTYiLz48cGF0aCBkPSJNMTYgNWEyIDIgMCAwIDEgMi0yYTIgMiAwIDAgMSAyIDJ2M2EyIDIgMCAwIDEtMiAyYTIgMiAwIDAgMS0yLTJ6TTQgMTZhMiAyIDAgMCAxIDItMmEyIDIgMCAwIDEgMiAydjNhMiAyIDAgMCAxLTIgMmEyIDIgMCAwIDEtMi0yeiIvPjwvZz48L3N2Zz4=", 1.0], "shoe": ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjIiPjxwYXRoIGQ9Ik00IDZoNS40MjZhMSAxIDAgMCAxIC44NjMuNDk2bDEuMDY0IDEuODIzYTMgMyAwIDAgMCAxLjg5NiAxLjQwN2w0LjY3NyAxLjExNEE0IDQgMCAwIDEgMjEgMTQuNzNWMTdhMSAxIDAgMCAxLTEgMUg0YTEgMSAwIDAgMS0xLTFWN2ExIDEgMCAwIDEgMS0xbTEwIDdsMS0yIi8+PHBhdGggZD0iTTggMTh2LTFhNCA0IDAgMCAwLTQtNEgzbTctMWwxLjUtMyIvPjwvZz48L3N2Zz4=", 1.0], "stopwatch": ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjIiIGQ9Ik01IDEzYTcgNyAwIDEgMCAxNCAwYTcgNyAwIDAgMC0xNCAwbTkuNS0yLjVMMTIgMTNtNS01bDEtMW0tNC00aC00Ii8+PC9zdmc+", 1.0], "bike": ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjIiIGQ9Ik0yIDE4YTMgMyAwIDEgMCA2IDBhMyAzIDAgMCAwLTYgMG0xNCAwYTMgMyAwIDEgMCA2IDBhMyAzIDAgMCAwLTYgMG0tNCAxdi00bC0zLTNsNS00bDIgM2gzbS01Ljk5My02YTIgMiAwIDEgMCA0IDBhMiAyIDAgMSAwLTQgMCIvPjwvc3ZnPg==", 1.0], "swimming": ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjIiIGQ9Ik0xNSA5YTEgMSAwIDEgMCAyIDBhMSAxIDAgMSAwLTIgMG0tOSAybDQtMmwzLjUgM2wtMS41IDJtLTkgMi43NUEyLjQgMi40IDAgMCAwIDQgMTdhMi40IDIuNCAwIDAgMCAyLTFhMi40IDIuNCAwIDAgMSAyLTFhMi40IDIuNCAwIDAgMSAyIDFhMi40IDIuNCAwIDAgMCAyIDFhMi40IDIuNCAwIDAgMCAyLTFhMi40IDIuNCAwIDAgMSAyLTFhMi40IDIuNCAwIDAgMSAyIDFhMi40IDIuNCAwIDAgMCAyIDFhMi40IDIuNCAwIDAgMCAxLS4yNSIvPjwvc3ZnPg==", 1.0], "bottle": ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjIiPjxwYXRoIGQ9Ik0xMCA1aDRWM2ExIDEgMCAwIDAtMS0xaC0yYTEgMSAwIDAgMC0xIDF6Ii8+PHBhdGggZD0iTTE0IDMuNWMwIDEuNjI2LjUwNyAzLjIxMiAxLjQ1IDQuNTM3bC4wNS4wN2E4LjEgOC4xIDAgMCAxIDEuNSA0LjY5NFYxOWEyIDIgMCAwIDEtMiAySDlhMiAyIDAgMCAxLTItMnYtNi4yYzAtMS42ODIuNTI0LTMuMzIyIDEuNS00LjY5M2wuMDUtLjA3QTcuODIgNy44MiAwIDAgMCAxMCAzLjUiLz48cGF0aCBkPSJNNyAxNC44MDNBMi40IDIuNCAwIDAgMCA4IDE0YTIuNCAyLjQgMCAwIDEgMi0xYTIuNCAyLjQgMCAwIDEgMiAxYTIuNCAyLjQgMCAwIDAgMiAxYTIuNCAyLjQgMCAwIDAgMi0xYTIuNCAyLjQgMCAwIDEgMS0uODA1Ii8+PC9nPjwvc3ZnPg==", 1.0], "yoga": ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjIiPjxwYXRoIGQ9Ik00IDIwaDRsMS41LTNtNy41IDNsLTEtNWgtNWwxLTciLz48cGF0aCBkPSJtNCAxMGw0LTFsNC0xbDQgMS41bDQgMS41bS05Ljk5My02YTIgMiAwIDEgMCA0IDBhMiAyIDAgMSAwLTQgMCIvPjwvZz48L3N2Zz4=", 1.0], "ball-volleyball": ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjIiPjxwYXRoIGQ9Ik0zIDEyYTkgOSAwIDEgMCAxOCAwYTkgOSAwIDEgMC0xOCAwIi8+PHBhdGggZD0iTTEyIDEyYTggOCAwIDAgMCA4IDRNNy41IDEzLjVBMTIgMTIgMCAwIDAgMTYgMjAiLz48cGF0aCBkPSJNMTIgMTJhOCA4IDAgMCAwLTcuNDY0IDQuOTI4bTguNDE1LTkuNTc1YTEyIDEyIDAgMCAwLTkuODggNC4xMTEiLz48cGF0aCBkPSJNMTIgMTJhOCA4IDAgMCAwLS41MzYtOC45MjhtNC4wODUgMTIuMDc1YTEyIDEyIDAgMCAwIDEuMzgtMTAuNjExIi8+PC9nPjwvc3ZnPg==", 0.72], "heartbeat": ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjIiPjxwYXRoIGQ9Ik0xOS41IDEzLjU3MkwxMiAyMWwtMi44OTYtMi44NjhtLTYuMTE3LTguMTA0QTUgNSAwIDAgMSAxMiA3LjAwNmE1IDUgMCAxIDEgNy41IDYuNTcyIi8+PHBhdGggZD0iTTMgMTNoMmwyIDNsMi02bDEgM2gzIi8+PC9nPjwvc3ZnPg==", 1.0], "treadmill": ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjIiPjxwYXRoIGQ9Ik0xMCAzYTEgMSAwIDEgMCAyIDBhMSAxIDAgMCAwLTIgME0zIDE0bDQgMWwuNS0uNU0xMiAxOHYtM2wtMy0yLjkyM0w5Ljc1IDciLz48cGF0aCBkPSJNNiAxMFY4bDQtMWwyLjUgMi41bDIuNS41bTYgMTJhMSAxIDAgMCAwLTEtMUg0YTEgMSAwIDAgMC0xIDFtMTUtMWwxLTExbDItMSIvPjwvZz48L3N2Zz4=", 1.0], "medal": ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjIiIGQ9Ik0xMiA0djNNOCA0djZtOC02djZtLTQgOC41TDkgMjBsLjUtMy41bC0yLTJsMy0uNWwxLjUtM2wxLjUgM2wzIC41bC0yIDJMMTUgMjB6Ii8+PC9zdmc+", 1.0]};
+const LATO = 20, SUPER = 8;          // rasterizzo 8x piu' grande e poi medio
+async function pixella(voce, lato, soglia){
+  const [url, riduzione] = voce;
+  const img = new Image(); img.src = url;
+  await img.decode();
+  const g = lato * SUPER;
+  const c = document.createElement('canvas'); c.width = c.height = g;
+  const x = c.getContext('2d');
+  const d2 = g * riduzione, off = (g - d2) / 2;
+  x.drawImage(img, off, off, d2, d2);
+  const d = x.getImageData(0,0,g,g).data;
+  const righe = [];
+  for(let by=0; by<lato; by++){
+    let r = '';
+    for(let bx=0; bx<lato; bx++){
+      let somma = 0;
+      for(let y=0; y<SUPER; y++) for(let xx=0; xx<SUPER; xx++){
+        somma += d[(((by*SUPER+y)*g)+(bx*SUPER+xx))*4+3];   // alfa
+      }
+      // soglia bassa: le linee sottili di Tabler coprono poco di ogni quadretto
+      r += (somma/(SUPER*SUPER)) > soglia ? '#' : '.';
+    }
+    righe.push(r);
+  }
+  return righe;
+}
+async function rifai(soglia){
+  document.getElementById('val').textContent = soglia;
+  const res = {}, occhio = [];
+  for(const [n,u] of Object.entries(ICONE)){
+    res[n] = await pixella(u, LATO, +soglia);
+    occhio.push(n + '\n' + res[n].map(r => '  ' + r.replace(/\./g,' ')).join('\n'));
+  }
+  window.RISULTATO = res;
+  document.getElementById('out').textContent = Object.entries(res).map(([n,g]) =>
+    '    "' + n + '": {"contorno": [\n' +
+    g.map(r => '        "' + r + '",').join('\n') + '\n    ]},').join('\n');
+  document.getElementById('occhio').textContent = occhio.join('\n\n');
+}
+rifai(110);
+</script>

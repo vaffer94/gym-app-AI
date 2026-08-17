@@ -33,6 +33,9 @@ licenza. In particolare:
                            copyright Twitter, Inc. e collaboratori,
                            licenza CC-BY 4.0.
   - le icone del pacchetto npm "pixelarticons", licenza MIT.
+  - public/sfondo-attrezzi.svg — generato dalle icone di Tabler Icons
+                           (https://tabler.io/icons), copyright (c) 2020-2024
+                           Paweł Kuna, licenza MIT.
   - src/data/catalog.json — generato da free-exercise-db
                            (https://github.com/yuhonas/free-exercise-db),
                            rilasciato con The Unlicense (pubblico dominio).

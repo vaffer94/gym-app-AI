@@ -41,16 +41,21 @@ html, body, #root { min-height: 100%; }
 
 body {
   margin: 0;
-  /* Righe diagonali arcobaleno, a scaletta di pixel.
-     La piastrella e' un SVG generato da scripts/genera-sfondo.py, non un
-     repeating-linear-gradient: il gradiente disegna diagonali LISCE e
-     antialiasate, e accanto a icone su griglia 24x24 stonano. I colori stanno
-     dentro l'SVG, quindi si cambiano nello script e si rigenera.
-     --paper resta sotto: se l'SVG non arriva (primo caricamento senza cache)
-     lo sfondo e' crema e non bianco accecante.
-     `fixed` evita che le righe scorrano col contenuto: con una diagonale in
-     movimento sotto le card viene il mal di mare. */
-  background: var(--paper) url('/sfondo-righe.svg') repeat fixed;
+  /* Sfondo: carta da parati di attrezzi da palestra a contorno, fitti e
+     girati, in ink molto trasparente sul crema. Devono leggersi come
+     decorazione e mai competere col contenuto delle card.
+     Una piastrella che si ripete: la densita' e' uniforme per costruzione, e su
+     qualunque schermo copre tutto senza deformare niente. Gli attrezzi sono
+     girati solo a QUARTI di giro (piu' lo specchio, fanno otto orientamenti):
+     un disegno a pixel ruotato di un angolo qualsiasi smette di essere un
+     disegno a pixel, i quadretti cadono fra due pixel e i bordi si sfrangiano.
+     `fixed` li tiene fermi mentre il contenuto scorre: se scorressero anche
+     loro sembrerebbero pezzi della pagina invece che sfondo.
+     Si genera con scripts/genera-sfondo.py. */
+  background-color: var(--paper);
+  background-image: url('/sfondo-attrezzi.svg');
+  background-repeat: repeat;
+  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--font-body);
   font-size: 16px;

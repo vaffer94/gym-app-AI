@@ -530,6 +530,25 @@ icone derivate, e restano alla libreria solo le cinque emoji che stavano dentro 
 **Eccezione**: `scale` di pixelarticons e' il ridimensionamento, non una bilancia, e in home
 diceva "ingrandisci" al posto di "peso" — quella si genera dall'emoji ⚖.
 
+### F9.4-bis Le licenze, e perche' prima non c'erano
+
+Finche' l'app scriveva nel codice il **carattere** `👟`, il disegno lo metteva il telefono
+di chi guardava: l'app distribuiva una lettera, non un'immagine, e non c'era niente da
+dichiarare. Pixellando, il disegno **entra nel bundle** e viene ridistribuito.
+
+Scelto **Twemoji** (CC-BY 4.0): PNG pronti, forme piatte che reggono la riduzione, e
+l'obbligo si esaurisce in una riga di attribuzione. Scartati **OpenMoji** (CC BY-SA: lo
+share-alike sulle derivate complica un repository pubblico con disegni di tre provenienze) e
+**Fluent Emoji** di Microsoft, che pure e' MIT e sarebbe stato il piu' comodo: pubblica solo
+SVG, e rasterizzarli richiede `cairo`, una libreria di sistema da installare a parte.
+
+L'attribuzione sta in tre posti apposta: `src/icons/CREDITI.md` (l'elenco autorevole), il
+README, e **dentro l'app** nella schermata "Scrivimi" — la CC-BY chiede il credito dove il
+lavoro viene usato, e un file nel repository non lo vede chi apre l'app dal telefono.
+
+**Valutata e rimandata**: l'idea di un repository separato per le icone. Aveva senso solo
+per pubblicarle, e quel bisogno e' caduto.
+
 ### F9.4-ter Due difetti trovati solo guardando l'app
 
 Il primo: le icone uscivano con un **alone nero irregolare**. Non veniva da Twemoji ma dallo
@@ -552,25 +571,6 @@ schermo non e' una formalita' finale.
 Restano caratteri di testo, e non sono un dimenticanza: `→` `✓` `✕` stanno dentro frasi,
 sono segni tipografici e non disegni.
 
-### F9.4-bis Le licenze, e perche' prima non c'erano
-
-Finche' l'app scriveva nel codice il **carattere** `👟`, il disegno lo metteva il telefono
-di chi guardava: l'app distribuiva una lettera, non un'immagine, e non c'era niente da
-dichiarare. Pixellando, il disegno **entra nel bundle** e viene ridistribuito.
-
-Scelto **Twemoji** (CC-BY 4.0): PNG pronti, forme piatte che reggono la riduzione, e
-l'obbligo si esaurisce in una riga di attribuzione. Scartati **OpenMoji** (CC BY-SA: lo
-share-alike sulle derivate complica un repository pubblico con disegni di tre provenienze) e
-**Fluent Emoji** di Microsoft, che pure e' MIT e sarebbe stato il piu' comodo: pubblica solo
-SVG, e rasterizzarli richiede `cairo`, una libreria di sistema da installare a parte.
-
-L'attribuzione sta in tre posti apposta: `src/icons/CREDITI.md` (l'elenco autorevole), il
-README, e **dentro l'app** nella schermata "Scrivimi" — la CC-BY chiede il credito dove il
-lavoro viene usato, e un file nel repository non lo vede chi apre l'app dal telefono.
-
-**Valutata e rimandata**: l'idea di un repository separato per le icone. Aveva senso solo
-per pubblicarle, e quel bisogno e' caduto.
-
 ### F9.5 Come si aggiunge un'icona disegnata a mano
 
 `scripts/png2icona.py` converte un PNG 24×24 in un componente React in cui **ogni colore
@@ -588,7 +588,7 @@ l'unica parte dell'interfaccia capace di non comparire con la connessione baller
 giorno il repo separato si fara', le icone andranno prese **al momento della build**.
 Per ora stanno in `src/icons/mie/`: estrarle dopo e' banale, sono file.
 
-### F9.5 Angoli appena smussati (10/7)
+### F9.6 Angoli appena smussati (10/7)
 
 Secondo passo dello stile retro'. Da 20px/14px si scende a **10px per le card e 7px per
 i bottoni**, scelti guardando cinque varianti affiancate sulla stessa schermata.
@@ -606,34 +606,51 @@ Le pastiglie che invece erano **rettangoli disegnati come pillole** (chip, badge
 calendario, barre di avanzamento) sono scese a 4-7px: a 999px accanto a card da 10
 stonavano piu' di prima.
 
-### F9.6 Lo sfondo a righe, e la regola che ne aveva impedito una prima
+### F9.7 Lo sfondo: attrezzi a pixel, e tre approcci scartati
 
-Terzo passo. Lo sfondo crema diventa **righe diagonali arcobaleno a scaletta di pixel**,
-nei colori dell'app schiariti fin quasi al bianco.
+Terzo passo. Lo sfondo crema diventa una **carta da parati di attrezzi da palestra a
+contorno**, fitti e girati, in `--ink` al 10%.
 
-**La regola andava corretta, non aggirata.** In `global.css` c'era scritto che un fondo a
-righe era gia' stato valutato e scartato "perche' DESIGN.md esclude i gradienti, e le
-righe si fanno con repeating-linear-gradient". Quella motivazione confondeva il nome della
-funzione CSS col risultato: l'anti-pattern elenca gradienti, glassmorphism, blur e ombre
-sfumate, cioe' cose che **sfumano** contro lo stile piatto. Bande a stop netti non sfumano
-niente. La regola ora dice "gradienti **sfumati**", e il commento vecchio e' stato riscritto
-invece di lasciarlo li' a difendere una decisione morta.
+**Tre approcci sono stati provati e buttati**, e vale la pena ricordarli perche' ognuno
+sembrava ragionevole prima di vederlo:
 
-**Ma alla fine il gradiente non serviva comunque**, e per un motivo migliore: a 45 gradi un
-gradiente CSS disegna diagonali **lisce e antialiasate**, che accanto a icone su griglia
-24×24 stonano. Le scalette di pixel richiedono blocchi quadrati, quindi una piastrella —
-`public/sfondo-righe.svg`, 240×240, blocchi da 8px e bande da 48px, generata da
-`scripts/genera-sfondo.py`.
+1. **Righe diagonali arcobaleno.** Belle da sole, sbagliate qui: le diagonali di un
+   gradiente CSS sono lisce e antialiasate, e accanto a icone su griglia a pixel stonano.
+   Rifatte a scaletta di pixel con una piastrella, restavano comunque un motivo che non
+   parla di palestra.
+2. **Attrezzi ammucchiati negli angoli.** L'idea era bella ma ha prodotto due difetti
+   veri: due livelli di sfondo indipendenti si accavallavano dove si incontravano (nessuno
+   dei due sapeva dove stava l'altro), e per avere angoli distinti serviva un'immagine non
+   ripetuta, che lascia i lati vuoti su schermo largo.
+3. **Attrezzi disegnati a mano.** Il piu' istruttivo: dodici tentativi, e venivano storti.
+   I cerchi squadrati, le simmetrie sfasate di un pixel, il manico della kettlebell
+   attaccato alla palla. Un controllo automatico di simmetria ha trovato errori che a
+   occhio non si vedevano nell'ASCII ma si vedevano benissimo nel disegno.
 
-I colori stanno **nello script e non in variabili CSS**: finiscono dentro l'SVG, e una
-variabile senza effetto sarebbe peggio che non averla.
+**Quello che funziona**: non disegnarle. Le icone sono quelle di
+[Tabler Icons](https://tabler.io/icons) (MIT) — manubrio, bilanciere, corda, scarpa,
+cronometro, bici, nuotatore, borraccia, yoga, pallavolo, battito, tapis roulant, medaglia —
+ridotte a una griglia 20×20 da `scripts/pixella-tabler.html`, che le disegna su una tela
+otto volte piu' grande e poi media ogni quadretto. E' lo stesso ragionamento delle emoji:
+si trasforma un disegno che esiste gia' invece di rifarlo.
 
-Due dettagli pagati subito:
-- `background-attachment: fixed`, se no le diagonali scorrono sotto le card e viene il mal
-  di mare.
-- La piastrella e' stata aggiunta a `includeAssets` in `vite.config.js`: senza, non entrava
-  nel precache del service worker e offline lo sfondo tornava crema — cioe' proprio in
-  palestra, che e' dove la connessione non c'e'.
+La pagina e' un file HTML e non uno script Python perche' i rasterizzatori SVG da riga di
+comando vogliono `cairo`, una libreria di sistema da installare a parte — lo stesso
+ostacolo che aveva fatto scartare Fluent Emoji in F9.4-bis. Ha il cursore della soglia:
+sotto 80 le icone vengono gonfie, sopra 120 si spezzano.
+
+**Le rotazioni sono solo a quarti di giro** (piu' lo specchio, fanno otto orientamenti). Il
+riferimento di partenza aveva angoli qualsiasi, ma quello e' disegno vettoriale: un disegno
+a pixel ruotato di 37 gradi smette di essere un disegno a pixel, i quadretti cadono fra due
+pixel dello schermo e i bordi si sfrangiano.
+
+Due ritocchi dichiarati: la **pallavolo** e' disegnata al 72% della sua casella per venire
+piu' piccola delle altre, e la **borraccia** ha due righe modificate a mano per stringerla
+in vita — l'icona di Tabler ha i fianchi dritti.
+
+Una sola immagine che si ripete, quindi densita' uniforme per costruzione e nessuna
+sovrapposizione possibile: le collisioni si controllano in un'unica passata, sui riquadri
+reali dei disegni e tenendo conto della giunzione fra due copie affiancate.
 
 ## Fuori scope v1 (idee registrate)
 

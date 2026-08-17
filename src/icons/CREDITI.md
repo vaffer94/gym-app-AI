@@ -15,6 +15,15 @@ peggio di nessuna icona.
 | — (dal pacchetto npm) | [pixelarticons](https://pixelarticons.com/) | **MIT** | va conservato l'avviso di copyright |
 | `da-emoji/` | [Twemoji](https://github.com/jdecked/twemoji) | **CC-BY 4.0** | serve l'attribuzione, ed e' quella qui sotto |
 | `mie/` | disegnate da Vania | nessun vincolo | sono sue |
+| `public/sfondo-attrezzi.svg` | [Tabler Icons](https://tabler.io/icons) | **MIT** | va conservato l'avviso di copyright |
+
+## Lo sfondo
+
+Gli attrezzi dello sfondo sono le icone di **Tabler Icons** (MIT) ridotte a una
+griglia 16x16 con `scripts/pixella-tabler.html`. Non sono disegnate da noi: erano
+state disegnate a mano e venivano storte, quindi si e' scelto di trasformare un
+disegno che esiste gia', come si fa con le emoji. MIT non chiede attribuzione
+visibile, ma l'avviso di copyright va conservato — sta in `LICENSE`.
 
 ## L'attribuzione
 
