@@ -6,7 +6,7 @@ Obiettivo: moderno, semplice, giocoso. Mai più di 3-4 elementi importanti per s
 
 1. **Contorni**: bordo `3px solid var(--ink)` (#2B2B3C) su card, bottoni, avatar
 2. **Ombre "sticker"**: piatte, senza blur — `4px 4px 0 var(--ink)`. Al tap l'elemento si "preme" (trasla di 4px e perde l'ombra)
-3. **Angoli**: molto stondati — 20px card, 14px bottoni
+3. **Angoli**: appena smussati — 10px card (`--radius`), 7px bottoni (`--radius-sm`). Non 90 gradi: lo squadrato secco è stato provato e scartato. Gli elementi **tondi** (avatar, swatch dei colori, il (+) fra due esercizi, la pastiglia dell'alimento) restano tondi: un cerchio non ha angoli
 4. **Palette limitata** (mai altri colori):
    - Ink `#2B2B3C` · Paper `#FDF6EC` (sfondo) · Bianco card
    - Primary arancio `#FF6B35` (azione principale, una sola per schermata)

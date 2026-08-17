@@ -118,7 +118,7 @@ function FoodBar({ b }) {
         </div>
         <div
           style={{
-            height: 14, border: '2px solid var(--ink)', borderRadius: 999,
+            height: 14, border: '2px solid var(--ink)', borderRadius: 5,
             background: 'transparent', overflow: 'hidden',
           }}
         >

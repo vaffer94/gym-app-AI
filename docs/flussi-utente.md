@@ -588,6 +588,24 @@ l'unica parte dell'interfaccia capace di non comparire con la connessione baller
 giorno il repo separato si fara', le icone andranno prese **al momento della build**.
 Per ora stanno in `src/icons/mie/`: estrarle dopo e' banale, sono file.
 
+### F9.5 Angoli appena smussati (10/7)
+
+Secondo passo dello stile retro'. Da 20px/14px si scende a **10px per le card e 7px per
+i bottoni**, scelti guardando cinque varianti affiancate sulla stessa schermata.
+
+**Il 90 gradi e' stato provato e scartato**, ed e' la decisione che vale la pena
+ricordare: lo squadrato secco fa "terminale" e toglie morbidezza a un'app che si usa col
+fiatone fra una serie e l'altra. Dall'altra parte 20px accanto alle icone a pixel sembrava
+una bolla. 10/7 e' il punto in cui gli angoli si vedono senza tagliare.
+
+**Le forme tonde restano tonde**: avatar, swatch dei colori, il (+) fra due esercizi e la
+pastiglia dell'alimento nell'elenco. Un cerchio non ha angoli, e appuntirlo non lo
+renderebbe piu' coerente, gli cambierebbe la forma.
+
+Le pastiglie che invece erano **rettangoli disegnati come pillole** (chip, badge del
+calendario, barre di avanzamento) sono scese a 4-7px: a 999px accanto a card da 10
+stonavano piu' di prima.
+
 ## Fuori scope v1 (idee registrate)
 
 - **Gruppi di utenti**: condivisione schede, sfide — dopo web app + watch + pagamenti

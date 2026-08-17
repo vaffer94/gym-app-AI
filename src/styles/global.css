@@ -1,6 +1,6 @@
 /* ============================================================
    GYM APP — Design System "Cartoon"
-   Regole: contorni netti (3px ink), angoli molto stondati,
+   Regole: contorni netti (3px ink), angoli appena smussati (10/7),
    ombre piatte "sticker" (no blur), palette limitata,
    font arrotondati, icone a pixel (src/icons). Poche cose per schermata.
    ============================================================ */
@@ -21,8 +21,11 @@
   --danger: #e63946;
 
   /* Forme */
-  --radius: 20px;
-  --radius-sm: 14px;
+  /* Angoli appuntiti ma non a 90 gradi: lo squadrato secco toglieva
+     morbidezza a un'app che si usa col fiatone, e 20/14 era troppo
+     "bolla" accanto alle icone a pixel. */
+  --radius: 10px;
+  --radius-sm: 7px;
   --border: 3px solid var(--ink);
   --shadow: 4px 4px 0 var(--ink);
   --shadow-sm: 3px 3px 0 var(--ink);
@@ -162,7 +165,7 @@ p { margin: 0; }
   font-weight: 800;
   font-size: 0.8rem;
   border: 2px solid var(--ink);
-  border-radius: 999px;
+  border-radius: 7px;
   padding: 4px 12px;
   background: var(--yellow);
 }
@@ -263,7 +266,7 @@ p { margin: 0; }
   width: 110px;
   height: 110px;
   border: var(--border);
-  border-radius: 28px;
+  border-radius: 14px;
   box-shadow: var(--shadow);
   background: var(--primary);
   display: flex;
@@ -316,7 +319,7 @@ p { margin: 0; }
   text-align: center;
   background: var(--card);
   border: 2px solid var(--ink);
-  border-radius: 10px;
+  border-radius: 5px;
   padding: 6px 4px;
   outline: none;
 }
@@ -352,7 +355,7 @@ p { margin: 0; }
   width: 56px;
   height: 56px;
   border: 2px solid var(--ink);
-  border-radius: 12px;
+  border-radius: 3px;
   object-fit: cover;
   background: var(--yellow-soft);
   display: flex;
@@ -536,7 +539,7 @@ p { margin: 0; }
   color: var(--muted);
   background: var(--card);
   border: 2px solid var(--ink);
-  border-radius: 10px;
+  border-radius: 5px;
 }
 /* Sopra la cornice teal del giorno conteggiato: le icone dicono cose diverse dalla
    cornice (passi, attivita' vista e non conteggiata) e devono restare leggibili */
@@ -550,7 +553,7 @@ p { margin: 0; }
   font-size: 0.55rem;
   background: var(--card);
   border: 2px solid var(--ink);
-  border-radius: 999px;
+  border-radius: 4px;
   padding: 1px 4px;
   color: var(--ink);
 }
@@ -574,7 +577,7 @@ p { margin: 0; }
   position: absolute;
   inset: 0;
   border: 5px solid var(--teal);
-  border-radius: 8px;
+  border-radius: 3px;
   z-index: 1;
   pointer-events: none;
 }
@@ -592,7 +595,7 @@ p { margin: 0; }
   flex: 1;
   height: 18px;
   border: 2px solid var(--ink);
-  border-radius: 6px;
+  border-radius: 3px;
   background: transparent;
 }
 .seg--on { background: var(--yellow); }
@@ -601,14 +604,14 @@ p { margin: 0; }
 .bar-track {
   height: 18px;
   border: 2px solid var(--ink);
-  border-radius: 999px;
+  border-radius: 5px;
   background: var(--card);
   overflow: hidden;
 }
 .bar-fill {
   height: 100%;
   background: var(--primary);
-  border-radius: 999px;
+  border-radius: 5px;
   min-width: 6px;
   transition: width 0.3s ease;
 }
@@ -664,7 +667,7 @@ p { margin: 0; }
   gap: 10px;
   font-weight: 700;
   padding: 8px;
-  border-radius: 10px;
+  border-radius: 5px;
   cursor: pointer;
 }
 .dropdown-item:hover { background: var(--paper); }
