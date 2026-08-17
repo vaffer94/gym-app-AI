@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthContext'
 import { getRepo } from '../data/repo'
 import {
   isHealthConfigured, isHealthConnected, connectHealth, disconnectHealth,
-  getHealthSummary, clearHealthCache,
+  getHealthSummary, clearHealthCache, healthNeedsReconnect,
   connectHealthZones, hasZonesScope,
 } from '../data/health'
 import { getStepsGoal, pushGoals } from '../data/goals'
@@ -75,7 +75,9 @@ export default function IntegrationsPage() {
               <h3>Google Health</h3>
               <p className="small muted">Passi e allenamenti rilevati dal tuo Pixel Watch (ecosistema Fitbit)</p>
             </div>
-            {isHealthConnected() && <span className="chip"><i className="fa-solid fa-circle-check" /> collegato</span>}
+            {isHealthConnected() && (healthNeedsReconnect()
+              ? <span className="chip"><i className="fa-solid fa-triangle-exclamation" /> da ricollegare</span>
+              : <span className="chip"><i className="fa-solid fa-circle-check" /> collegato</span>)}
           </div>
 
           {!isHealthConfigured && (
@@ -90,7 +92,7 @@ export default function IntegrationsPage() {
               className="btn btn--primary btn--big"
               disabled={busy === 'connect'}
               onClick={() => conAttesa('connect', async () => {
-                await connectHealth()
+                await connectHealth(user.email)
                 await loadHealth()
               })}
             >
@@ -98,6 +100,33 @@ export default function IntegrationsPage() {
                 ? <><i className="fa-solid fa-rotate fa-spin" /> Collego…</>
                 : 'Collega Google Health'}
             </button>
+          )}
+
+          {/* Il permesso di Google dura un'ora e si rinnova da solo. Quando il rinnovo
+              non riesce, l'app smette di riprovare (vedi ensureToken in data/health.js)
+              e la ripartenza torna una scelta di chi la usa: e' l'unico modo perche' la
+              finestra di Google compaia solo quando la si e' chiesta. */}
+          {isHealthConnected() && healthNeedsReconnect() && (
+            <>
+              <p className="small" style={{ color: 'var(--danger)' }}>
+                <i className="fa-solid fa-triangle-exclamation" /> Il permesso di Google è
+                scaduto e non si è rinnovato da solo. I passi e gli allenamenti che vedi in
+                giro per l’app sono gli ultimi arrivati prima di adesso.
+              </p>
+              <button
+                className="btn btn--primary btn--big"
+                disabled={busy === 'connect'}
+                onClick={() => conAttesa('connect', async () => {
+                  await connectHealth(user.email)
+                  clearHealthCache()
+                  await loadHealth()
+                })}
+              >
+                {busy === 'connect'
+                  ? <><i className="fa-solid fa-rotate fa-spin" /> Collego…</>
+                  : <><i className="fa-solid fa-rotate-right" /> Ricollega Google Health</>}
+              </button>
+            </>
           )}
 
           {isHealthConnected() && (
@@ -137,7 +166,7 @@ export default function IntegrationsPage() {
               className="btn"
               disabled={busy === 'zones'}
               onClick={() => conAttesa('zones', async () => {
-                await connectHealthZones()
+                await connectHealthZones(user.email)
                 setZonesOn(true)
               })}
             >
@@ -177,7 +206,12 @@ export default function IntegrationsPage() {
             </>
           )}
 
-          {errore && <p className="small" style={{ color: 'var(--danger)' }}>{errore}</p>}
+          {/* Se il permesso e' scaduto lo dice gia' il blocco "da ricollegare" qui sopra,
+              col pulsante accanto: ripeterlo in rosso in fondo sarebbe lo stesso problema
+              detto due volte in due punti diversi */}
+          {errore && !healthNeedsReconnect() && (
+            <p className="small" style={{ color: 'var(--danger)' }}>{errore}</p>
+          )}
         </div>
 
         {isHealthConnected() && (

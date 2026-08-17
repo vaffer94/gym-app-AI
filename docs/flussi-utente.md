@@ -360,6 +360,9 @@ un difetto di quello di ieri.
 Le segnalazioni non le rilegge nessuno dall'app (le regole vietano la lettura): si
 guardano dalla console Firebase. Una pagina di lettura dentro l'app avrebbe voluto dire
 distinguere chi mantiene l'app da chi la usa, e non c'e' ancora niente che lo faccia.
+**Il link della console e cosa c'e' dentro ogni messaggio stanno nel README**, sezione
+"Leggere le segnalazioni": una cosa che si fa due volte l'anno, se non e' scritta dove
+si cercano le istruzioni operative, alla seconda volta non si ricorda dove guardare.
 
 ### F8.2 Le due modalita' si presentano a vicenda
 
@@ -400,6 +403,46 @@ e' l'unico modo per vedere la trappola del §6 di CLAUDE.md (l'APK non si aggior
 solo). Richiede pero' di toccare `watch/` e di reinstallare l'APK a mano, quindi vale
 come punto a se' — con l'ironia che il primo APK che scrive la sua versione e' anche
 l'ultimo di cui non la sappiamo.
+
+### F8.3 Il selettore degli account di Google che compariva da solo
+
+**Il sintomo**: aprendo lo Storico compariva spesso la schermata di Google che chiede con
+quale account stai accedendo. Sembrava un difetto dell'integrazione, o qualcosa che si
+sarebbe risolto pubblicando l'app. Non era ne' l'uno ne' l'altro.
+
+Il permesso che Google da' a una pagina web dura **un'ora**, e **non c'e' un refresh
+token**: quelli Google li rilascia solo a chi scambia il codice da un server, e qui un
+server non c'e'. Passata l'ora il permesso va richiesto da capo, e ogni richiesta — anche
+quella marcata come silenziosa — apre una finestra di Google. Se il rinnovo riesce la
+finestra si richiude da sola; se non riesce resta li' a chiedere l'account.
+
+Due cause, due rimedi distinti.
+
+**Non gli avevamo mai detto quale account.** `prompt: ''` non e' un ordine, e' una
+preferenza: significa "non disturbare l'utente **se puoi evitarlo**". Google puo'
+evitarlo solo se riesce a capire da solo di chi si tratta, e con piu' account collegati
+allo stesso browser non puo'. Ora si passa `login_hint` con l'indirizzo usato per entrare
+nell'app, e lo si conserva dentro il token per poterlo ridire al rinnovo — che avviene in
+fondo a una chiamata API, dove non c'e' piu' nessuno che sappia chi e' l'utente. Resta un
+suggerimento: se il consenso a Google Health e' stato dato con un altro account, Google lo
+ignora e chiede lo stesso.
+
+**E un rinnovo fallito non se lo ricordava nessuno.** Era questa la causa del "molte
+volte": non il token che scadeva dieci volte, ma **lo stesso tentativo fallito rifatto a
+ogni apertura della pagina**, perche' lo Storico chiede i dati appena si apre. Ora un
+rinnovo andato male si segna (`gym.health.rinnovoFallito`) e i tentativi automatici si
+fermano: Integrazioni mostra "da ricollegare" e un pulsante, e la finestra di Google si
+apre solo quando la si e' chiesta. Non e' solo una questione di garbo — i browser
+bloccano le finestre aperte senza un gesto dell'utente, quindi buona parte di quei
+tentativi automatici non arrivava nemmeno in fondo.
+
+**Cosa resta com'era, e va accettato**: una volta all'ora, quando il rinnovo riesce, si
+vede comunque un lampo di finestra che si apre e si chiude. Toglierlo del tutto vorrebbe
+dire un server che tiene il refresh token, cioe' un backend che questo progetto non ha.
+
+**Da non confondere**: la schermata "app non verificata" e i tester da aggiungere a mano
+sono un'altra cosa — dipendono dalla verifica della schermata di consenso su Google
+Cloud, e diventeranno un problema quando l'app la useranno persone diverse da Vania.
 
 ## Fuori scope v1 (idee registrate)
 

@@ -5,7 +5,7 @@
  *  - localStorage (modalità demo)
  */
 import {
-  collection, doc, getDocs, setDoc, deleteDoc, getDoc, addDoc,
+  collection, doc, getDocs, setDoc, deleteDoc, getDoc, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 
@@ -142,7 +142,20 @@ function makeFirestoreRepo(uid) {
      * riceve non finisce nel bundle, che e' pubblico anche senza login.
      */
     async sendFeedback(feedback) {
-      await addDoc(collection(db, 'feedback'), feedback)
+      // L'id e' la data, non un id automatico: la console Firestore elenca i documenti
+      // per id, e con gli id casuali l'ultima segnalazione arrivata finisce in mezzo
+      // alle altre. Le quattro lettere in coda evitano che due messaggi mandati nello
+      // stesso secondo si scrivano addosso — e sarebbero un update, che le regole
+      // vietano, quindi il secondo utente vedrebbe un "permesso negato" senza motivo
+      const quando = new Date().toISOString().slice(0, 19).replace('T', '_').replace(/:/g, '-')
+      const id = `${quando}-${Math.random().toString(36).slice(2, 6)}`
+      await setDoc(doc(db, 'feedback', id), {
+        ...feedback,
+        // L'ora del server accanto a quella del dispositivo: la seconda e' l'orologio
+        // di chi scrive, che puo' essere sbagliato, e la console la mostra come data
+        // leggibile invece che come numero di millisecondi
+        ricevutoIl: serverTimestamp(),
+      })
       return { recapitata: true }
     },
     async listPlans() {

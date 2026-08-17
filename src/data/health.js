@@ -22,7 +22,12 @@ const SCOPE = 'https://www.googleapis.com/auth/googlehealth.activity_and_fitness
  * passi e allenamenti, che invece funzionano gia'.
  */
 const SCOPE_METRICS = 'https://www.googleapis.com/auth/googlehealth.health_metrics_and_measurements.readonly'
-const LS = { token: 'gym.health.token', cache: 'gym.health.cache' }
+const LS = {
+  token: 'gym.health.token',
+  cache: 'gym.health.cache',
+  // Segna che l'ultimo rinnovo automatico e' andato male: vedi ensureToken()
+  fallito: 'gym.health.rinnovoFallito',
+}
 
 /* ---------- stato connessione ---------- */
 function getToken() {
@@ -30,9 +35,18 @@ function getToken() {
 }
 export const isHealthConnected = () => Boolean(getToken())
 
+/**
+ * Collegamento ancora presente ma da rifare a mano: il token e' scaduto e il rinnovo
+ * automatico non e' riuscito. Serve all'interfaccia per mostrare "Ricollega" invece di
+ * far ripartire da sola una finestra di Google a ogni apertura di pagina.
+ */
+export const healthNeedsReconnect = () =>
+  Boolean(getToken()) && localStorage.getItem(LS.fallito) === '1'
+
 export function disconnectHealth() {
   localStorage.removeItem(LS.token)
   localStorage.removeItem(LS.cache)
+  localStorage.removeItem(LS.fallito)
 }
 
 /** Forza il refresh ignorando la cache dei 30 minuti */
@@ -56,13 +70,22 @@ function loadGis() {
   return gisPromise
 }
 
-function requestToken({ silent, scope = SCOPE } = {}) {
+function requestToken({ silent, scope = SCOPE, hint } = {}) {
   return new Promise((resolve, reject) => {
     loadGis()
       .then(() => {
         const client = window.google.accounts.oauth2.initTokenClient({
           client_id: CLIENT_ID,
           scope,
+          // QUALE ACCOUNT: senza questo, al rinnovo Google non ha modo di sapere di
+          // quale dei conti collegati al browser si tratta, e allora lo chiede — anche
+          // quando gli abbiamo detto di non chiedere, perche' `prompt: ''` e' una
+          // preferenza ("non disturbare se puoi evitarlo"), non un ordine. Il risultato
+          // era il selettore degli account a ogni apertura dello Storico.
+          // Il suggerimento e' l'indirizzo con cui si e' entrati nell'app: se poi il
+          // consenso a Google Health e' stato dato con un altro account, Google lo
+          // ignora e chiede lo stesso — resta un suggerimento, non un vincolo.
+          ...(hint ? { login_hint: hint } : {}),
           callback: (resp) => {
             if (resp.error) return reject(new Error(resp.error))
             const tok = {
@@ -72,8 +95,12 @@ function requestToken({ silent, scope = SCOPE } = {}) {
               // quanto chiesto, e chiedere le zone con un token che non le copre
               // significherebbe solo prendersi un 403 a ogni apertura del dettaglio.
               scope: resp.scope || scope,
+              // ...e a chi lo si era chiesto, per poterlo ridire al rinnovo, che
+              // avviene dentro una chiamata API dove non c'e' piu' nessuno a saperlo
+              hint: hint || null,
             }
             localStorage.setItem(LS.token, JSON.stringify(tok))
+            localStorage.removeItem(LS.fallito)
             resolve(tok)
           },
           error_callback: (err) => reject(new Error(err?.message || 'Autorizzazione annullata')),
@@ -85,22 +112,41 @@ function requestToken({ silent, scope = SCOPE } = {}) {
 }
 
 /** Avvia il collegamento (mostra il consenso Google) */
-export const connectHealth = () => requestToken({ silent: false })
+export const connectHealth = (email) => requestToken({ silent: false, hint: email })
 
 /** Consenso allargato alle metriche di salute: sblocca le soglie di zona vere */
-export const connectHealthZones = () =>
-  requestToken({ silent: false, scope: `${SCOPE} ${SCOPE_METRICS}` })
+export const connectHealthZones = (email) =>
+  requestToken({ silent: false, scope: `${SCOPE} ${SCOPE_METRICS}`, hint: email })
 
 export const hasZonesScope = () => Boolean(getToken()?.scope?.includes(SCOPE_METRICS))
 
+/**
+ * UN SOLO TENTATIVO AUTOMATICO, POI SI FERMA.
+ *
+ * Il token dura un'ora e non esiste un refresh token: Google li da' solo a chi scambia
+ * il codice da un server, e qui un server non c'e'. Quindi ogni ora il token va
+ * richiesto da capo, e ogni richiesta — anche quella "silenziosa" — apre una finestra
+ * di Google. Se il rinnovo riesce si richiude da sola; se non riesce resta li' a
+ * chiedere con quale account stai accedendo.
+ *
+ * Prima non se lo ricordava nessuno, e la stessa richiesta fallita ripartiva a ogni
+ * apertura dello Storico: non era il token che scadeva dieci volte, era lo stesso
+ * fallimento ripetuto. Ora un rinnovo andato male si segna, e finche' non si preme
+ * "Ricollega" nessuna finestra si apre da sola — anche perche' i browser bloccano le
+ * finestre aperte senza che l'utente abbia toccato niente, quindi quei tentativi in
+ * buona parte non arrivavano nemmeno in fondo.
+ */
 async function ensureToken() {
   const tok = getToken()
   if (tok && Date.now() < tok.expiresAt) return tok
   if (!tok) return null
-  // token scaduto: tentativo silenzioso, conservando gli scope gia' concessi
+  if (localStorage.getItem(LS.fallito) === '1') return null
+  // token scaduto: tentativo silenzioso, conservando gli scope gia' concessi e
+  // ricordando a Google quale account era
   try {
-    return await requestToken({ silent: true, scope: tok.scope || SCOPE })
+    return await requestToken({ silent: true, scope: tok.scope || SCOPE, hint: tok.hint })
   } catch {
+    localStorage.setItem(LS.fallito, '1')
     return null
   }
 }
@@ -108,7 +154,7 @@ async function ensureToken() {
 /* ---------- chiamate API ---------- */
 async function api(path, options = {}) {
   const tok = await ensureToken()
-  if (!tok) throw new Error('Collegamento scaduto: premi di nuovo "Collega"')
+  if (!tok) throw new Error('collegamento con Google scaduto, va rifatto a mano')
   const res = await fetch(`https://health.googleapis.com/v4${path}`, {
     ...options,
     headers: {

@@ -33,7 +33,7 @@ Tutto da [console.cloud.google.com](https://console.cloud.google.com), col proge
 4. **Schermata consenso OAuth → Data Access (Ambiti)** → aggiungi `.../auth/googlehealth.activity_and_fitness.readonly`
 5. **Schermata consenso OAuth → Audience → Utenti di prova** → aggiungi la tua email (app non verificata = max 100 utenti)
 6. Copia il **Client ID** (`...apps.googleusercontent.com`) in `.env.local` come `VITE_GOOGLE_HEALTH_CLIENT_ID`
-7. Riavvia `npm run dev` → Storico → Integrations → **Collega Google Health**
+7. Riavvia `npm run dev` → home → **Integrazioni** → **Collega Google Health**
 
 ## Deploy su Firebase Hosting
 
@@ -46,6 +46,29 @@ firebase deploy
 ```
 
 L'app sarà online su `https://<project-id>.web.app`. Dal telefono: apri l'URL → menu del browser → **Aggiungi a schermata Home** per installarla come app.
+
+Le regole Firestore non partono con `firebase deploy` da sole se il deploy è parziale:
+dopo averle cambiate serve `firebase deploy --only firestore:rules`, se no le scritture
+nuove falliscono con *Missing or insufficient permissions* pur essendo giuste nel codice.
+
+## Leggere le segnalazioni (il pulsante 💬)
+
+Quello che gli utenti scrivono da **Scrivimi** non arriva per posta: finisce nella
+collezione `feedback` su Firestore. Si legge dalla console, che le regole di sicurezza
+non le applica:
+
+**https://console.firebase.google.com/project/gym-app-2dd77/firestore/data/~2Ffeedback**
+
+- La collezione **non esiste finché non arriva il primo messaggio**: se nella colonna di
+  sinistra non c'è, non è rotto niente, non ha ancora scritto nessuno.
+- I documenti hanno per id la data (`2026-08-17_14-32-05-a4f9`), quindi la lista è già
+  in ordine cronologico e l'ultimo arrivato è in fondo.
+- Dentro ogni messaggio: `tipo` (`bug` o `idea`), `testo`, `nome` e `email` di chi
+  scrive, `userAgent`, `build` (quale versione stava davvero girando) e due orari —
+  `ricevutoIl` è quello del server, `creatoIl` quello del dispositivo. Se non
+  coincidono, l'orologio di chi ha scritto era sbagliato.
+- Nessuno può rileggerle o cancellarle dall'app: le regole permettono solo di crearle.
+  Per rispondere si usa l'indirizzo che è dentro il messaggio.
 
 ## Struttura
 
