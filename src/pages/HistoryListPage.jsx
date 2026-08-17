@@ -14,7 +14,7 @@ import {
   getHealthSummary, clearHealthCache, localISO, exerciseTypeInfo,
   connectHealthZones, hasZonesScope,
 } from '../data/health'
-import { getStepsGoal, getTrackedActivityTypes } from '../data/goals'
+import { getStepsGoal, getTrackedActivityTypes, syncGoals, pushGoals } from '../data/goals'
 import {
   allActivities, trackedActivities, activityDaysISO, dentroFinestra,
   inizioFinestra, isDoppione, FINESTRA_GIORNI,
@@ -54,6 +54,20 @@ export default function HistoryListPage() {
   // I tipi scelti stanno in localStorage, ma serve anche in stato: spuntare un chip in
   // Integrazioni deve ricalcolare obiettivi e medaglie subito, non al prossimo ingresso
   const [tracked, setTracked] = useState(getTrackedActivityTypes)
+  const [, setObiettiviAllineati] = useState(0) // solo per ridisegnare dopo la sincronizzazione
+
+  // Gli obiettivi possono essere stati cambiati da un altro dispositivo: qui si legge
+  // l'obiettivo passi, quello di allenamenti e le attivita' scelte, e mostrarli vecchi
+  // sarebbe peggio che non mostrarli
+  useEffect(() => {
+    let vivo = true
+    syncGoals(repo).then((esito) => {
+      if (!vivo || !esito.cambiato) return
+      setTracked(getTrackedActivityTypes())
+      setObiettiviAllineati((n) => n + 1)
+    }).catch((e) => console.warn('Obiettivi non allineati col profilo:', e.message))
+    return () => { vivo = false }
+  }, [repo])
   const [, setZonesOn] = useState(hasZonesScope()) // solo per ridisegnare dopo il consenso
 
   useEffect(() => {
@@ -327,7 +341,10 @@ export default function HistoryListPage() {
           </div>
 
           {isHealthConnected() && (
-            <TrackedActivities detectedWorkouts={fitbit?.detectedWorkouts} onChange={setTracked} />
+            <TrackedActivities
+              detectedWorkouts={fitbit?.detectedWorkouts}
+              onChange={(types) => { setTracked(types); pushGoals(repo) }}
+            />
           )}
 
           <KcalDiagnostics sessions={sessions} />

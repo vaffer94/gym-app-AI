@@ -45,14 +45,19 @@ export default function WeekGoals({ activities, kcalById, onOpenGoals }) {
           <span className="small" style={{ flex: 1, minWidth: 96 }}>Allenamenti</span>
           <span className="small" style={{ fontWeight: 800 }}>{fatti} di {goalW}</span>
         </div>
-        <div className="bar-track">
-          <div
-            className="bar-fill"
-            style={{
-              width: `${Math.min(100, (fatti / goalW) * 100)}%`,
-              background: fatti >= goalW ? 'var(--teal)' : 'var(--yellow)',
-            }}
-          />
+        {/* Una tacca per allenamento previsto: con obiettivi da tre o quattro, una barra
+            continua fa diventare la differenza fra uno e due una questione di pixel */}
+        <div
+          className="seg-track"
+          role="img"
+          aria-label={`${fatti} allenamenti su ${goalW}`}
+        >
+          {Array.from({ length: goalW }, (_, i) => (
+            <span
+              key={i}
+              className={`seg ${i < fatti ? (fatti >= goalW ? 'seg--done' : 'seg--on') : ''}`}
+            />
+          ))}
         </div>
         {daGoogle > 0 && (
           <p className="small muted" style={{ margin: 0 }}>

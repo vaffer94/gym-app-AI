@@ -7,8 +7,11 @@ import {
   getStepsGoal, setStepsGoal,
   getWorkoutGoal, setWorkoutGoal,
   getKcalGoal, setKcalGoal, cartKcal,
+  syncGoals, pushGoals,
 } from '../data/goals'
 import { isHealthConnected } from '../data/health'
+import { useAuth } from '../auth/AuthContext'
+import { getRepo } from '../data/repo'
 
 /**
  * Gli obiettivi, tutti in un posto solo.
@@ -19,11 +22,39 @@ import { isHealthConnected } from '../data/health'
  */
 export default function GoalsPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const repo = getRepo(user)
   const [steps, setSteps] = useState(getStepsGoal)
   const [workouts, setWorkouts] = useState(getWorkoutGoal)
   const [energia, setEnergia] = useState(getKcalGoal)
 
-  const salvaEnergia = (next) => { setEnergia(next); setKcalGoal(next) }
+  // Com'e' andata con il profilo. Si mostra perche' una sincronizzazione muta non si
+  // distingue da una che non c'e': e' successo davvero, con l'app del telefono ferma a
+  // una versione che il profilo non lo scriveva nemmeno
+  const [sync, setSync] = useState(null)
+
+  // Gli obiettivi del profilo possono essere piu' recenti di quelli di questo
+  // dispositivo (li hai messi dal telefono): si rilegge tutto solo se e' cambiato
+  // qualcosa, se no il campo che stai toccando ti salterebbe sotto le dita
+  useEffect(() => {
+    let vivo = true
+    syncGoals(repo).then((esito) => {
+      if (!vivo) return
+      setSync(esito)
+      if (!esito.cambiato) return
+      setSteps(getStepsGoal())
+      setWorkouts(getWorkoutGoal())
+      setEnergia(getKcalGoal())
+    }).catch((e) => {
+      console.warn('Obiettivi non allineati col profilo:', e.message)
+      if (vivo) setSync({ stato: 'errore', errore: e.message })
+    })
+    return () => { vivo = false }
+  }, [repo])
+
+  const salva = () => pushGoals(repo, setSync)
+
+  const salvaEnergia = (next) => { setEnergia(next); setKcalGoal(next); salva() }
 
   // Cambiare le quantita' ricalcola il totale: il carrello E' l'obiettivo
   const cambiaQta = (id, qty) => {
@@ -62,13 +93,14 @@ export default function GoalsPage() {
           <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Obiettivo</span>
           <Stepper
             value={workouts}
-            onChange={(v) => { setWorkouts(v); setWorkoutGoal(v) }}
+            onChange={(v) => { setWorkouts(v); setWorkoutGoal(v); salva() }}
             min={1} max={14} step={1}
           />
         </div>
         <p className="small muted">
-          Nello Storico vedi le <strong>settimane di fila</strong> in cui l’hai rispettato.
-          Contano solo gli allenamenti registrati dall’app.
+          Nello Storico vedi le <strong>settimane</strong> in cui l’hai rispettato. Contano
+          gli allenamenti registrati dall’app più le attività che hai scelto di conteggiare
+          in Storico → Integrazioni.
         </p>
       </div>
 
@@ -84,7 +116,7 @@ export default function GoalsPage() {
           <span className="label" style={{ margin: 0, flex: 1, minWidth: 96 }}>Obiettivo</span>
           <Stepper
             value={steps}
-            onChange={(v) => { setSteps(v); setStepsGoal(v) }}
+            onChange={(v) => { setSteps(v); setStepsGoal(v); salva() }}
             min={1000} max={50000} step={500}
           />
         </div>
@@ -97,7 +129,42 @@ export default function GoalsPage() {
       </div>
 
       <EnergyGoalCard goal={energia} onQty={cambiaQta} onAdd={aggiungi} onSet={salvaEnergia} />
+
+      <StatoProfilo sync={sync} />
     </div>
+  )
+}
+
+/**
+ * Dove stanno gli obiettivi, in una riga.
+ *
+ * Serve perche' "non si sincronizza" e "la sincronizzazione non c'e' ancora su questo
+ * dispositivo" si assomigliano moltissimo dal lato di chi guarda, e distinguerli a mano
+ * significa aprire la console. Qui la differenza si legge.
+ */
+function StatoProfilo({ sync }) {
+  if (!sync) return null
+
+  const quando = sync.updatedAt
+    ? new Date(sync.updatedAt).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : null
+
+  const testo = {
+    ricevuti: `Aggiornati da un altro dispositivo (${quando})`,
+    inviati: `Salvati sul tuo profilo (${quando})`,
+    allineati: `Sul tuo profilo, ultima modifica ${quando}`,
+    'mai-impostati': 'Non ancora salvati sul profilo: tocca un obiettivo per mandarceli',
+    'non-disponibile': 'Modalità demo: restano su questo dispositivo',
+    errore: `Profilo non raggiungibile: ${sync.errore}. Gli obiettivi valgono lo stesso qui`,
+  }[sync.stato]
+
+  if (!testo) return null
+
+  return (
+    <p className="small muted center" style={{ margin: 0 }}>
+      <i className={`fa-solid ${sync.stato === 'errore' ? 'fa-triangle-exclamation' : 'fa-cloud'}`} />{' '}
+      {testo}
+    </p>
   )
 }
 
@@ -179,8 +246,9 @@ function EnergyGoalCard({ goal, onQty, onAdd, onSet }) {
 
       <p className="small muted" style={{ margin: 0 }}>
         Nello Storico ogni alimento diventa una barra che si riempie con l’energia degli
-        allenamenti della settimana. Contano solo quelli registrati dall’app: quelli che
-        Google riconosce da solo (una camminata, le scale) non riempiono niente.
+        allenamenti della settimana, e delle attività che hai scelto di conteggiare. Quelle
+        che Google riconosce da solo e che non hai spuntato (una camminata, le scale) non
+        riempiono niente.
       </p>
 
       {picker && (

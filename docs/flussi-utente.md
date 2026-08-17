@@ -275,6 +275,40 @@ medio** — due voci con lo stesso contatore possono essere mezz'ora e due ore.
 - Le attivita' senza orario di fine si contano nel contatore ma **non nella media**:
   sommarle come zero abbasserebbe il tempo medio di un allenamento che c'e' stato.
 
+### F7.6 Correzioni dopo la prova sul telefono (17/08/2026)
+
+- **La cornice del giorno conteggiato passa sotto le icone** dei passi e delle attivita'
+  non conteggiate: dicono cose diverse dalla cornice e devono restare leggibili.
+- **Cornice piu' spessa e attaccata al bordo** (`inset: 0`, 5px): staccata di qualche
+  pixel sembrava un secondo bordo messo per sbaglio, attaccata sembra il giorno colorato
+  fin dove finisce.
+- **Barra degli allenamenti a tacche**, una per allenamento previsto. La barra continua
+  funziona per le kcal, che sono centinaia, ma non per un obiettivo da tre: riempita a un
+  terzo non dice "uno su tre", dice "circa un terzo", e la differenza fra uno e due
+  allenamenti diventa una questione di pixel. Le barre dell'energia restano continue.
+
+### F7.7 Gli obiettivi seguono la persona, non il dispositivo
+
+Gli obiettivi erano nati come impostazioni locali — "come il profilo, non hanno bisogno
+di sincronizzazione" — e con un telefono solo la differenza non si vedeva. Si e' vista
+aprendo l'app dal portatile: obiettivo di energia sparito, obiettivo di allenamenti
+apparentemente intatto **solo perche' il valore scelto era per caso quello di default**
+(3). Il secondo caso e' il piu' insidioso: un default che somiglia a un'impostazione fa
+credere che tutto funzioni.
+
+Ora gli obiettivi stanno anche su `users/{uid}/meta/goals`, insieme alla scelta delle
+attivita' da conteggiare. `localStorage` resta la copia da cui si legge, perche' le
+schermate leggono gli obiettivi mentre disegnano e non possono aspettare la rete.
+
+- **Vince l'ultimo che ha scritto**, confrontando `updatedAt`. Non si fondono: fondere
+  "tre allenamenti" con "quattro" non da' un numero che qualcuno abbia scelto.
+- **I default non si mandano mai**: un dispositivo che non ha mai impostato niente ha
+  timbro 0, e senza questa regola sovrascriverebbe col nulla gli obiettivi veri.
+- **Le scritture aspettano 800 ms**: lo stepper si preme piu' volte di fila, e "da 3 a 6"
+  sono tre tocchi per un'unica decisione.
+- Il **profilo** (eta', peso, altezza) ha lo stesso problema e non e' stato ancora
+  spostato: e' il candidato successivo.
+
 ## Fuori scope v1 (idee registrate)
 
 - **Gruppi di utenti**: condivisione schede, sfide — dopo web app + watch + pagamenti

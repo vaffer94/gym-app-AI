@@ -22,8 +22,21 @@ const ls = {
 }
 
 function makeLocalRepo() {
-  const K = { plans: 'gym.plans', custom: 'gym.customExercises', labels: 'gym.labels', sessions: 'gym.sessions' }
+  const K = {
+    plans: 'gym.plans', custom: 'gym.customExercises', labels: 'gym.labels',
+    sessions: 'gym.sessions', goals: 'gym.goals',
+  }
   return {
+    // In demo il "profilo remoto" e' un'altra chiave dello stesso localStorage: non
+    // sincronizza niente, ma fa esistere l'interfaccia anche senza account, se no
+    // ogni chiamante dovrebbe chiedersi se il repo di turno sa fare questa cosa
+    async getGoals() {
+      try { return JSON.parse(localStorage.getItem(K.goals)) || null } catch { return null }
+    },
+    async saveGoals(goals) {
+      localStorage.setItem(K.goals, JSON.stringify(goals))
+      return goals
+    },
     async listPlans() {
       return ls.read(K.plans).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
     },
@@ -91,8 +104,26 @@ function makeFirestoreRepo(uid) {
   const customCol = () => collection(db, 'users', uid, 'customExercises')
   const labelsDoc = () => doc(db, 'users', uid, 'meta', 'labels')
   const sessionsCol = () => collection(db, 'users', uid, 'sessions')
+  const goalsDoc = () => doc(db, 'users', uid, 'meta', 'goals')
 
   return {
+    /**
+     * Gli obiettivi stanno sul profilo e non solo sul dispositivo.
+     *
+     * Erano nati come impostazioni locali, e con un telefono solo la differenza non si
+     * vedeva. Si e' vista appena aperta l'app sul portatile: obiettivo di energia
+     * sparito, obiettivo di allenamenti apparentemente intatto solo perche' il valore
+     * scelto era per caso quello di default. Un obiettivo che dipende dal vetro da cui
+     * lo guardi non e' un obiettivo.
+     */
+    async getGoals() {
+      const snap = await getDoc(goalsDoc())
+      return snap.exists() ? snap.data() : null
+    },
+    async saveGoals(goals) {
+      await setDoc(goalsDoc(), goals)
+      return goals
+    },
     async listPlans() {
       const snap = await getDocs(plansCol())
       return snap.docs

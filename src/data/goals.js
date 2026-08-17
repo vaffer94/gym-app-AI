@@ -7,8 +7,12 @@ import { mondayOf } from './aggregate'
  * — mentre prima l'unico che esisteva (i passi) era finito fra le integrazioni, cioe'
  * fra i collegamenti a servizi esterni, che e' un'altra categoria.
  *
- * Sono impostazioni locali al dispositivo, come il profilo: non hanno bisogno di
- * sincronizzazione e non devono sparire se l'utente non e' collegato alla rete.
+ * Vivono in localStorage e in piu' sul profilo (vedi syncGoals). Erano solo locali,
+ * "come il profilo, non hanno bisogno di sincronizzazione": vero con un dispositivo
+ * solo, falso appena si apre l'app dal portatile e l'obiettivo di energia non c'e' piu'.
+ * localStorage resta la copia da cui si legge, perche' le schermate leggono gli
+ * obiettivi mentre disegnano e non possono aspettare la rete; il profilo e' quello che
+ * li fa sopravvivere al cambio di dispositivo.
  */
 
 const DAY = 24 * 3600 * 1000
@@ -19,19 +23,26 @@ const LS = {
   workouts: 'gym.goal.workouts',
   kcal: 'gym.goal.kcal',
   activities: 'gym.goal.activityTypes',
+  // Quando questo dispositivo ha cambiato un obiettivo l'ultima volta: e' l'unico
+  // criterio con cui si decide chi ha ragione fra due copie diverse
+  stamp: 'gym.goal.updatedAt',
 }
+
+/** Da chiamare a ogni modifica locale: senza il timbro, la copia sul profilo vince
+ *  sempre e riporterebbe indietro quello che hai appena scelto */
+const timbra = () => localStorage.setItem(LS.stamp, String(Date.now()))
 
 /* ---------- passi ---------- */
 
 export const getStepsGoal = () => Number(localStorage.getItem(LS.steps)) || 10000
-export const setStepsGoal = (v) => localStorage.setItem(LS.steps, String(v))
+export const setStepsGoal = (v) => { localStorage.setItem(LS.steps, String(v)); timbra() }
 
 /* ---------- allenamenti a settimana ---------- */
 
 export const DEFAULT_WORKOUT_GOAL = 3
 
 export const getWorkoutGoal = () => Number(localStorage.getItem(LS.workouts)) || DEFAULT_WORKOUT_GOAL
-export const setWorkoutGoal = (v) => localStorage.setItem(LS.workouts, String(v))
+export const setWorkoutGoal = (v) => { localStorage.setItem(LS.workouts, String(v)); timbra() }
 
 /* ---------- energia a settimana ---------- */
 
@@ -61,7 +72,7 @@ export function getKcalGoal() {
   return { kcal: 0, cart: [] }
 }
 
-export const setKcalGoal = (goal) => localStorage.setItem(LS.kcal, JSON.stringify(goal))
+export const setKcalGoal = (goal) => { localStorage.setItem(LS.kcal, JSON.stringify(goal)); timbra() }
 
 /** Somma di un carrello, in kcal */
 export const cartKcal = (cart) =>
@@ -91,8 +102,10 @@ export function getTrackedActivityTypes() {
   }
 }
 
-export const setTrackedActivityTypes = (types) =>
+export const setTrackedActivityTypes = (types) => {
   localStorage.setItem(LS.activities, JSON.stringify([...new Set(types)]))
+  timbra()
+}
 
 /**
  * Predicato pronto da passare a un filtro. Legge localStorage una volta sola: fatto
@@ -101,6 +114,102 @@ export const setTrackedActivityTypes = (types) =>
 export function trackedActivityFilter() {
   const set = new Set(getTrackedActivityTypes())
   return (w) => set.has(w?.type)
+}
+
+/* ---------- sincronizzazione fra dispositivi ---------- */
+
+/** Tutti gli obiettivi in un oggetto solo: e' l'unita' con cui viaggiano e con cui si
+ *  confrontano due copie. Salvarli separati vorrebbe dire poter avere l'obiettivo di
+ *  energia di ieri accanto a quello di allenamenti di oggi. */
+export function readAllGoals() {
+  return {
+    steps: getStepsGoal(),
+    workouts: getWorkoutGoal(),
+    kcal: getKcalGoal(),
+    activityTypes: getTrackedActivityTypes(),
+    updatedAt: Number(localStorage.getItem(LS.stamp)) || 0,
+  }
+}
+
+/** Scrive in locale quello che arriva dal profilo, timbro compreso: e' una copia di
+ *  qualcosa deciso altrove, non una modifica fatta qui */
+function applyGoals(g) {
+  if (Number(g.steps) > 0) localStorage.setItem(LS.steps, String(Math.round(g.steps)))
+  if (Number(g.workouts) > 0) localStorage.setItem(LS.workouts, String(Math.round(g.workouts)))
+  if (g.kcal && typeof g.kcal === 'object') localStorage.setItem(LS.kcal, JSON.stringify(g.kcal))
+  if (Array.isArray(g.activityTypes)) localStorage.setItem(LS.activities, JSON.stringify(g.activityTypes))
+  localStorage.setItem(LS.stamp, String(g.updatedAt || Date.now()))
+}
+
+/**
+ * Allinea gli obiettivi di questo dispositivo con quelli del profilo.
+ *
+ * Vince chi ha scritto per ultimo, confrontando i timbri. Non e' una fusione: fondere
+ * "tre allenamenti" con "quattro allenamenti" non da' un numero che qualcuno abbia
+ * scelto, e su un'impostazione che si cambia una volta ogni tanto l'ultima parola e'
+ * il criterio che non sorprende nessuno.
+ *
+ * Un dispositivo nuovo ha timbro 0 e quindi perde sempre, che e' esattamente il caso da
+ * cui e' nata questa funzione: aprire l'app dal portatile e ritrovare i propri obiettivi
+ * invece dei valori di default.
+ *
+ * Ritorna anche com'e' andata, e non solo se ridisegnare: una sincronizzazione che
+ * fallisce in silenzio non si distingue da una che non e' mai partita, ed e' esattamente
+ * l'equivoco costato una serata a capire che l'app sul telefono era ancora quella vecchia.
+ *
+ * @returns {Promise<{cambiato:boolean, stato:string, updatedAt?:number}>}
+ *   stato: 'ricevuti' (vinceva il profilo) | 'inviati' (vinceva questo dispositivo)
+ *   | 'allineati' | 'mai-impostati' | 'non-disponibile' (repo senza profilo, cioe' demo)
+ */
+export async function syncGoals(repo) {
+  if (!repo?.getGoals) return { cambiato: false, stato: 'non-disponibile' }
+  const locali = readAllGoals()
+  const remoti = await repo.getGoals()
+
+  if (!remoti) {
+    // Sul profilo non c'e' ancora niente: ci va quello che c'e' qui, ma solo se
+    // qualcuno l'ha scelto davvero. Mandare i default sovrascriverebbe col nulla il
+    // primo dispositivo che si collega dopo.
+    if (locali.updatedAt) {
+      await repo.saveGoals(locali)
+      return { cambiato: false, stato: 'inviati', updatedAt: locali.updatedAt }
+    }
+    return { cambiato: false, stato: 'mai-impostati' }
+  }
+  if ((remoti.updatedAt || 0) > locali.updatedAt) {
+    applyGoals(remoti)
+    return { cambiato: true, stato: 'ricevuti', updatedAt: remoti.updatedAt }
+  }
+  if (locali.updatedAt > (remoti.updatedAt || 0)) {
+    await repo.saveGoals(locali)
+    return { cambiato: false, stato: 'inviati', updatedAt: locali.updatedAt }
+  }
+  return { cambiato: false, stato: 'allineati', updatedAt: remoti.updatedAt }
+}
+
+/**
+ * Manda al profilo gli obiettivi appena cambiati.
+ *
+ * Con un ritardo perche' lo stepper si preme piu' volte di fila: "da 3 a 6" sono tre
+ * tocchi, e senza attesa sarebbero tre scritture per un'unica decisione.
+ *
+ * Se la rete non c'e' non succede niente di grave: il valore e' gia' in locale e
+ * funziona, e Firestore ha la sua cache che riprova da sola. L'unico caso davvero perso
+ * e' cambiare obiettivo offline e non riaprire piu' l'app su questo dispositivo.
+ */
+let attesaPush = null
+export function pushGoals(repo, onEsito, ritardo = 800) {
+  if (!repo?.saveGoals) return
+  clearTimeout(attesaPush)
+  attesaPush = setTimeout(() => {
+    const g = readAllGoals()
+    repo.saveGoals(g)
+      .then(() => onEsito?.({ stato: 'inviati', updatedAt: g.updatedAt }))
+      .catch((e) => {
+        console.warn('Obiettivi non salvati sul profilo:', e.message)
+        onEsito?.({ stato: 'errore', errore: e.message })
+      })
+  }, ritardo)
 }
 
 /* ---------- avanzamento ---------- */
