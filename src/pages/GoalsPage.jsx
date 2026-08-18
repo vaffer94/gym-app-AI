@@ -12,6 +12,7 @@ import {
 import { isHealthConnected } from '../data/health'
 import { useAuth } from '../auth/AuthContext'
 import { getRepo } from '../data/repo'
+import Icona from '../icons'
 
 /**
  * Gli obiettivi, tutti in un posto solo.
@@ -76,14 +77,14 @@ export default function GoalsPage() {
     <div className="page">
       <header className="appbar">
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
-          <i className="fa-solid fa-arrow-left" />
+          <Icona nome="indietro" />
         </button>
-        <h2>🎯 Obiettivi</h2>
+        <h2><Icona nome="obiettivi" /> Obiettivi</h2>
       </header>
 
       <div className="card stack">
         <div className="row">
-          <span className="emoji-lg">🏋️</span>
+          <Icona nome="allenamento" size="1.8rem" />
           <div style={{ flex: 1, minWidth: 96 }}>
             <h3>Allenamenti a settimana</h3>
             <p className="small muted">Quante volte vuoi allenarti da lunedì a domenica</p>
@@ -106,7 +107,7 @@ export default function GoalsPage() {
 
       <div className="card stack">
         <div className="row">
-          <span className="emoji-lg">👟</span>
+          <Icona nome="obiettivoPassi" size="1.8rem" />
           <div style={{ flex: 1, minWidth: 96 }}>
             <h3>Passi al giorno</h3>
             <p className="small muted">Serve a segnare i giorni buoni nel calendario</p>
@@ -162,7 +163,7 @@ function StatoProfilo({ sync }) {
 
   return (
     <p className="small muted center" style={{ margin: 0 }}>
-      <i className={`fa-solid ${sync.stato === 'errore' ? 'fa-triangle-exclamation' : 'fa-cloud'}`} />{' '}
+      <Icona nome={sync.stato === 'errore' ? 'avviso' : 'nuvola'} />{' '}
       {testo}
     </p>
   )
@@ -195,7 +196,7 @@ function EnergyGoalCard({ goal, onQty, onAdd, onSet }) {
   return (
     <div className="card stack">
       <div className="row">
-        <span className="emoji-lg">🍽</span>
+        <Icona nome="obiettivoEnergia" size="1.8rem" />
         <div style={{ flex: 1, minWidth: 96 }}>
           <h3>Energia a settimana</h3>
           <p className="small muted">Quanto vuoi bruciare, misurato in cose buone</p>
@@ -212,7 +213,7 @@ function EnergyGoalCard({ goal, onQty, onAdd, onSet }) {
         const f = foodById(i.id)
         return (
           <div key={i.id} className="row" style={{ gap: 8 }}>
-            <span style={{ fontSize: '1.4rem', lineHeight: 1 }}>{f.emoji}</span>
+            <Icona nome={f.icona} size="1.4rem" />
             <div style={{ flex: 1, minWidth: 96 }}>
               <span className="small" style={{ fontWeight: 800 }}>{f.name}</span>
               <p className="small muted" style={{ margin: 0 }}>
@@ -225,7 +226,7 @@ function EnergyGoalCard({ goal, onQty, onAdd, onSet }) {
       })}
 
       <button className="btn" onClick={() => setPicker(true)}>
-        <i className="fa-solid fa-plus" /> Aggiungi un alimento
+        <Icona nome="aggiungi" /> Aggiungi un alimento
       </button>
 
       <div className="row" style={{ borderTop: '2px dashed var(--paper)', paddingTop: 10 }}>
@@ -253,7 +254,7 @@ function EnergyGoalCard({ goal, onQty, onAdd, onSet }) {
 
       {picker && (
         <SheetDialog onClose={() => setPicker(false)}>
-          <h2>🍽 Cosa vuoi guadagnarti</h2>
+          <h2><Icona nome="obiettivoEnergia" /> Cosa vuoi guadagnarti</h2>
           <p className="small muted">Tocca un alimento per aggiungerlo all’obiettivo della settimana.</p>
           <div className="stack" style={{ gap: 2, maxHeight: '52vh', overflowY: 'auto', margin: '8px 0' }}>
             {FOODS.map((f) => {
@@ -272,7 +273,7 @@ function EnergyGoalCard({ goal, onQty, onAdd, onSet }) {
                     borderRadius: 'var(--radius-sm)', font: 'inherit', color: 'inherit', cursor: 'pointer',
                   }}
                 >
-                  <span style={{ fontSize: '1.3rem', lineHeight: 1 }}>{f.emoji}</span>
+                  <Icona nome={f.icona} size="1.3rem" />
                   <span className="small" style={{ flex: 1, minWidth: 96 }}>
                     {f.name} <span className="muted">({f.portion})</span>
                   </span>

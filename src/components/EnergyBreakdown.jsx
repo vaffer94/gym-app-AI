@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { sessionEnergyBreakdown } from '../data/exerciseStats'
 import { getProfile, sessionKcal } from '../data/kcal'
 import { getWorkoutEnergy, isHealthConnected } from '../data/health'
+import Icona from '../icons'
 
 /**
  * Dove sono finite le kcal dell'allenamento, esercizio per esercizio.
@@ -28,7 +29,7 @@ export default function EnergyBreakdown({ session }) {
 
   return (
     <div className="card card--flat stack">
-      <span className="label" style={{ margin: 0 }}>🔥 Energia per esercizio</span>
+      <span className="label" style={{ margin: 0 }}><Icona nome="energia" /> Energia per esercizio</span>
 
       {data.parts.map((p) => (
         <Riga key={p.key} colore={p.color} nome={p.name} kcal={p.kcal} max={max} />

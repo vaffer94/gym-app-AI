@@ -269,7 +269,7 @@ export default function HrChart({ session, zones }) {
               transform: `translate(${x(hoverPoint.sec) > W / 2 ? '-105%' : '8px'}, 0)`,
               background: 'var(--card)',
               border: '2px solid var(--ink)',
-              borderRadius: 8,
+              borderRadius: 5,
               padding: '4px 8px',
               fontSize: 12,
               fontWeight: 700,

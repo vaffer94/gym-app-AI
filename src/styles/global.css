@@ -1,14 +1,14 @@
 /* ============================================================
    GYM APP — Design System "Cartoon"
-   Regole: contorni netti (3px ink), angoli molto stondati,
+   Regole: contorni netti (3px ink), angoli appena smussati (10/7),
    ombre piatte "sticker" (no blur), palette limitata,
-   font arrotondati, emoji come icone. Poche cose per schermata.
+   font arrotondati, icone a pixel (src/icons). Poche cose per schermata.
    ============================================================ */
 
 :root {
   /* Palette */
   --ink: #2b2b3c;          /* contorni e testo */
-  --paper: #fdf6ec;        /* sfondo crema */
+  --paper: #fdf6ec;        /* crema di base, sotto le righe */
   --card: #ffffff;
   --primary: #ff6b35;      /* arancio energia */
   --primary-soft: #ffe1d3;
@@ -21,8 +21,11 @@
   --danger: #e63946;
 
   /* Forme */
-  --radius: 20px;
-  --radius-sm: 14px;
+  /* Angoli appuntiti ma non a 90 gradi: lo squadrato secco toglieva
+     morbidezza a un'app che si usa col fiatone, e 20/14 era troppo
+     "bolla" accanto alle icone a pixel. */
+  --radius: 10px;
+  --radius-sm: 7px;
   --border: 3px solid var(--ink);
   --shadow: 4px 4px 0 var(--ink);
   --shadow-sm: 3px 3px 0 var(--ink);
@@ -38,7 +41,21 @@ html, body, #root { min-height: 100%; }
 
 body {
   margin: 0;
-  background: var(--paper);
+  /* Sfondo: carta da parati di attrezzi da palestra a contorno, fitti e
+     girati, in ink molto trasparente sul crema. Devono leggersi come
+     decorazione e mai competere col contenuto delle card.
+     Una piastrella che si ripete: la densita' e' uniforme per costruzione, e su
+     qualunque schermo copre tutto senza deformare niente. Gli attrezzi sono
+     girati solo a QUARTI di giro (piu' lo specchio, fanno otto orientamenti):
+     un disegno a pixel ruotato di un angolo qualsiasi smette di essere un
+     disegno a pixel, i quadretti cadono fra due pixel e i bordi si sfrangiano.
+     `fixed` li tiene fermi mentre il contenuto scorre: se scorressero anche
+     loro sembrerebbero pezzi della pagina invece che sfondo.
+     Si genera con scripts/genera-sfondo.py. */
+  background-color: var(--paper);
+  background-image: url('/sfondo-attrezzi.svg');
+  background-repeat: repeat;
+  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--font-body);
   font-size: 16px;
@@ -162,7 +179,7 @@ p { margin: 0; }
   font-weight: 800;
   font-size: 0.8rem;
   border: 2px solid var(--ink);
-  border-radius: 999px;
+  border-radius: 7px;
   padding: 4px 12px;
   background: var(--yellow);
 }
@@ -202,10 +219,36 @@ p { margin: 0; }
    l'una, sotto il minimo leggibile: si dispongono 2x2 chiedendo meta' riga a testa. */
 .tabs > .btn { flex: 1 1 calc(50% - 6px); }
 
-/* ---------- Emoji icona grande ---------- */
+/* ---------- Icone ---------- */
 
-.emoji-xl { font-size: 2.4rem; line-height: 1; }
-.emoji-lg { font-size: 1.8rem; line-height: 1; }
+/* .emoji-xl e .emoji-lg sono state tolte insieme alle emoji: erano misure di
+   font, e un SVG non si dimensiona col font-size. La misura ora e' la prop
+   `size` di <Icona>, che accetta le stesse (2.4rem, 1.8rem). */
+
+/* Le icone sono SVG a pixel su griglia 24x24 (pixelarticons + le nostre, in
+   src/icons/). Si dimensionano in em per crescere col testo che accompagnano.
+   L'allineamento e' il motivo per cui questa regola esiste: un <svg> in linea si
+   appoggia alla base del testo e sporge sotto, mentre le icone di Font Awesome
+   erano glifi e si allineavano da sole. Il ritocco di -0.125em rimette il
+   centro dell'icona all'altezza del centro della minuscola. */
+.icona {
+  display: inline-block;
+  vertical-align: -0.125em;
+  flex-shrink: 0;
+}
+
+/* Sostituisce fa-spin. Il passo di 90 gradi invece della rotazione continua non
+   e' un vezzo: un disegno a pixel ruotato di 37 gradi diventa una macchia di
+   antialiasing, e i quarti di giro sono le uniche posizioni in cui la griglia
+   resta griglia. */
+@keyframes icona-gira {
+  to { transform: rotate(360deg); }
+}
+.icona--gira { animation: icona-gira 1s steps(4, end) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .icona--gira { animation-duration: 2.4s; }
+}
 
 /* ---------- Header app ---------- */
 
@@ -237,7 +280,7 @@ p { margin: 0; }
   width: 110px;
   height: 110px;
   border: var(--border);
-  border-radius: 28px;
+  border-radius: 14px;
   box-shadow: var(--shadow);
   background: var(--primary);
   display: flex;
@@ -290,7 +333,7 @@ p { margin: 0; }
   text-align: center;
   background: var(--card);
   border: 2px solid var(--ink);
-  border-radius: 10px;
+  border-radius: 5px;
   padding: 6px 4px;
   outline: none;
 }
@@ -326,7 +369,7 @@ p { margin: 0; }
   width: 56px;
   height: 56px;
   border: 2px solid var(--ink);
-  border-radius: 12px;
+  border-radius: 3px;
   object-fit: cover;
   background: var(--yellow-soft);
   display: flex;
@@ -394,8 +437,10 @@ p { margin: 0; }
    ombra perche' non e' un allenamento registrato qui e non si puo' aprire. Tre stati
    distinguibili senza leggere: card colorata con ombra = tuo, teal piatto = conta,
    tratteggiato spento = visto e basta.
-   Era stato valutato un fondo a righe, scartato: DESIGN.md esclude i gradienti, e le
-   righe si fanno con repeating-linear-gradient. */
+   Un fondo a righe per questa tile resta escluso, ma non piu' per il motivo scritto
+   qui prima ("DESIGN.md esclude i gradienti"): le righe ora esistono, sono lo sfondo
+   della pagina, e si fanno con una piastrella SVG. Il motivo vero e' un altro — righe
+   dentro una tile che sta gia' sopra un fondo a righe diventano illeggibili. */
 .tile--counted {
   background: var(--teal-soft);
   box-shadow: none;
@@ -510,7 +555,7 @@ p { margin: 0; }
   color: var(--muted);
   background: var(--card);
   border: 2px solid var(--ink);
-  border-radius: 10px;
+  border-radius: 5px;
 }
 /* Sopra la cornice teal del giorno conteggiato: le icone dicono cose diverse dalla
    cornice (passi, attivita' vista e non conteggiata) e devono restare leggibili */
@@ -524,7 +569,7 @@ p { margin: 0; }
   font-size: 0.55rem;
   background: var(--card);
   border: 2px solid var(--ink);
-  border-radius: 999px;
+  border-radius: 4px;
   padding: 1px 4px;
   color: var(--ink);
 }
@@ -548,7 +593,7 @@ p { margin: 0; }
   position: absolute;
   inset: 0;
   border: 5px solid var(--teal);
-  border-radius: 8px;
+  border-radius: 3px;
   z-index: 1;
   pointer-events: none;
 }
@@ -566,7 +611,7 @@ p { margin: 0; }
   flex: 1;
   height: 18px;
   border: 2px solid var(--ink);
-  border-radius: 6px;
+  border-radius: 3px;
   background: transparent;
 }
 .seg--on { background: var(--yellow); }
@@ -575,14 +620,14 @@ p { margin: 0; }
 .bar-track {
   height: 18px;
   border: 2px solid var(--ink);
-  border-radius: 999px;
+  border-radius: 5px;
   background: var(--card);
   overflow: hidden;
 }
 .bar-fill {
   height: 100%;
   background: var(--primary);
-  border-radius: 999px;
+  border-radius: 5px;
   min-width: 6px;
   transition: width 0.3s ease;
 }
@@ -638,7 +683,7 @@ p { margin: 0; }
   gap: 10px;
   font-weight: 700;
   padding: 8px;
-  border-radius: 10px;
+  border-radius: 5px;
   cursor: pointer;
 }
 .dropdown-item:hover { background: var(--paper); }

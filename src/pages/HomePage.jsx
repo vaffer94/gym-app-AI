@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import Icona from '../icons'
 
 /**
  * La home e' un indice: una riga per posto dove andare, nient'altro. I parametri erano
@@ -9,7 +10,7 @@ import { useAuth } from '../auth/AuthContext'
 const SECTIONS = [
   {
     to: '/allenamento',
-    emoji: '🔥',
+    icona: 'energia',
     title: 'Avvia allenamento',
     text: 'Scegli la scheda e parti',
     variant: 'card--primary',
@@ -17,28 +18,28 @@ const SECTIONS = [
   },
   {
     to: '/schede',
-    emoji: '📋',
+    icona: 'schede',
     title: 'Schede',
     text: 'Crea e gestisci le tue schede',
     variant: 'card--teal',
   },
   {
     to: '/obiettivi',
-    emoji: '🎯',
+    icona: 'obiettivi',
     title: 'Obiettivi',
     text: 'Allenamenti, passi ed energia',
     variant: 'card--lilac',
   },
   {
     to: '/storico',
-    emoji: '📊',
+    icona: 'storicoSezione',
     title: 'Storico',
     text: 'Allenamenti passati e statistiche',
     variant: 'card--yellow',
   },
   {
     to: '/parametri',
-    emoji: '⚖️',
+    icona: 'parametri',
     title: 'Parametri',
     text: 'Peso, altezza, età',
     // Bianco e non un quarto colore: la palette e' volutamente corta, e queste sono
@@ -47,7 +48,7 @@ const SECTIONS = [
   },
   {
     to: '/integrazioni',
-    emoji: '🔌',
+    icona: 'integrazioni',
     title: 'Integrazioni',
     text: 'Google Health e attività da conteggiare',
     variant: '',
@@ -65,7 +66,9 @@ export default function HomePage() {
         {user.photoURL ? (
           <img className="avatar" src={user.photoURL} alt="" referrerPolicy="no-referrer" />
         ) : (
-          <div className="avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>💪</div>
+          <div className="avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Icona nome="catBraccia" size="1.6rem" />
+          </div>
         )}
         {/* minWidth:0 perche' a 320 px il saluto, non potendo restringersi, spingeva
             fuori i pulsanti a destra */}
@@ -83,10 +86,10 @@ export default function HomePage() {
           aria-label="Segnala un problema o proponi un’idea"
           title="Segnala un problema o proponi un’idea"
         >
-          <i className="fa-solid fa-comment-dots" />
+          <Icona nome="commento" />
         </button>
         <button className="btn" onClick={signOut}>
-          <i className="fa-solid fa-right-from-bracket" /> Esci
+          <Icona nome="esci" /> Esci
         </button>
       </header>
 
@@ -94,7 +97,7 @@ export default function HomePage() {
         {SECTIONS.map((s) => (
           <div key={s.to} className={`card card--tap ${s.variant}`} onClick={() => navigate(s.to)}>
             <div className="row" style={{ flexWrap: 'nowrap' }}>
-              <span className="emoji-xl">{s.emoji}</span>
+              <Icona nome={s.icona} size="2.4rem" />
               {/* flex:1 + minWidth:0 e non uno .spacer: con lo spacer il testo lungo
                   spingeva la freccia a capo, e sui 320 px finiva da sola su una riga
                   vuota. Cosi' e' il testo ad andare a capo dentro il suo spazio */}
@@ -112,14 +115,14 @@ export default function HomePage() {
                   title="Allenarsi dall’orologio"
                   onClick={(e) => { e.stopPropagation(); navigate('/watch') }}
                 >
-                  {/* Emoji e non Font Awesome, che nella versione gratuita l'orologio
-                      da polso non ce l'ha: il cronometro si legge come "durata" e il
-                      quadrante come "orario". ⌚ e' gia' il segno del watch in
-                      Integrazioni, e vale la pena restare coerenti con quello */}
-                  <span aria-hidden="true">⌚</span>
+                  {/* Lo stesso disegno che segna il watch in Integrazioni: due punti
+                      diversi che parlano dello stesso dispositivo devono somigliarsi.
+                      (Con Font Awesome qui c'era un'emoji, perche' nella versione
+                      gratuita l'orologio da polso non esisteva; pixelarticons ce l'ha) */}
+                  <Icona nome="orologio" />
                 </button>
               )}
-              <i className="fa-solid fa-arrow-right" aria-hidden="true" />
+              <Icona nome="avanti" />
             </div>
           </div>
         ))}

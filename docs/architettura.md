@@ -25,12 +25,13 @@ linguaggi, senza niente che verifichi che siano d'accordo. Vedi §5.
 
 ```
 src/
-  main.jsx          bootstrap: React, router, Font Awesome, service worker PWA
+  main.jsx          bootstrap: React, router, service worker PWA
   App.jsx           tutte le rotte, tutte dentro <Protected>
   auth/             AuthContext: login Google, utente demo, pulizia al logout
   lib/              firebase.js (init + cache persistente), image.js (compressione foto)
   pages/            una schermata = un file. Contengono la UI e l'orchestrazione
   components/       pezzi riusabili e grafici (chart.js)
+  icons/            il componente <Icona> e il registro nome -> disegno
   data/             accesso ai dati e calcoli di dominio — nessun JSX
   workout/          logica dell'allenamento: motore sessione e analisi del battito
   styles/global.css il design system per intero (vedi DESIGN.md)

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { getRepo } from '../data/repo'
 import { formatDate } from '../data/planColors'
+import Icona from '../icons'
 
 export default function SchedeListPage() {
   const { user } = useAuth()
@@ -17,8 +18,8 @@ export default function SchedeListPage() {
   return (
     <div className="page">
       <header className="appbar">
-        <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home"><i className="fa-solid fa-arrow-left" /></button>
-        <h2>📋 Le tue schede</h2>
+        <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home"><Icona nome="indietro" /></button>
+        <h2><Icona nome="schede" /> Le tue schede</h2>
       </header>
 
       <button className="btn btn--primary btn--big" onClick={() => navigate('/schede/nuova')}>
@@ -29,7 +30,7 @@ export default function SchedeListPage() {
 
       {plans?.length === 0 && (
         <div className="card center stack" style={{ padding: '40px 20px' }}>
-          <span className="emoji-xl">📋</span>
+          <Icona nome="schede" size="2.4rem" />
           <p className="muted">Nessuna scheda ancora. Crea la tua prima!</p>
         </div>
       )}

@@ -1,4 +1,5 @@
 import { getWorkoutGoal, getKcalGoal, weekSessions, weekKcal, fillCart } from '../data/goals'
+import Icona from '../icons'
 
 /**
  * Come sta andando la settimana rispetto agli obiettivi.
@@ -22,7 +23,7 @@ export default function WeekGoals({ activities, kcalById, onOpenGoals }) {
   // Obiettivo scritto a mano (nessun alimento): resta comunque una barra sola, se no
   // chi ha impostato solo il numero non vedrebbe niente
   const barre = goalE.kcal > 0 && pieni.length === 0
-    ? [{ id: '__totale', food: { emoji: '🔥', name: 'Obiettivo della settimana' }, qty: 1,
+    ? [{ id: '__totale', food: { icona: 'energia', name: 'Obiettivo della settimana' }, qty: 1,
          totKcal: goalE.kcal, filled: Math.min(goalE.kcal, guadagnate),
          pct: Math.min(100, (guadagnate / goalE.kcal) * 100) }]
     : pieni
@@ -30,13 +31,13 @@ export default function WeekGoals({ activities, kcalById, onOpenGoals }) {
   return (
     <div className="card card--lilac stack">
       <div className="row">
-        <span className="emoji-lg">🎯</span>
+        <Icona nome="obiettivi" size="1.8rem" />
         <div style={{ flex: 1, minWidth: 96 }}>
           <h3>Questa settimana</h3>
           <p className="small muted">Da lunedì</p>
         </div>
         <button className="btn btn--sm" onClick={onOpenGoals} aria-label="Modifica gli obiettivi">
-          <i className="fa-solid fa-pen" />
+          <Icona nome="modifica" />
         </button>
       </div>
 
@@ -101,10 +102,10 @@ function FoodBar({ b }) {
   return (
     <div className="row" style={{ gap: 8 }}>
       <span
-        style={{ fontSize: '1.3rem', lineHeight: 1, opacity: completo ? 1 : 0.55 }}
+        style={{ lineHeight: 1, opacity: completo ? 1 : 0.55 }}
         title={completo ? 'Guadagnato!' : 'Ancora da guadagnare'}
       >
-        {b.food.emoji}
+        <Icona nome={b.food.icona} size="1.3rem" />
       </span>
       <div style={{ flex: 1, minWidth: 96 }}>
         <div className="row" style={{ gap: 6 }}>
@@ -117,7 +118,7 @@ function FoodBar({ b }) {
         </div>
         <div
           style={{
-            height: 14, border: '2px solid var(--ink)', borderRadius: 999,
+            height: 14, border: '2px solid var(--ink)', borderRadius: 5,
             background: 'transparent', overflow: 'hidden',
           }}
         >

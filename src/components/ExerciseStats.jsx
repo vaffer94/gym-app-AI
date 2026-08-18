@@ -181,7 +181,7 @@ function BarreVerticali({ valori, colore, formato }) {
 
 /** Tre trattamenti grafici sullo stesso colore: leggibili anche senza distinguere tinte */
 function barStyle(stile, color) {
-  const base = { border: '2px solid var(--ink)', borderRadius: '6px 6px 0 0' }
+  const base = { border: '2px solid var(--ink)', borderRadius: '3px 3px 0 0' }
   if (stile === 'pieno') return { ...base, background: color }
   if (stile === 'righe') {
     return {

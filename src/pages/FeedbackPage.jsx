@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { getRepo } from '../data/repo'
+import Icona from '../icons'
 
 const MAX = 2000
 
 const TIPI = [
-  { id: 'bug', icon: 'fa-bug', label: 'Qualcosa non va' },
-  { id: 'idea', icon: 'fa-lightbulb', label: 'Ho un’idea' },
+  { id: 'bug', icon: 'problema', label: 'Qualcosa non va' },
+  { id: 'idea', icon: 'idea', label: 'Ho un’idea' },
 ]
 
 /**
@@ -67,9 +68,9 @@ export default function FeedbackPage() {
     <div className="page">
       <header className="appbar">
         <button className="btn" onClick={() => navigate('/')} aria-label="Torna alla home">
-          <i className="fa-solid fa-arrow-left" />
+          <Icona nome="indietro" />
         </button>
-        <h2>💬 Scrivimi</h2>
+        <h2><Icona nome="scrivimi" /> Scrivimi</h2>
       </header>
 
       <div className="card stack">
@@ -88,7 +89,7 @@ export default function FeedbackPage() {
               className={`chip chip--select ${tipo === t.id ? 'chip--on' : ''}`}
               onClick={() => setTipo(t.id)}
             >
-              <i className={`fa-solid ${t.icon}`} /> {t.label}
+              <Icona nome={t.icon} /> {t.label}
             </button>
           ))}
         </div>
@@ -114,8 +115,8 @@ export default function FeedbackPage() {
           onClick={invia}
         >
           {inviando
-            ? <><i className="fa-solid fa-rotate fa-spin" /> Invio…</>
-            : <><i className="fa-solid fa-paper-plane" /> Invia</>}
+            ? <><Icona nome="ricarica" className="icona--gira" /> Invio…</>
+            : <><Icona nome="invia" /> Invia</>}
         </button>
 
         {errore && (
@@ -127,7 +128,7 @@ export default function FeedbackPage() {
 
         {esito && (
           <p className="small" style={{ margin: 0, color: 'var(--teal)' }}>
-            <i className="fa-solid fa-circle-check" />{' '}
+            <Icona nome="fatto" />{' '}
             {esito.recapitata
               ? 'Ricevuto, grazie. Se serve ti rispondo all’indirizzo del tuo account.'
               : 'Modalità demo: il messaggio è rimasto su questo dispositivo, non è stato inviato.'}
@@ -141,6 +142,32 @@ export default function FeedbackPage() {
           allenamenti né obiettivi.
         </p>
       </div>
+
+      <Crediti />
     </div>
+  )
+}
+
+/**
+ * L'attribuzione delle icone.
+ *
+ * Sta qui e non solo in src/icons/CREDITI.md perche' la CC-BY chiede il credito dove
+ * il lavoro viene usato, e un file nel repository non lo vede chi apre l'app dal
+ * telefono. Questa e' la schermata che piu' somiglia a un "info sull'app", ed e'
+ * l'unico posto dove una riga del genere non ruba spazio a qualcosa che serve.
+ *
+ * Il giorno in cui tutte le icone derivate saranno state ridisegnate, questo
+ * riquadro si cancella insieme a src/icons/da-emoji/.
+ */
+function Crediti() {
+  return (
+    <p className="small muted center" style={{ margin: 0 }}>
+      Icone:{' '}
+      <a href="https://pixelarticons.com/" target="_blank" rel="noreferrer noopener">pixelarticons</a>
+      {' '}(MIT) e{' '}
+      <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noreferrer noopener">Twemoji</a>
+      {' '}(<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer noopener">CC-BY 4.0</a>),
+      ridotte a pixel art.
+    </p>
   )
 }

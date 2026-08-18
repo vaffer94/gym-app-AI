@@ -151,3 +151,25 @@ Firebase/Firestore della web app. Setup, struttura e stato di avanzamento: vedi
 
 Fuori roadmap, già in app: obiettivi settimanali con equivalente alimentare,
 statistiche per esercizio, parametri e storico peso.
+
+## Crediti e licenze
+
+Le icone dell'app vengono da due posti, e i dettagli stanno in
+[`src/icons/CREDITI.md`](src/icons/CREDITI.md):
+
+- [pixelarticons](https://pixelarticons.com/) — licenza MIT
+- [Twemoji](https://github.com/jdecked/twemoji) — grafica
+  [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/), ridotta a pixel art dallo
+  script `scripts/genera-icone-emoji.py`
+
+L'attribuzione compare anche dentro l'app, nella schermata "Scrivimi": la CC-BY la
+chiede dove il lavoro viene usato, e un file nel repository non lo vede chi apre l'app
+dal telefono.
+
+Il codice di questo progetto e' **proprietario**: vedi [`LICENSE`](LICENSE). Il
+repository e' pubblico per essere leggibile, non riutilizzabile — e la licenza lo dice
+esplicitamente, invece di lasciarlo dedurre dall'assenza di un file.
+
+L'eccezione sono le icone e il catalogo esercizi, che sono materiale di terzi e
+mantengono la loro licenza: l'elenco sta sia in `LICENSE` sia in
+[`src/icons/CREDITI.md`](src/icons/CREDITI.md).

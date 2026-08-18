@@ -66,7 +66,7 @@ export default function ZoneBars({ data, thresholdSource }) {
               <div
                 style={{
                   width: '100%', height: h, display: 'flex', flexDirection: 'column',
-                  border: '2px solid var(--ink)', borderRadius: '6px 6px 0 0',
+                  border: '2px solid var(--ink)', borderRadius: '3px 3px 0 0',
                   overflow: 'hidden', background: 'var(--card)',
                 }}
               >

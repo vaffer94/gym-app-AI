@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { computeStats } from '../workout/sessionEngine'
 import { formatClock } from '../workout/activeSession'
 import { exerciseTypeInfo } from '../data/health'
+import Icona from '../icons'
 
 /** Finestra della legenda. Quattro settimane e non "il mese": i mesi sono lunghi
  *  diversi, e un confronto fra un febbraio e un marzo non e' un confronto. */
@@ -43,7 +44,7 @@ export default function MonthBreakdown({ activities }) {
         .filter((a) => a.source !== 'google')
         .map((s) => ({
           nome: s.planName || 'Senza scheda',
-          icona: 'fa-dumbbell',
+          icona: 'pesi',
           sec: computeStats(s).durationSec,
         }))
     )
@@ -80,7 +81,7 @@ function Blocco({ titolo, righe, vuoto }) {
       {righe.length === 0 && <p className="small muted" style={{ margin: 0 }}>{vuoto}</p>}
       {righe.map((r) => (
         <div key={r.nome} className="row" style={{ gap: 8 }}>
-          <i className={`fa-solid ${r.icona}`} aria-hidden="true" style={{ width: 16, textAlign: 'center' }} />
+          <Icona nome={r.icona} style={{ width: 16, textAlign: 'center' }} />
           <span className="small" style={{ flex: 1, minWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {r.nome}
           </span>

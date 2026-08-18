@@ -1,0 +1,76 @@
+Copyright (c) 2026 Vania Ferrari. Tutti i diritti riservati.
+Copyright (c) 2026 Vania Ferrari. All rights reserved.
+
+
+ITALIANO
+
+Il codice sorgente di questo progetto e' di proprieta' esclusiva dell'autrice.
+
+Il repository e' pubblico perche' sia visibile e leggibile, non perche' sia
+riutilizzabile. Non e' concesso, senza permesso scritto dell'autrice:
+
+  - usare il software, in tutto o in parte, per qualsiasi scopo;
+  - copiarlo, modificarlo, tradurlo o derivarne altre opere;
+  - distribuirlo, pubblicarlo o metterlo a disposizione di terzi;
+  - pubblicarlo su uno store o offrirlo come servizio.
+
+Restano salve le facolta' che i termini di servizio di GitHub concedono agli
+altri utenti sui repository pubblici (visualizzazione e fork all'interno della
+piattaforma), che non implicano il permesso di usare o distribuire il software.
+
+E' consentito leggere il codice, studiarlo e citarne parti a fini didattici o
+di discussione, indicando la fonte.
+
+
+ECCEZIONI: MATERIALE DI TERZI
+
+Questa licenza copre il codice scritto per questo progetto. NON copre il
+materiale di terzi incluso nel repository, che resta soggetto alla propria
+licenza. In particolare:
+
+  - src/icons/da-emoji/  — icone derivate dalle emoji di Twemoji
+                           (https://github.com/jdecked/twemoji),
+                           copyright Twitter, Inc. e collaboratori,
+                           licenza CC-BY 4.0.
+  - le icone del pacchetto npm "pixelarticons", licenza MIT.
+  - public/sfondo-attrezzi.svg — generato dalle icone di Tabler Icons
+                           (https://tabler.io/icons), copyright (c) 2020-2024
+                           Paweł Kuna, licenza MIT.
+  - src/data/catalog.json — generato da free-exercise-db
+                           (https://github.com/yuhonas/free-exercise-db),
+                           rilasciato con The Unlicense (pubblico dominio).
+                           Le foto degli esercizi non stanno nel repository:
+                           il file contiene solo i loro indirizzi, e l'app le
+                           carica dal CDN di quel progetto.
+
+I dettagli e l'attribuzione completa stanno in src/icons/CREDITI.md.
+
+Le dipendenze installate da npm non fanno parte di questo repository e hanno
+ciascuna la propria licenza.
+
+
+ENGLISH
+
+The source code of this project is the exclusive property of the author.
+
+This repository is public so that it can be seen and read, not so that it can
+be reused. Without the author's written permission, you may not:
+
+  - use the software, in whole or in part, for any purpose;
+  - copy, modify, translate it, or create derivative works from it;
+  - distribute, publish, or make it available to third parties;
+  - publish it on an app store or offer it as a service.
+
+This does not affect the rights that GitHub's Terms of Service grant to other
+users over public repositories (viewing and forking within the platform), which
+do not imply permission to use or distribute the software.
+
+You may read and study the code, and quote portions of it for teaching or
+discussion, with attribution.
+
+
+EXCEPTIONS: THIRD-PARTY MATERIAL
+
+This license covers the code written for this project. It does NOT cover the
+third-party material included in the repository, which remains under its own
+license — see the Italian section above and src/icons/CREDITI.md.

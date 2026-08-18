@@ -16,6 +16,7 @@ import ExerciseThumb from '../components/ExerciseThumb'
 import Stepper from '../components/Stepper'
 import { formatEntryTarget } from '../data/format'
 import KcalRow from '../components/KcalRow'
+import Icona from '../icons'
 
 const vibrate = (pattern = [300, 150, 300]) => navigator.vibrate?.(pattern)
 
@@ -171,10 +172,10 @@ export default function WorkoutPage() {
   return (
     <div className="page">
       <header className="appbar">
-        <span className="chip"><i className="fa-solid fa-stopwatch" /> {elapsed}</span>
+        <span className="chip"><Icona nome="durata" /> {elapsed}</span>
         <div className="spacer" />
         <button className="btn btn--sm" onClick={handlePause}>
-          <i className={`fa-solid ${paused ? 'fa-play' : 'fa-pause'}`} /> {paused ? 'Riprendi' : 'Pausa'}
+          <Icona nome={paused ? 'avvia' : 'pausa'} /> {paused ? 'Riprendi' : 'Pausa'}
         </button>
         <button
           className="btn btn--sm"
@@ -188,7 +189,7 @@ export default function WorkoutPage() {
       {paused && (
         <div className="sheet-backdrop">
           <div className="sheet center stack" style={{ padding: 32 }}>
-            <span className="emoji-xl">⏸️</span>
+            <Icona nome="pausa" size="2.4rem" />
             <h2>In pausa</h2>
             <p className="small muted">Il tempo di pausa non conta nelle statistiche</p>
             <button className="btn btn--primary btn--big" onClick={handlePause}>Riprendi</button>
@@ -222,7 +223,7 @@ export default function WorkoutPage() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h2>{curr.name}</h2>
                 <p className="small muted">
-                  {categoryById(curr.category).emoji} {categoryById(curr.category).label}
+                  <Icona nome={categoryById(curr.category).icona} /> {categoryById(curr.category).label}
                   {curr.mode === 'duration'
                     ? ` · ${Math.round(curr.durationSec / 60)} min`
                     : `${curr.hasWeight ? ` · target ${curr.weightKg} kg` : ''} · ${curr.reps} ripetizioni`}
@@ -269,13 +270,13 @@ export default function WorkoutPage() {
 
           <div className="row">
             <button className="btn" style={{ flex: 1 }} onClick={() => update((st) => ({ ...st, session: postponeCurrent(st.session) }))}>
-              <i className="fa-solid fa-clock-rotate-left" /> Posticipa
+              <Icona nome="posticipa" /> Posticipa
             </button>
             <button className="btn" style={{ flex: 1 }} onClick={() => setDialog({ type: 'skip' })}>
-              <i className="fa-solid fa-forward" /> Salta
+              <Icona nome="salta" /> Salta
             </button>
             <button className="btn" onClick={() => setNoting(curr.key)}>
-              <i className="fa-solid fa-pen-to-square" /> Nota
+              <Icona nome="nota" /> Nota
             </button>
           </div>
 
@@ -385,7 +386,7 @@ function DurationRunner({ exercise, onStart, onFinish }) {
     return (
       <div className="center stack" style={{ marginTop: 12 }}>
         <p className="kpi" style={{ color: 'var(--teal)' }}>
-          <i className="fa-solid fa-circle-check" /> Fatto — {formatClock(actualSec)}
+          <Icona nome="fatto" /> Fatto — {formatClock(actualSec)}
         </p>
       </div>
     )
@@ -407,7 +408,7 @@ function DurationRunner({ exercise, onStart, onFinish }) {
   return (
     <div className="center stack" style={{ marginTop: 12 }}>
       <button className="btn btn--primary btn--big" onClick={onStart}>
-        <i className="fa-solid fa-stopwatch" /> START — {Math.round(exercise.durationSec / 60)} min
+        <Icona nome="durata" /> START — {Math.round(exercise.durationSec / 60)} min
       </button>
     </div>
   )
@@ -565,7 +566,7 @@ function Summary({ stats, prev, planName, session, onHome }) {
   return (
     <div className="page">
       <div className="center stack" style={{ paddingTop: 16 }}>
-        <span className="emoji-xl">🎉</span>
+        <Icona nome="festa" size="2.4rem" />
         <h1>Fatto!</h1>
         <p className="muted">{planName}</p>
       </div>
@@ -591,7 +592,7 @@ function Summary({ stats, prev, planName, session, onHome }) {
         <div className="card card--flat stack">
           <span className="label" style={{ margin: 0 }}>Serie per categoria</span>
           {Object.entries(stats.byCategory).map(([cat, n]) => (
-            <StatRow key={cat} label={`${categoryById(cat).emoji} ${categoryById(cat).label}`} value={`${Math.round((n / stats.doneSeries) * 100)}%`} />
+            <StatRow key={cat} label={<><Icona nome={categoryById(cat).icona} /> {categoryById(cat).label}</>} value={`${Math.round((n / stats.doneSeries) * 100)}%`} />
           ))}
         </div>
       )}

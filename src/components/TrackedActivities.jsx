@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { activityTypeOptions } from '../data/health'
 import { getTrackedActivityTypes, setTrackedActivityTypes } from '../data/goals'
+import Icona from '../icons'
 
 /**
  * Quali attivita' riconosciute da Google valgono come allenamento.
@@ -32,7 +33,7 @@ export default function TrackedActivities({ detectedWorkouts, onChange }) {
   return (
     <div className="card stack">
       <div className="row">
-        <span className="emoji-lg">🏊</span>
+        <Icona nome="nuotoSezione" size="1.8rem" />
         <div style={{ flex: 1, minWidth: 96 }}>
           <h3>Attività da conteggiare</h3>
           <p className="small muted">
@@ -57,7 +58,7 @@ export default function TrackedActivities({ detectedWorkouts, onChange }) {
                 (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), toggle(g))
               }
             >
-              <i className={`fa-solid ${g.icon}`} aria-hidden="true" />
+              <Icona nome={g.icon} />
               {g.label}
               {/* Quante volte e' comparsa: distingue a colpo d'occhio cio' che fai
                   davvero dal resto dell'elenco, che altrimenti e' un catalogo */}

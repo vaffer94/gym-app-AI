@@ -444,8 +444,218 @@ dire un server che tiene il refresh token, cioe' un backend che questo progetto 
 sono un'altra cosa — dipendono dalla verifica della schermata di consenso su Google
 Cloud, e diventeranno un problema quando l'app la useranno persone diverse da Vania.
 
+## F9 — Icone a pixel (17/08/2026)
+
+Primo passo di un cambio di stile piu' largo verso il retro' anni 80. Si e' scelto di
+cominciare **dalle icone** e non dai font o dal colore: sono il pezzo piu' visibile che
+si puo' cambiare senza toccare la disposizione di nessuna schermata.
+
+### F9.1 Perche' pixelarticons, e perche' gli SVG e non il webfont
+
+Il font delle icone (Font Awesome) e' sostituito da [pixelarticons](https://pixelarticons.com/),
+MIT, 1.036 icone su griglia 24×24. Valutato e scartato **NES.css**: fermo dal 2022, 282 KB,
+ha 21 icone che sono quasi tutte loghi social, e contiene sprite di Mario e Pokémon che la
+licenza MIT del codice non copre come marchi.
+
+pixelarticons offre anche un webfont, che avrebbe reso la migrazione un cambio di classe
+CSS. **E' stato scartato lo stesso**: un glifo di un font ha un colore solo, e le icone che
+Vania disegnera' devono poter essere multicolore. Si usano quindi gli SVG, che pesano 262
+byte l'uno.
+
+Effetto collaterale gradito: sparisce l'import di tutto Font Awesome per usarne 44, e nel
+bundle non ci sono piu' webfont.
+
+### F9.2 Il registro: nomi che dicono il significato, non il disegno
+
+Le pagine chiedono `<Icona nome="pesi" />`, mai il nome della libreria. La corrispondenza
+fra significato e disegno sta in un unico file, `src/icons/registry.js`.
+
+Non e' un vezzo architetturale: **serve a poter sostituire un'icona alla volta**. Il piano
+e' che Vania ne ridisegni una ogni tanto, la sera; con i nomi della libreria sparsi nelle
+pagine, ogni sostituzione avrebbe voluto dire ripassare i 21 file che usano le icone. Cosi'
+si cambia una riga nel registro e nient'altro.
+
+### F9.3 Le dodici che non esistevano
+
+Font Awesome aveva dodici icone che pixelarticons non ha — quasi tutte le attivita'
+sportive. Si e' scelto di **sostituirle con icone esistenti che tengono il concetto**,
+invece di aspettare i disegni: meglio un'app coerente con qualche approssimazione che
+mezza a pixel e mezza no.
+
+| concetto | scelta | tenuta |
+|---|---|---|
+| pesi | figura che solleva | dice il gesto, non l'attrezzo |
+| camminata | figura in piedi | ok |
+| nuoto | onde | ok |
+| escursione | pino | il posto al posto della persona |
+| yoga / pilates | foglia | stesso registro |
+| medaglia | stella | premio, e resta distinta dal trofeo |
+| durata | orologio | ok |
+| passi | bersaglio | e' l'obiettivo, non il piede |
+| sport | bandiera | categoria, non disciplina |
+| **corsa** | tachimetro veloce | **debole** |
+| **bici** | tachimetro medio | **debole** |
+
+Le ultime due sono segnaposto dichiarati: leggono come tachimetri e si distinguono solo
+l'una dall'altra. Sono le prime due da ridisegnare, ed e' scritto sia nel registro sia in
+`src/icons/mie/LEGGIMI.md`.
+
+Undici delle dodici stanno nella tabella `EXERCISE_TYPES` di `data/health.js`, che ora
+contiene nomi del registro (`'corsa'`) e non piu' classi CSS (`'fa-person-running'`).
+
+### F9.4 Le emoji diventano icone anche loro (pixellandole)
+
+Fermarsi alle icone di Font Awesome aveva lasciato l'app **mezza a pixel e mezza no**, che
+sta peggio di com'era prima: le cinquanta emoji sono ovunque, a partire dalla home.
+
+Il primo ragionamento era che gli alimenti dovessero restare emoji, perche' nessuna libreria
+a pixel ha pizza, birra, sushi e ramen. **Era la domanda sbagliata**: non serve che qualcuno
+abbia disegnato una pizza a pixel, basta pixellare la pizza che c'e' gia'.
+`scripts/emoji2icona.py` prende il disegno ufficiale di un set di emoji libero, lo riduce a
+24×24 con poche tinte e lo passa a `png2icona.py`. Il carrello resta leggibile: nell'elenco
+si distinguono prosecco, vino rosso, birra, gin tonic, spritz e i due gelati.
+
+Dettaglio tecnico che decide la resa: il ridimensionamento usa la **media dell'area** e non
+il nearest-neighbour. Scendendo da 72 px a 24, il nearest tiene un pixel ogni tre e i tratti
+sottili spariscono — il manico del bilanciere, il quadrante dell'orologio. La media li
+conserva come tinta intermedia, e la quantizzazione subito dopo li riporta a un colore netto.
+
+**La regola di quando serve il colore**, imparata sbagliando: dove prima c'era un'EMOJI va
+un'icona a colori, dove c'era un'icona di Font Awesome resta il disegno monocromatico di
+pixelarticons. Le monocromatiche funzionano dentro un pulsante, accanto a "Indietro" o
+"Pausa", dove devono solo ripetere il verbo; da sole a 2.4rem come illustrazione di sezione
+sono povere — la home con la fiamma di contorno al posto di 🔥 sembrava spenta. Sono 46
+icone derivate, e restano alla libreria solo le cinque emoji che stavano dentro un pulsante.
+
+**Eccezione**: `scale` di pixelarticons e' il ridimensionamento, non una bilancia, e in home
+diceva "ingrandisci" al posto di "peso" — quella si genera dall'emoji ⚖.
+
+### F9.4-bis Le licenze, e perche' prima non c'erano
+
+Finche' l'app scriveva nel codice il **carattere** `👟`, il disegno lo metteva il telefono
+di chi guardava: l'app distribuiva una lettera, non un'immagine, e non c'era niente da
+dichiarare. Pixellando, il disegno **entra nel bundle** e viene ridistribuito.
+
+Scelto **Twemoji** (CC-BY 4.0): PNG pronti, forme piatte che reggono la riduzione, e
+l'obbligo si esaurisce in una riga di attribuzione. Scartati **OpenMoji** (CC BY-SA: lo
+share-alike sulle derivate complica un repository pubblico con disegni di tre provenienze) e
+**Fluent Emoji** di Microsoft, che pure e' MIT e sarebbe stato il piu' comodo: pubblica solo
+SVG, e rasterizzarli richiede `cairo`, una libreria di sistema da installare a parte.
+
+L'attribuzione sta in tre posti apposta: `src/icons/CREDITI.md` (l'elenco autorevole), il
+README, e **dentro l'app** nella schermata "Scrivimi" — la CC-BY chiede il credito dove il
+lavoro viene usato, e un file nel repository non lo vede chi apre l'app dal telefono.
+
+**Valutata e rimandata**: l'idea di un repository separato per le icone. Aveva senso solo
+per pubblicarle, e quel bisogno e' caduto.
+
+### F9.4-ter Due difetti trovati solo guardando l'app
+
+Il primo: le icone uscivano con un **alone nero irregolare**. Non veniva da Twemoji ma dallo
+script — nei PNG i pixel trasparenti hanno un colore sotto, quasi sempre nero, e mediando
+l'area senza tenerne conto un pixel di bordo (meta' disegno, meta' trasparente-nero) esce
+scurissimo. Si corregge moltiplicando i colori per l'opacita' **prima** di mediare e
+dividendo dopo, cosi' i pixel trasparenti pesano zero invece di pesare come nero.
+
+Il secondo, piu' vistoso: **il maiale era blu scuro col bordo rosa**, e l'hamburger uguale.
+`png2icona.py` faceva ripiegare il primo colore su `currentColor`, cosi' un'icona segue il
+colore del testo che accompagna. E' giusto per un disegno di un colore solo — una freccia,
+una X — e sbagliato per uno a piu' tinte, dove il "primo colore" e' solo la regione piu'
+grande, che diventava il blu del testo. Ora `converti()` ha `segui_testo`, acceso per le
+monocromatiche e spento per le derivate.
+
+Nessuno dei due si vedeva nei PNG di prova: il primo si notava solo ingrandendo, il secondo
+esisteva solo una volta diventato SVG dentro l'app. E' il motivo per cui la verifica a
+schermo non e' una formalita' finale.
+
+Restano caratteri di testo, e non sono un dimenticanza: `→` `✓` `✕` stanno dentro frasi,
+sono segni tipografici e non disegni.
+
+### F9.5 Come si aggiunge un'icona disegnata a mano
+
+`scripts/png2icona.py` converte un PNG 24×24 in un componente React in cui **ogni colore
+diventa una variabile CSS** (`--ico-a`, `--ico-b`, ...), col colore disegnato come ripiego.
+Il primo colore ripiega su `currentColor`, cosi' l'icona segue il colore del testo come
+facevano quelle di Font Awesome.
+
+Si genera un `.jsx` e non si importa il `.svg` per non aggiungere `vite-plugin-svgr`: e'
+anche il formato in cui pixelarticons distribuisce le sue, quindi il registro non deve
+sapere quale delle due sta montando. Istruzioni in `src/icons/mie/LEGGIMI.md`.
+
+**Valutato e rimandato**: pubblicare le icone in un repo GitHub separato che l'app scarica.
+Scartato il **runtime** — questa e' una PWA che si usa in palestra, e le icone sarebbero
+l'unica parte dell'interfaccia capace di non comparire con la connessione ballerina. Se un
+giorno il repo separato si fara', le icone andranno prese **al momento della build**.
+Per ora stanno in `src/icons/mie/`: estrarle dopo e' banale, sono file.
+
+### F9.6 Angoli appena smussati (10/7)
+
+Secondo passo dello stile retro'. Da 20px/14px si scende a **10px per le card e 7px per
+i bottoni**, scelti guardando cinque varianti affiancate sulla stessa schermata.
+
+**Il 90 gradi e' stato provato e scartato**, ed e' la decisione che vale la pena
+ricordare: lo squadrato secco fa "terminale" e toglie morbidezza a un'app che si usa col
+fiatone fra una serie e l'altra. Dall'altra parte 20px accanto alle icone a pixel sembrava
+una bolla. 10/7 e' il punto in cui gli angoli si vedono senza tagliare.
+
+**Le forme tonde restano tonde**: avatar, swatch dei colori, il (+) fra due esercizi e la
+pastiglia dell'alimento nell'elenco. Un cerchio non ha angoli, e appuntirlo non lo
+renderebbe piu' coerente, gli cambierebbe la forma.
+
+Le pastiglie che invece erano **rettangoli disegnati come pillole** (chip, badge del
+calendario, barre di avanzamento) sono scese a 4-7px: a 999px accanto a card da 10
+stonavano piu' di prima.
+
+### F9.7 Lo sfondo: attrezzi a pixel, e tre approcci scartati
+
+Terzo passo. Lo sfondo crema diventa una **carta da parati di attrezzi da palestra a
+contorno**, fitti e girati, in `--ink` al 10%.
+
+**Tre approcci sono stati provati e buttati**, e vale la pena ricordarli perche' ognuno
+sembrava ragionevole prima di vederlo:
+
+1. **Righe diagonali arcobaleno.** Belle da sole, sbagliate qui: le diagonali di un
+   gradiente CSS sono lisce e antialiasate, e accanto a icone su griglia a pixel stonano.
+   Rifatte a scaletta di pixel con una piastrella, restavano comunque un motivo che non
+   parla di palestra.
+2. **Attrezzi ammucchiati negli angoli.** L'idea era bella ma ha prodotto due difetti
+   veri: due livelli di sfondo indipendenti si accavallavano dove si incontravano (nessuno
+   dei due sapeva dove stava l'altro), e per avere angoli distinti serviva un'immagine non
+   ripetuta, che lascia i lati vuoti su schermo largo.
+3. **Attrezzi disegnati a mano.** Il piu' istruttivo: dodici tentativi, e venivano storti.
+   I cerchi squadrati, le simmetrie sfasate di un pixel, il manico della kettlebell
+   attaccato alla palla. Un controllo automatico di simmetria ha trovato errori che a
+   occhio non si vedevano nell'ASCII ma si vedevano benissimo nel disegno.
+
+**Quello che funziona**: non disegnarle. Le icone sono quelle di
+[Tabler Icons](https://tabler.io/icons) (MIT) — manubrio, bilanciere, corda, scarpa,
+cronometro, bici, nuotatore, borraccia, yoga, pallavolo, battito, tapis roulant, medaglia —
+ridotte a una griglia 20×20 da `scripts/pixella-tabler.html`, che le disegna su una tela
+otto volte piu' grande e poi media ogni quadretto. E' lo stesso ragionamento delle emoji:
+si trasforma un disegno che esiste gia' invece di rifarlo.
+
+La pagina e' un file HTML e non uno script Python perche' i rasterizzatori SVG da riga di
+comando vogliono `cairo`, una libreria di sistema da installare a parte — lo stesso
+ostacolo che aveva fatto scartare Fluent Emoji in F9.4-bis. Ha il cursore della soglia:
+sotto 80 le icone vengono gonfie, sopra 120 si spezzano.
+
+**Le rotazioni sono solo a quarti di giro** (piu' lo specchio, fanno otto orientamenti). Il
+riferimento di partenza aveva angoli qualsiasi, ma quello e' disegno vettoriale: un disegno
+a pixel ruotato di 37 gradi smette di essere un disegno a pixel, i quadretti cadono fra due
+pixel dello schermo e i bordi si sfrangiano.
+
+Due ritocchi dichiarati: la **pallavolo** e' disegnata al 72% della sua casella per venire
+piu' piccola delle altre, e la **borraccia** ha due righe modificate a mano per stringerla
+in vita — l'icona di Tabler ha i fianchi dritti.
+
+Una sola immagine che si ripete, quindi densita' uniforme per costruzione e nessuna
+sovrapposizione possibile: le collisioni si controllano in un'unica passata, sui riquadri
+reali dei disegni e tenendo conto della giunzione fra due copie affiancate.
+
 ## Fuori scope v1 (idee registrate)
 
 - **Gruppi di utenti**: condivisione schede, sfide — dopo web app + watch + pagamenti
 - Coach LLM (Step 7 del piano di sviluppo)
 - Eliminazione account (necessaria prima del Play Store)
+- Resto del cambio di stile retro': angoli a zero, sfondo, trattamento delle foto degli
+  esercizi (vedi F9 per il perche' si e' partiti dalle icone)
