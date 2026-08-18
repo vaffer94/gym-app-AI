@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import Icona from '../icons'
+import SelettoreTema from '../components/SelettoreTema'
 
 /**
  * La home e' un indice: una riga per posto dove andare, nient'altro. I parametri erano
@@ -76,21 +77,26 @@ export default function HomePage() {
           <h2>Ciao, {firstName}!</h2>
           <p className="small muted">Pronta ad allenarti?</p>
         </div>
-        <div className="spacer" />
-        {/* Solo icona: e' l'unico posto da cui si scrive a chi mantiene l'app, ma non
-            e' una cosa che si fa spesso, e con l'etichetta accanto a "Esci" la barra
-            sui telefoni stretti non ci sta */}
-        <button
-          className="btn"
-          onClick={() => navigate('/scrivimi')}
-          aria-label="Segnala un problema o proponi un’idea"
-          title="Segnala un problema o proponi un’idea"
-        >
-          <Icona nome="commento" />
-        </button>
-        <button className="btn" onClick={signOut}>
-          <Icona nome="esci" /> Esci
-        </button>
+        {/* I tre pulsanti stanno in un gruppo, non sciolti nella barra: a 320px
+            andavano a capo uno alla volta e il tema restava da solo sopra gli
+            altri due. Cosi' o ci stanno tutti in riga, o scendono insieme. */}
+        <div className="appbar-azioni">
+          <SelettoreTema />
+          {/* Solo icona: e' l'unico posto da cui si scrive a chi mantiene l'app, ma non
+              e' una cosa che si fa spesso, e con l'etichetta accanto a "Esci" la barra
+              sui telefoni stretti non ci sta */}
+          <button
+            className="btn"
+            onClick={() => navigate('/scrivimi')}
+            aria-label="Segnala un problema o proponi un’idea"
+            title="Segnala un problema o proponi un’idea"
+          >
+            <Icona nome="commento" />
+          </button>
+          <button className="btn" onClick={signOut}>
+            <Icona nome="esci" /> Esci
+          </button>
+        </div>
       </header>
 
       <div className="stack">

@@ -5,10 +5,20 @@
    font arrotondati, icone a pixel (src/icons). Poche cose per schermata.
    ============================================================ */
 
+/* I due temi.
+   Le variabili sono le stesse, cambiano solo i valori: nessuna regola piu' in
+   basso sa che tema e' attivo, e questo e' il motivo per cui il tema scuro e'
+   costato poco — le 25 regole che usano --ink non si toccano.
+
+   Il tema scuro ribalta i ruoli invece di schiarire tutto: quello che era
+   scuro (contorni, testo, ombre) diventa un pastello, e il blu scuro prende il
+   posto della carta. Le tinte "soft", che nel chiaro sono fondi pastello delle
+   card, nello scuro diventano blu tinti — un fondo pastello pieno su schermo
+   scuro abbaglia, e con contorni pastello sopra non si leggerebbe niente. */
 :root {
-  /* Palette */
+  /* Palette — tema chiaro */
   --ink: #2b2b3c;          /* contorni e testo */
-  --paper: #fdf6ec;        /* crema di base, sotto le righe */
+  --paper: #fdf6ec;        /* crema di base, sotto gli attrezzi */
   --card: #ffffff;
   --primary: #ff6b35;      /* arancio energia */
   --primary-soft: #ffe1d3;
@@ -19,6 +29,10 @@
   --lilac-soft: #e4d9ff;
   --muted: #63637a;   /* abbastanza scuro da restare leggibile */
   --danger: #e63946;
+  --su-primary: #fff;      /* cosa ci sta sopra ai fondi pieni */
+  --su-teal: #fff;
+  --su-yellow: var(--ink); /* il giallo e' chiaro: sopra ci va sempre scuro */
+  --sfondo-opacita: 0.10;
 
   /* Forme */
   /* Angoli appuntiti ma non a 90 gradi: lo squadrato secco toglieva
@@ -26,36 +40,115 @@
      "bolla" accanto alle icone a pixel. */
   --radius: 10px;
   --radius-sm: 7px;
-  --border: 3px solid var(--ink);
-  --shadow: 4px 4px 0 var(--ink);
-  --shadow-sm: 3px 3px 0 var(--ink);
+  /* Il contorno e' un token separato dal testo perche' nel tema scuro ogni
+     card ha il bordo del PROPRIO pastello, mentre il testo resta uno solo.
+     ATTENZIONE: --border e --shadow NON possono contenere var(--bordo). Un
+     custom property viene sostituito dove e' DICHIARATO — qui su :root — non
+     dove viene usato, quindi ridefinire --bordo su .card--teal non avrebbe
+     alcun effetto: i bordi restavano tutti uguali. Per questo le regole sotto
+     scrivono `3px solid var(--bordo)` per esteso invece di usare --border. */
+  --bordo: var(--ink);
+  /* L'ombra piatta e' un token separato dal bordo: nel tema scuro il contorno
+     e' scurissimo e il colore della card vive TUTTO nell'ombra, che e' quel
+     rilievo laterale che da' profondita'. Nel chiaro sono la stessa cosa. */
+  --ombra: var(--ink);
 
   /* Font */
   --font-display: 'Baloo 2', system-ui, sans-serif;
   --font-body: 'Nunito', system-ui, sans-serif;
 }
 
+[data-tema="scuro"] {
+  /* Palette — tema scuro */
+  --ink: #ece0cc;          /* il testo: un crema caldo, uno solo per tutta l'app */
+  --paper: #101020;        /* blu scuro, il colore dominante */
+  --card: #191932;         /* le card stanno appena sopra lo sfondo */
+  /* Il contorno e' piu' scuro della carta: la card si stacca dal fondo per
+     via del bordo scuro, non perche' e' piu' chiara. Il colore non sta qui. */
+  --bordo: #08080f;
+  /* Il colore della card sta nell'OMBRA, che e' il rilievo laterale. Cosi' il
+     tema scuro resta scuro e il pastello si vede solo dove serve — coi bordi
+     pastello c'era troppo colore per essere una modalita' notte. */
+  --ombra: #b3a9dd;
+  /* I pieni sono schiariti: l'arancio e il teal del chiaro, su fondo scuro,
+     perdono contrasto col testo che ci sta sopra. */
+  --primary: #ff8a5c;
+  --teal: #45d6c6;
+  --yellow: #ffd869;
+  /* Le quattro tinte "soft" collassano sul colore delle card: nel tema scuro
+     il fondo e' uguale per tutte e a distinguerle e' solo il bordo. Fondi
+     scuri diversi per ogni card facevano un effetto sporco — quattro sfumature
+     di quasi-nero che non si leggono come colori ma come macchie. */
+  --primary-soft: var(--card);
+  --teal-soft: var(--card);
+  --yellow-soft: var(--card);
+  --lilac-soft: var(--card);
+  --muted: #a49fbb;   /* schiarito: #63637a su blu scuro non si legge */
+  --danger: #ff7a86;
+  /* Sui fondi pieni schiariti ci va il testo SCURO, non bianco: arancio chiaro
+     con scritta bianca sta sotto il rapporto di contrasto leggibile. */
+  --su-primary: #2b1a12;
+  --su-teal: #0d2422;
+  /* Il giallo resta chiaro anche nel tema scuro: sopra ci va il blu, non il
+     crema del testo — giallo su crema non si legge, ed e' successo sul chip
+     del conteggio nello Storico. */
+  --su-yellow: #2b2417;
+  /* Un filo piu' marcato: sul blu scuro il pastello al 10% sparisce. */
+  --sfondo-opacita: 0.13;
+}
+
+/* Nel tema scuro il colore di una card sta tutto nel BORDO, e sono gli stessi
+   pastelli che nel tema chiaro fanno da fondo: --primary-soft e compagni. Cosi'
+   una card teal resta riconoscibile come teal passando da un tema all'altro.
+   Nel chiaro i bordi restano tutti ink: li' il contorno scuro e' la firma
+   dello stile ed e' il fondo pastello a distinguere le card. */
+[data-tema="scuro"] .card--primary,
+[data-tema="scuro"] .btn--primary  { --ombra: #ffe1d3; }
+[data-tema="scuro"] .card--teal,
+[data-tema="scuro"] .btn--teal     { --ombra: #d5f4f1; }
+[data-tema="scuro"] .card--yellow,
+[data-tema="scuro"] .btn--yellow   { --ombra: #fff3c7; }
+[data-tema="scuro"] .card--lilac   { --ombra: #e4d9ff; }
+/* Il riquadro del logo nel login e' una superficie come le card, non un'azione:
+   segue la stessa regola — dentro il colore delle card, il colore solo nel
+   bordo. Coi pieni restano solo i PULSANTI, che sono azioni e devono staccare. */
+[data-tema="scuro"] .login-hero .logo {
+  background: var(--card);
+  --ombra: #ffe1d3;
+}
+
 * { box-sizing: border-box; }
+
+/* Lo sfondo: carta da parati di attrezzi da palestra a contorno, fitti e
+   girati, molto trasparenti. Devono leggersi come decorazione e mai competere
+   col contenuto delle card.
+   E' una MASCHERA e non un'immagine di sfondo: l'SVG e' nero pieno, il colore
+   arriva da background-color e quindi segue --ink. Con un'immagine colorata
+   sarebbero serviti due file, uno per tema, da tenere allineati a mano.
+   Sta su un ::before fisso e non su body perche' body puo' avere una sola
+   background-color, e qui ne servono due: la carta sotto e gli attrezzi sopra.
+   `fixed` li tiene fermi mentre il contenuto scorre: se scorressero anche loro
+   sembrerebbero pezzi della pagina invece che sfondo.
+   L'immagine si genera con scripts/genera-sfondo.py. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--ink);
+  opacity: var(--sfondo-opacita);
+  -webkit-mask-image: url('/sfondo-attrezzi.svg');
+  mask-image: url('/sfondo-attrezzi.svg');
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+}
 
 html, body, #root { min-height: 100%; }
 
 body {
   margin: 0;
-  /* Sfondo: carta da parati di attrezzi da palestra a contorno, fitti e
-     girati, in ink molto trasparente sul crema. Devono leggersi come
-     decorazione e mai competere col contenuto delle card.
-     Una piastrella che si ripete: la densita' e' uniforme per costruzione, e su
-     qualunque schermo copre tutto senza deformare niente. Gli attrezzi sono
-     girati solo a QUARTI di giro (piu' lo specchio, fanno otto orientamenti):
-     un disegno a pixel ruotato di un angolo qualsiasi smette di essere un
-     disegno a pixel, i quadretti cadono fra due pixel e i bordi si sfrangiano.
-     `fixed` li tiene fermi mentre il contenuto scorre: se scorressero anche
-     loro sembrerebbero pezzi della pagina invece che sfondo.
-     Si genera con scripts/genera-sfondo.py. */
-  background-color: var(--paper);
-  background-image: url('/sfondo-attrezzi.svg');
-  background-repeat: repeat;
-  background-attachment: fixed;
+  background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
   font-size: 16px;
@@ -99,9 +192,9 @@ p { margin: 0; }
 
 .card {
   background: var(--card);
-  border: var(--border);
+  border: 3px solid var(--bordo);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: 4px 4px 0 var(--ombra);
   padding: 20px;
 }
 
@@ -120,7 +213,7 @@ p { margin: 0; }
 }
 .card--tap:active {
   transform: translate(4px, 4px);
-  box-shadow: 0 0 0 var(--ink);
+  box-shadow: 0 0 0 var(--ombra);
 }
 
 /* ---------- Bottoni ---------- */
@@ -129,9 +222,9 @@ p { margin: 0; }
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 1.05rem;
-  border: var(--border);
+  border: 3px solid var(--bordo);
   border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 3px 3px 0 var(--ombra);
   background: var(--card);
   color: var(--ink);
   /* min-width:0 annulla il min-width:auto implicito dei figli flex, senza il quale
@@ -148,7 +241,7 @@ p { margin: 0; }
 }
 .btn:active {
   transform: translate(3px, 3px);
-  box-shadow: 0 0 0 var(--ink);
+  box-shadow: 0 0 0 var(--ombra);
 }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -158,15 +251,15 @@ p { margin: 0; }
    schiacciarsi. Esclusi i .btn--sm, che sono i quadratini con la sola icona. */
 .row > .btn:not(.btn--sm) { min-width: 96px; }
 
-.btn--primary { background: var(--primary); color: #fff; }
-.btn--teal { background: var(--teal); color: #fff; }
-.btn--yellow { background: var(--yellow); }
+.btn--primary { background: var(--primary); color: var(--su-primary); }
+.btn--teal { background: var(--teal); color: var(--su-teal); }
+.btn--yellow { background: var(--yellow); color: var(--su-yellow); }
 .btn--big {
   width: 100%;
   font-size: 1.25rem;
   padding: 18px 24px;
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: 4px 4px 0 var(--ombra);
 }
 .btn--big:active { transform: translate(4px, 4px); }
 
@@ -178,10 +271,11 @@ p { margin: 0; }
   gap: 6px;
   font-weight: 800;
   font-size: 0.8rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--bordo);
   border-radius: 7px;
   padding: 4px 12px;
   background: var(--yellow);
+  color: var(--su-yellow);
 }
 
 /* Pastiglia dell'equivalente alimentare dentro una riga di testo (elenco storico).
@@ -196,7 +290,7 @@ p { margin: 0; }
   height: 30px;
   padding: 0;
   vertical-align: middle;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--bordo);
   border-radius: 999px;
   background: var(--card);
   cursor: pointer;
@@ -256,12 +350,26 @@ p { margin: 0; }
   display: flex;
   align-items: center;
   gap: 12px;
+  /* flex-wrap come in .row: col terzo pulsante (il tema) a 320px "Esci" veniva
+     schiacciato e la parola tagliata a meta'. Andando a capo la barra diventa
+     alta due righe, che e' meglio di un pulsante mozzato. */
+  flex-wrap: wrap;
+}
+/* Il saluto puo' restringersi, i pulsanti no: sono bersagli da dito. Senza
+   questo andavano a capo i pulsanti anche quando bastava accorciare il testo. */
+.appbar > div { flex-shrink: 1; min-width: 0; }
+.appbar-azioni {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;   /* spinge il gruppo a destra, senza uno .spacer */
+  flex-shrink: 0;      /* o ci stanno tutti in riga, o scendono insieme */
 }
 .appbar .avatar {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  border: var(--border);
+  border: 3px solid var(--bordo);
   object-fit: cover;
   background: var(--yellow-soft);
 }
@@ -279,9 +387,9 @@ p { margin: 0; }
 .login-hero .logo {
   width: 110px;
   height: 110px;
-  border: var(--border);
+  border: 3px solid var(--bordo);
   border-radius: 14px;
-  box-shadow: var(--shadow);
+  box-shadow: 4px 4px 0 var(--ombra);
   background: var(--primary);
   display: flex;
   align-items: center;
@@ -297,14 +405,14 @@ p { margin: 0; }
   font-size: 1rem;
   color: var(--ink);
   background: var(--card);
-  border: var(--border);
+  border: 3px solid var(--bordo);
   border-radius: var(--radius-sm);
   padding: 12px 14px;
   width: 100%;
   outline: none;
 }
 .input:focus, .select:focus, .textarea:focus {
-  box-shadow: var(--shadow-sm);
+  box-shadow: 3px 3px 0 var(--ombra);
 }
 .textarea { min-height: 84px; resize: vertical; }
 .label {
@@ -332,12 +440,12 @@ p { margin: 0; }
   width: 64px;
   text-align: center;
   background: var(--card);
-  border: 2px solid var(--ink);
+  border: 2px solid var(--bordo);
   border-radius: 5px;
   padding: 6px 4px;
   outline: none;
 }
-.stepper .value-input:focus { box-shadow: 2px 2px 0 var(--ink); }
+.stepper .value-input:focus { box-shadow: 2px 2px 0 var(--ombra); }
 
 /* Toggle */
 .toggle { display: flex; align-items: center; gap: 10px; cursor: pointer; }
@@ -347,10 +455,14 @@ p { margin: 0; }
 
 .chip--select {
   background: var(--card);
+  /* Il fondo non e' piu' giallo, quindi torna il testo normale: senza questa
+     riga il chip selezionabile si teneva il colore scuro pensato per il
+     giallo, e sul tema scuro spariva dentro la card. */
+  color: var(--ink);
   cursor: pointer;
   user-select: none;
 }
-.chip--on { background: var(--teal); color: #fff; }
+.chip--on { background: var(--teal); color: var(--su-teal); }
 
 .chips-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
 
@@ -361,14 +473,14 @@ p { margin: 0; }
   align-items: center;
   gap: 12px;
   background: var(--card);
-  border: var(--border);
+  border: 3px solid var(--bordo);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
 }
 .thumb {
   width: 56px;
   height: 56px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--bordo);
   border-radius: 3px;
   object-fit: cover;
   background: var(--yellow-soft);
@@ -406,21 +518,21 @@ p { margin: 0; }
   width: 36px;
   height: 36px;
   padding: 0;
-  border: var(--border);
+  border: 3px solid var(--bordo);
   border-radius: 999px;
   background: var(--teal);
-  color: #fff;
+  color: var(--su-teal);
   font-size: 1rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 3px 3px 0 var(--ombra);
   transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
 .btn-insert:active {
   transform: translate(3px, 3px);
-  box-shadow: 0 0 0 var(--ink);
+  box-shadow: 0 0 0 var(--ombra);
 }
 
 /* Tile "fantasma": allenamenti rilevati da Google, non cliccabili */
@@ -450,9 +562,9 @@ p { margin: 0; }
   padding: 6px 10px;
   font-size: 0.9rem;
   border-width: 2px;
-  box-shadow: 2px 2px 0 var(--ink);
+  box-shadow: 2px 2px 0 var(--ombra);
 }
-.btn--sm:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ink); }
+.btn--sm:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ombra); }
 
 /* ---------- Allenamento ---------- */
 
@@ -466,9 +578,9 @@ p { margin: 0; }
   width: 88px;
   font-family: var(--font-display);
   background: var(--card);
-  border: var(--border);
+  border: 3px solid var(--bordo);
   border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 3px 3px 0 var(--ombra);
   padding: 10px 6px;
   cursor: pointer;
   display: flex;
@@ -477,17 +589,18 @@ p { margin: 0; }
   gap: 2px;
   transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
-.serie:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ink); }
+.serie:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ombra); }
 .serie .serie-num { font-size: 1.3rem; font-weight: 800; }
-.serie--done { background: var(--teal); color: #fff; }
+.serie--done { background: var(--teal); color: var(--su-teal); }
 .serie--done .muted { color: rgba(255, 255, 255, 0.85); }
 .serie--active {
   background: var(--yellow);
+  color: var(--su-yellow);
   animation: serie-pulse 1.2s ease-in-out infinite;
 }
 @keyframes serie-pulse {
-  0%, 100% { box-shadow: var(--shadow-sm); }
-  50% { box-shadow: 6px 6px 0 var(--ink); transform: translate(-2px, -2px); }
+  0%, 100% { box-shadow: 3px 3px 0 var(--ombra); }
+  50% { box-shadow: 6px 6px 0 var(--ombra); transform: translate(-2px, -2px); }
 }
 
 /* Conferma visiva del tocco.
@@ -554,7 +667,7 @@ p { margin: 0; }
   font-weight: 700;
   color: var(--muted);
   background: var(--card);
-  border: 2px solid var(--ink);
+  border: 2px solid var(--bordo);
   border-radius: 5px;
 }
 /* Sopra la cornice teal del giorno conteggiato: le icone dicono cose diverse dalla
@@ -568,16 +681,16 @@ p { margin: 0; }
   gap: 2px;
   font-size: 0.55rem;
   background: var(--card);
-  border: 2px solid var(--ink);
+  border: 2px solid var(--bordo);
   border-radius: 4px;
   padding: 1px 4px;
   color: var(--ink);
 }
 .cal-cell--on {
   background: var(--primary);
-  color: #fff;
+  color: var(--su-primary);
 }
-.cal-cell--today { box-shadow: var(--shadow-sm); }
+.cal-cell--today { box-shadow: 3px 3px 0 var(--ombra); }
 
 /* Giorno con un'attivita' conteggiata da Google: una cornice dentro la cella, non un
    secondo fondo. Cosi' convive con l'arancione dell'allenamento registrato dall'app
@@ -610,7 +723,7 @@ p { margin: 0; }
 .seg {
   flex: 1;
   height: 18px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--bordo);
   border-radius: 3px;
   background: transparent;
 }
@@ -619,7 +732,7 @@ p { margin: 0; }
 
 .bar-track {
   height: 18px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--bordo);
   border-radius: 5px;
   background: var(--card);
   overflow: hidden;
@@ -639,13 +752,13 @@ p { margin: 0; }
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  border: 3px solid var(--ink);
+  border: 3px solid var(--bordo);
   cursor: pointer;
   padding: 0;
   transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
 .swatch--on {
-  box-shadow: var(--shadow-sm);
+  box-shadow: 3px 3px 0 var(--ombra);
   transform: scale(1.12);
 }
 
@@ -667,9 +780,9 @@ p { margin: 0; }
   right: 0;
   z-index: 40;
   background: var(--card);
-  border: var(--border);
+  border: 3px solid var(--bordo);
   border-radius: var(--radius-sm);
-  box-shadow: var(--shadow);
+  box-shadow: 4px 4px 0 var(--ombra);
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -703,9 +816,9 @@ p { margin: 0; }
 }
 .sheet {
   background: var(--paper);
-  border: var(--border);
+  border: 3px solid var(--bordo);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: 4px 4px 0 var(--ombra);
   width: 100%;
   max-width: 440px;
   max-height: 85dvh;

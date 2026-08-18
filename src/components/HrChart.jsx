@@ -11,8 +11,10 @@ import { buildSegments, buildRests, binHr, hrWindowSec, splitHrRuns, HR_STEP_SEC
  * nome scritto sopra, c'e' la legenda e il tooltip dice sempre in che esercizio sei.
  */
 
-const INK = '#2b2b3c'
-const MUTED = '#63637a'
+// L'SVG puo' usare le variabili CSS direttamente: cosi' segue il tema da solo,
+// al contrario del canvas di Chart.js che va ridipinto a mano.
+const INK = 'var(--ink)'
+const MUTED = 'var(--muted)'
 const GRID = 'rgba(43, 43, 60, 0.12)'
 
 // Altezza fissa; la larghezza logica segue quella reale del contenitore

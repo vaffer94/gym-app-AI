@@ -1,25 +1,20 @@
-"""Genera lo sfondo: attrezzi da palestra a contorno, sparsi e piu' fitti in basso.
+"""Genera la piastrella dello sfondo: attrezzi da palestra a pixel.
 
-Lo sfondo e' tinta unita (--paper) con attrezzi disegnati **solo di contorno**,
-in una tinta scura ma chiaramente secondaria: devono leggersi come decorazione,
-mai competere con quello che sta dentro le card.
+Esce **una sola** immagine, `public/sfondo-attrezzi.svg`, che il CSS ripete su
+tutta la pagina. Una sola perche' e' l'unico modo di garantire che niente si
+sovrapponga: le collisioni si controllano in un'unica passata, sui riquadri
+reali dei disegni e tenendo conto della giunzione fra due copie affiancate.
 
-Escono due piastrelle:
-  sfondo-rado.svg   ripetuta su tutto lo schermo, pochi attrezzi
-  sfondo-fitto.svg  ripetuta solo in orizzontale in fondo, tanti e piu' piccoli
+L'SVG esce in **nero pieno**: e' una MASCHERA, non un'immagine. Colore e
+trasparenza li mette il CSS (`--ink` e `--sfondo-opacita` in global.css), cosi'
+lo stesso file serve tema chiaro e tema scuro senza doverne tenere due
+allineati a mano.
 
-Due immagini e non una perche' la densita' non e' uniforme: una piastrella sola,
-ripetuta, distribuirebbe tutto allo stesso modo. Sovrapponendo la fascia fitta
-in basso si ottiene "sparso ovunque, ammucchiato per terra" senza deformare
-niente e a qualunque dimensione di schermo.
-
-Gli attrezzi NON si sovrappongono mai: il controllo di collisione tiene conto
-anche del bordo della piastrella (distanza "a ciambella"), se no due attrezzi
-finivano addosso l'uno all'altro attraverso la giunzione fra una copia e la
-successiva.
+Gli attrezzi non sono disegnati qui: vengono da Tabler Icons, ridotti a griglia
+20x20 da `scripts/pixella-tabler.html`. Vedi ATTREZZI qui sotto.
 
     python3 scripts/genera-sfondo.py
-    python3 scripts/genera-sfondo.py --opacita 0.18
+    python3 scripts/genera-sfondo.py --quanti 40 --passo 3
     python3 scripts/genera-sfondo.py --controlla    # verifica i disegni e basta
 """
 import argparse
@@ -538,15 +533,20 @@ def sfondo(lato, quanti, passo, colore, opacita, seme, aria=1):
                         and py + ry + oy + rh > 0 and py + ry + oy < lato):
                     parti.append(disegna(forma, passo, px + ox, py + oy, giro, specchiato))
 
+    # Esce in nero pieno perche' l'SVG e' usato come MASCHERA, non come
+    # immagine: il colore e la trasparenza li mette il CSS (background-color:
+    # var(--ink) sotto la maschera). Cosi' un file solo serve tema chiaro e
+    # tema scuro — un'immagine colorata avrebbe richiesto due file da tenere
+    # allineati a mano.
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{lato}" height="{lato}" '
             f'viewBox="0 0 {lato} {lato}" shape-rendering="crispEdges">'
-            f'<g fill="{colore}" fill-opacity="{opacita}">{"".join(parti)}</g></svg>')
+            f'<g fill="#000">{"".join(parti)}</g></svg>')
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--colore", default="#2b2b3c")
-    ap.add_argument("--opacita", type=float, default=0.10)
+    # colore e opacita' non sono piu' parametri: l'SVG e' una maschera, e
+    # tutti e due li decide il CSS (--ink e --sfondo-opacita in global.css)
     ap.add_argument("--seme", type=int, default=11)
     ap.add_argument("--controlla", action="store_true",
                     help="verifica i disegni senza scrivere niente")
@@ -564,7 +564,7 @@ if __name__ == "__main__":
 
     dest = a.dir or os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "public")
     os.makedirs(dest, exist_ok=True)
-    svg = sfondo(a.lato, a.quanti, a.passo, a.colore, a.opacita, a.seme)
+    svg = sfondo(a.lato, a.quanti, a.passo, "#000", 1, a.seme)
     p = os.path.join(dest, "sfondo-attrezzi.svg")
     with open(p, "w") as f:
         f.write(svg)
