@@ -674,16 +674,40 @@ sfumature di quasi-nero non si leggono come colori, si leggono come macchie.
 Restano pieni **solo i pulsanti d'azione**: sono azioni e devono staccare. Il riquadro del
 logo nel login, che e' una superficie e non un'azione, segue invece la regola delle card.
 
-### F10.2 Dove sta il colore: nell'ombra, non nel bordo
+### F10.2 Dove sta il colore: in quattro tentativi, da nessuna parte
 
-Prima versione: bordi pastello e ombre uguali ai bordi. Scartata — **troppo colore per
-essere una modalita' notte**. Ora il contorno e' piu' scuro della carta stessa (`#08080f`)
-e il pastello vive solo nell'**ombra**, quel rilievo laterale che da' profondita' alle
-card. La card si stacca dal fondo per via del bordo scuro, e il colore si vede solo dove
-serve.
+1. **Bordi pastello.** Troppo colore per essere una modalita' notte.
+2. **Contorni quasi neri, colore nell'ombra.** Meglio, ma l'ombra colorava *due lati* di
+   ogni tile, e non tutte le superfici ce l'avevano — il riquadro dei grafici no — quindi
+   si leggeva come incoerenza invece che come stile.
+3. **Niente ombre, barretta di 4px a sinistra.** Ancora qualcosa non convinceva, e i
+   riquadri dei grafici stavano meglio senza.
+4. **Niente.** Nel tema scuro le card non portano colore: fondo, contorno e assenza di
+   ombra sono uguali per tutte. Il colore resta dove serve a capire qualcosa — le **icone**
+   e i **pulsanti d'azione**.
 
-Per farlo servono due token distinti, `--bordo` e `--ombra`: prima l'ombra usava il colore
-del bordo, e non si potevano separare.
+Nel tema chiaro invece il colore c'e' e sta nel fondo pastello, come prima. Non e' una
+disparita': e' che il chiaro ha spazio per ospitarlo e lo scuro no.
+
+**Cosa e' costato togliere le ombre**, e non era ovvio prima di farlo:
+
+- Il **tocco** era fatto dall'ombra che sparisce mentre l'elemento scende di 4px. Senza
+  ombra restava solo il salto, che senza rilievo sembra un difetto. Ora l'elemento si
+  scurisce e basta (`--tocco`), come fa qualunque pulsante — e nel tema scuro **schiarisce**,
+  se no premere non si vedrebbe.
+- La classe **`card--flat`** voleva dire "questa card non ha l'ombra". Senza ombre non
+  distingueva piu' niente: tolta dal CSS e dai 31 punti che la usavano.
+- Il giorno **oggi** nel calendario **tiene la sua ombra**: li' non decora, e' il segno che
+  lo distingue. E' l'unica rimasta, insieme al battito della serie in corso.
+
+### F10.2-bis Il colore della scheda, che sfuggiva ai temi
+
+Le card che portano il colore scelto per una scheda lo ricevevano **inline** su
+`background`, in cinque punti (elenco schede, dettaglio, avvio, allenamento in corso,
+storico). Inline vuol dire che non passa dai token: nel tema scuro restavano pastello
+accese, ed erano le uniche superfici colorate di tutta l'app. Ora il colore arriva come
+variabile `--tinta` su `.card--tinta`, e a decidere cosa farne e' il CSS — fondo nel
+chiaro, niente nello scuro.
 
 ### F10.3 Due difetti trovati misurando, non guardando
 

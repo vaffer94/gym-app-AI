@@ -27,11 +27,21 @@
   --yellow: #ffd23f;
   --yellow-soft: #fff3c7;
   --lilac-soft: #e4d9ff;
-  --muted: #63637a;   /* abbastanza scuro da restare leggibile */
+  /* Testo secondario. Misurato sui fondi veri: a #63637a il rapporto sul lilla
+     era 4.36, sotto la soglia di 4.5 per il testo piccolo. Cosi' il peggiore
+     (sempre il lilla) sta a 6.13 e resta chiaramente secondario rispetto
+     all'ink. */
+  --muted: #4d4d63;
   --danger: #e63946;
   --su-primary: #fff;      /* cosa ci sta sopra ai fondi pieni */
   --su-teal: #fff;
   --su-yellow: var(--ink); /* il giallo e' chiaro: sopra ci va sempre scuro */
+  /* La risposta al tocco. Prima era l'ombra che spariva mentre l'elemento
+     scendeva di 4px: tolte le ombre restava solo un salto, che senza rilievo
+     sembra un difetto. Ora l'elemento si scurisce appena e si muove di un
+     l'elemento si scurisce e basta, come fa qualunque pulsante. Nel tema
+     scuro si SCHIARISCE, se no premere non si vedrebbe. */
+  --tocco: brightness(0.94);
   --sfondo-opacita: 0.10;
 
   /* Forme */
@@ -48,10 +58,10 @@
      alcun effetto: i bordi restavano tutti uguali. Per questo le regole sotto
      scrivono `3px solid var(--bordo)` per esteso invece di usare --border. */
   --bordo: var(--ink);
-  /* L'ombra piatta e' un token separato dal bordo: nel tema scuro il contorno
-     e' scurissimo e il colore della card vive TUTTO nell'ombra, che e' quel
-     rilievo laterale che da' profondita'. Nel chiaro sono la stessa cosa. */
-  --ombra: var(--ink);
+  /* Serve solo ai due segnali rimasti che usano un'ombra: il giorno "oggi" nel
+     calendario e la serie in corso. Non e' piu' un colore decorativo — le
+     ombre e le barrette colorate sono state provate entrambe e tolte. */
+  --accento: var(--ink);
 
   /* Font */
   --font-display: 'Baloo 2', system-ui, sans-serif;
@@ -66,10 +76,11 @@
   /* Il contorno e' piu' scuro della carta: la card si stacca dal fondo per
      via del bordo scuro, non perche' e' piu' chiara. Il colore non sta qui. */
   --bordo: #08080f;
-  /* Il colore della card sta nell'OMBRA, che e' il rilievo laterale. Cosi' il
-     tema scuro resta scuro e il pastello si vede solo dove serve — coi bordi
-     pastello c'era troppo colore per essere una modalita' notte. */
-  --ombra: #b3a9dd;
+  /* Nel tema scuro le card non portano colore: ne' fondo, ne' ombra, ne'
+     barretta — provate tutte e tre, ogni volta era troppo. Il colore resta
+     nelle icone e nei pulsanti d'azione. Questo serve solo alle due ombre di
+     stato rimaste. */
+  --accento: #b3a9dd;
   /* I pieni sono schiariti: l'arancio e il teal del chiaro, su fondo scuro,
      perdono contrasto col testo che ci sta sopra. */
   --primary: #ff8a5c;
@@ -93,28 +104,14 @@
      crema del testo — giallo su crema non si legge, ed e' successo sul chip
      del conteggio nello Storico. */
   --su-yellow: #2b2417;
+  --tocco: brightness(1.35);
   /* Un filo piu' marcato: sul blu scuro il pastello al 10% sparisce. */
   --sfondo-opacita: 0.13;
 }
 
-/* Nel tema scuro il colore di una card sta tutto nel BORDO, e sono gli stessi
-   pastelli che nel tema chiaro fanno da fondo: --primary-soft e compagni. Cosi'
-   una card teal resta riconoscibile come teal passando da un tema all'altro.
-   Nel chiaro i bordi restano tutti ink: li' il contorno scuro e' la firma
-   dello stile ed e' il fondo pastello a distinguere le card. */
-[data-tema="scuro"] .card--primary,
-[data-tema="scuro"] .btn--primary  { --ombra: #ffe1d3; }
-[data-tema="scuro"] .card--teal,
-[data-tema="scuro"] .btn--teal     { --ombra: #d5f4f1; }
-[data-tema="scuro"] .card--yellow,
-[data-tema="scuro"] .btn--yellow   { --ombra: #fff3c7; }
-[data-tema="scuro"] .card--lilac   { --ombra: #e4d9ff; }
-/* Il riquadro del logo nel login e' una superficie come le card, non un'azione:
-   segue la stessa regola — dentro il colore delle card, il colore solo nel
-   bordo. Coi pieni restano solo i PULSANTI, che sono azioni e devono staccare. */
 [data-tema="scuro"] .login-hero .logo {
   background: var(--card);
-  --ombra: #ffe1d3;
+  --accento: #ffe1d3;
 }
 
 * { box-sizing: border-box; }
@@ -194,26 +191,31 @@ p { margin: 0; }
   background: var(--card);
   border: 3px solid var(--bordo);
   border-radius: var(--radius);
-  box-shadow: 4px 4px 0 var(--ombra);
   padding: 20px;
 }
 
-.card--flat { box-shadow: none; }
 .card--primary { background: var(--primary-soft); }
 .card--teal { background: var(--teal-soft); }
 .card--yellow { background: var(--yellow-soft); }
 /* Il lilla non e' un colore nuovo: e' gia' nella palette delle schede (PLAN_COLORS) */
 .card--lilac { background: var(--lilac-soft); }
 
+/* Card che porta il colore della scheda scelto da chi la usa. Il colore arriva
+   inline come --tinta e il CSS decide cosa farne: nel tema chiaro e' il fondo,
+   nello scuro sparisce e resta il fondo delle altre card. Prima il colore era
+   applicato inline direttamente su `background`, quindi non passava dai token e
+   nel tema scuro restava acceso: erano le uniche superfici pastello rimaste. */
+.card--tinta { background: var(--tinta, var(--card)); }
+[data-tema="scuro"] .card--tinta { background: var(--card); }
+
 /* Card cliccabile: si "preme" */
 .card--tap {
   cursor: pointer;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  transition: filter 0.08s ease;
   user-select: none;
 }
 .card--tap:active {
-  transform: translate(4px, 4px);
-  box-shadow: 0 0 0 var(--ombra);
+  filter: var(--tocco);
 }
 
 /* ---------- Bottoni ---------- */
@@ -224,7 +226,6 @@ p { margin: 0; }
   font-size: 1.05rem;
   border: 3px solid var(--bordo);
   border-radius: var(--radius-sm);
-  box-shadow: 3px 3px 0 var(--ombra);
   background: var(--card);
   color: var(--ink);
   /* min-width:0 annulla il min-width:auto implicito dei figli flex, senza il quale
@@ -236,12 +237,11 @@ p { margin: 0; }
   align-items: center;
   justify-content: center;
   gap: 10px;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  transition: filter 0.08s ease;
   user-select: none;
 }
 .btn:active {
-  transform: translate(3px, 3px);
-  box-shadow: 0 0 0 var(--ombra);
+  filter: var(--tocco);
 }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -259,9 +259,8 @@ p { margin: 0; }
   font-size: 1.25rem;
   padding: 18px 24px;
   border-radius: var(--radius);
-  box-shadow: 4px 4px 0 var(--ombra);
 }
-.btn--big:active { transform: translate(4px, 4px); }
+.btn--big:active { filter: var(--tocco); }
 
 /* ---------- Badge / chip ---------- */
 
@@ -389,7 +388,6 @@ p { margin: 0; }
   height: 110px;
   border: 3px solid var(--bordo);
   border-radius: 14px;
-  box-shadow: 4px 4px 0 var(--ombra);
   background: var(--primary);
   display: flex;
   align-items: center;
@@ -412,7 +410,6 @@ p { margin: 0; }
   outline: none;
 }
 .input:focus, .select:focus, .textarea:focus {
-  box-shadow: 3px 3px 0 var(--ombra);
 }
 .textarea { min-height: 84px; resize: vertical; }
 .label {
@@ -445,7 +442,7 @@ p { margin: 0; }
   padding: 6px 4px;
   outline: none;
 }
-.stepper .value-input:focus { box-shadow: 2px 2px 0 var(--ombra); }
+.stepper .value-input:focus { border-color: var(--primary); }
 
 /* Toggle */
 .toggle { display: flex; align-items: center; gap: 10px; cursor: pointer; }
@@ -527,19 +524,16 @@ p { margin: 0; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 3px 3px 0 var(--ombra);
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  transition: filter 0.08s ease;
 }
 .btn-insert:active {
-  transform: translate(3px, 3px);
-  box-shadow: 0 0 0 var(--ombra);
+  filter: var(--tocco);
 }
 
 /* Tile "fantasma": allenamenti rilevati da Google, non cliccabili */
 .tile--ghost {
   background: #f3eee3;
   border-style: dashed;
-  box-shadow: none;
   color: var(--muted);
 }
 .tile--ghost .tile-title { color: var(--muted); }
@@ -555,16 +549,14 @@ p { margin: 0; }
    dentro una tile che sta gia' sopra un fondo a righe diventano illeggibili. */
 .tile--counted {
   background: var(--teal-soft);
-  box-shadow: none;
 }
 
 .btn--sm {
   padding: 6px 10px;
   font-size: 0.9rem;
   border-width: 2px;
-  box-shadow: 2px 2px 0 var(--ombra);
 }
-.btn--sm:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ombra); }
+.btn--sm:active { filter: var(--tocco); }
 
 /* ---------- Allenamento ---------- */
 
@@ -580,16 +572,15 @@ p { margin: 0; }
   background: var(--card);
   border: 3px solid var(--bordo);
   border-radius: var(--radius-sm);
-  box-shadow: 3px 3px 0 var(--ombra);
   padding: 10px 6px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  transition: filter 0.08s ease;
 }
-.serie:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ombra); }
+.serie:active { filter: var(--tocco); }
 .serie .serie-num { font-size: 1.3rem; font-weight: 800; }
 .serie--done { background: var(--teal); color: var(--su-teal); }
 .serie--done .muted { color: rgba(255, 255, 255, 0.85); }
@@ -599,8 +590,8 @@ p { margin: 0; }
   animation: serie-pulse 1.2s ease-in-out infinite;
 }
 @keyframes serie-pulse {
-  0%, 100% { box-shadow: 3px 3px 0 var(--ombra); }
-  50% { box-shadow: 6px 6px 0 var(--ombra); transform: translate(-2px, -2px); }
+  0%, 100% { box-shadow: 3px 3px 0 var(--accento); }
+  50% { box-shadow: 6px 6px 0 var(--accento); transform: translate(-2px, -2px); }
 }
 
 /* Conferma visiva del tocco.
@@ -690,7 +681,10 @@ p { margin: 0; }
   background: var(--primary);
   color: var(--su-primary);
 }
-.cal-cell--today { box-shadow: 3px 3px 0 var(--ombra); }
+/* Qui l'ombra resta, ed e' l'unica rimasta insieme al battito della serie in
+   corso: non decora, dice "oggi". Senza, il giorno corrente non si distingue
+   piu' dagli altri. */
+.cal-cell--today { box-shadow: 3px 3px 0 var(--accento); }
 
 /* Giorno con un'attivita' conteggiata da Google: una cornice dentro la cella, non un
    secondo fondo. Cosi' convive con l'arancione dell'allenamento registrato dall'app
@@ -755,10 +749,9 @@ p { margin: 0; }
   border: 3px solid var(--bordo);
   cursor: pointer;
   padding: 0;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  transition: filter 0.08s ease;
 }
 .swatch--on {
-  box-shadow: 3px 3px 0 var(--ombra);
   transform: scale(1.12);
 }
 
@@ -782,7 +775,6 @@ p { margin: 0; }
   background: var(--card);
   border: 3px solid var(--bordo);
   border-radius: var(--radius-sm);
-  box-shadow: 4px 4px 0 var(--ombra);
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -818,7 +810,6 @@ p { margin: 0; }
   background: var(--paper);
   border: 3px solid var(--bordo);
   border-radius: var(--radius);
-  box-shadow: 4px 4px 0 var(--ombra);
   width: 100%;
   max-width: 440px;
   max-height: 85dvh;

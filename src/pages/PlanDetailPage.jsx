@@ -38,8 +38,8 @@ export default function PlanDetailPage() {
       <header className="appbar">
         <button className="btn" onClick={() => navigate('/schede')} aria-label="Indietro"><Icona nome="indietro" /></button>
         <div
-          className="card card--flat"
-          style={{ flex: 1, padding: '12px 16px', background: plan.color || 'var(--card)' }}
+          className="card card--tinta"
+          style={{ flex: 1, padding: '12px 16px', '--tinta': plan.color || undefined }}
         >
           <h2>{plan.name}</h2>
           {plan.labels?.length > 0 && (

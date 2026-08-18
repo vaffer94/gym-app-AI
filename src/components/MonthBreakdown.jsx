@@ -62,7 +62,7 @@ export default function MonthBreakdown({ activities }) {
   if (!totale) return null
 
   return (
-    <div className="card card--flat stack">
+    <div className="card stack">
       <div className="row">
         <span className="label" style={{ margin: 0, flex: 1 }}>Come si dividono le ultime 4 settimane</span>
         <span className="chip">{totale}</span>

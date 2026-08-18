@@ -62,7 +62,7 @@ export default function LoginPage() {
           </button>
         )}
         {error && (
-          <div className="card card--flat center" style={{ borderColor: 'var(--danger)' }}>
+          <div className="card center" style={{ borderColor: 'var(--danger)' }}>
             <p className="small">{error}</p>
           </div>
         )}

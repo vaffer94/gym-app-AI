@@ -226,7 +226,7 @@ export default function IntegrationsPage() {
 
         <KcalDiagnostics sessions={sessions} />
 
-        <div className="card card--flat center" style={{ padding: '28px 20px' }}>
+        <div className="card center" style={{ padding: '28px 20px' }}>
           <p className="small muted">Altre integrazioni arriveranno qui <Icona nome="integrazioni" /></p>
         </div>
       </div>

@@ -80,7 +80,7 @@ export default function ExerciseStats({ sessions, name, color }) {
       </div>
 
       {METRICHE.length > 0 && (
-        <div className="card card--flat stack">
+        <div className="card stack">
           <span className="label" style={{ margin: 0 }}>Rispetto a prima</span>
 
           {METRICHE.map((m) => {
@@ -111,7 +111,7 @@ export default function ExerciseStats({ sessions, name, color }) {
       )}
 
       {ultima.perZone && (
-        <div className="card card--flat stack">
+        <div className="card stack">
           <span className="label" style={{ margin: 0 }}>Zone del cuore in questo esercizio</span>
           {/* >= 15s: sotto c'e' solo il campione di transizione fra un esercizio e l'altro */}
           {ultima.perZone.filter((z) => z.sec >= 15).map((z) => (

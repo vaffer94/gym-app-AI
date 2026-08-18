@@ -243,7 +243,7 @@ function EditEntrySheet({ entry, onClose, onSave }) {
         </div>
 
         {isDuration ? (
-          <div className="card card--flat row">
+          <div className="card row">
             <span className="label" style={{ margin: 0, flex: 1 }}>
               <Icona nome="durata" /> Durata
             </span>

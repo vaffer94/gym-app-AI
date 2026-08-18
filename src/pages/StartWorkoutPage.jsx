@@ -71,7 +71,7 @@ export default function StartWorkoutPage() {
         <>
           <div className="field">
             <label className="label">Scheda</label>
-            <div className="card" style={selected.color ? { background: selected.color } : undefined}>
+            <div className="card card--tinta" style={selected.color ? { '--tinta': selected.color } : undefined}>
               <div className="row">
                 <div style={{ flex: 1 }}>
                   <h3>{selected.name}</h3>
@@ -86,7 +86,7 @@ export default function StartWorkoutPage() {
 
           <div className="field">
             <label className="label">Recupero tra serie ed esercizi (in secondi)</label>
-            <div className="card card--flat row">
+            <div className="card row">
               <span className="small muted" style={{ flex: 1 }}>
                 {Math.floor(restSec / 60) > 0 ? `${Math.floor(restSec / 60)} min ` : ''}{restSec % 60 > 0 ? `${restSec % 60} sec` : ''} di pausa — durante l'allenamento puoi sempre aggiungere +1 min o saltare
               </span>
@@ -123,7 +123,7 @@ export default function StartWorkoutPage() {
               {plans.map((p) => (
                 <div
                   key={p.id}
-                  className="card card--tap card--flat"
+                  className="card card--tap"
                   style={p.color ? { background: p.color } : undefined}
                   onClick={() => { setSelected(p); setChoosing(false) }}
                 >

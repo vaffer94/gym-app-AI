@@ -39,8 +39,8 @@ export default function SchedeListPage() {
         {plans?.map((p) => (
           <div
             key={p.id}
-            className="card card--tap"
-            style={p.color ? { background: p.color } : undefined}
+            className="card card--tap card--tinta"
+            style={p.color ? { '--tinta': p.color } : undefined}
             onClick={() => navigate(`/schede/${p.id}`)}
           >
             <div className="row">
