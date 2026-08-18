@@ -652,6 +652,110 @@ Una sola immagine che si ripete, quindi densita' uniforme per costruzione e ness
 sovrapposizione possibile: le collisioni si controllano in un'unica passata, sui riquadri
 reali dei disegni e tenendo conto della giunzione fra due copie affiancate.
 
+## F10 — Tema scuro (18/08/2026)
+
+Tre stati e non due: **"come il telefono"** (default), chiaro, scuro. Senza lo stato
+"sistema" chi non tocca mai l'interruttore resterebbe inchiodato al chiaro anche col
+telefono in modalita' notte, che e' proprio il caso in cui il tema scuro serve. La scelta
+sta in `localStorage` come `gym.tema`, e "sistema" si salva come **assenza** di chiave:
+cosi' chi non ha mai deciso e chi e' tornato al sistema si comportano uguale.
+
+### F10.1 Il ribaltamento, non lo schiarimento
+
+Il tema scuro non e' il chiaro con i colori abbassati: i **ruoli si scambiano**. Il blu
+scuro prende il posto della carta, il crema prende il posto dell'inchiostro. E soprattutto
+**il colore di una card sta tutto nel bordo**, negli stessi pastelli che nel tema chiaro
+fanno da fondo — cosi' una card teal resta riconoscibile come teal passando da un tema
+all'altro. L'interno e' uguale per tutte.
+
+Provato prima con quattro fondi scuri diversi, uno per variante, e scartato: quattro
+sfumature di quasi-nero non si leggono come colori, si leggono come macchie.
+
+Restano pieni **solo i pulsanti d'azione**: sono azioni e devono staccare. Il riquadro del
+logo nel login, che e' una superficie e non un'azione, segue invece la regola delle card.
+
+### F10.2 Dove sta il colore: in quattro tentativi, da nessuna parte
+
+1. **Bordi pastello.** Troppo colore per essere una modalita' notte.
+2. **Contorni quasi neri, colore nell'ombra.** Meglio, ma l'ombra colorava *due lati* di
+   ogni tile, e non tutte le superfici ce l'avevano — il riquadro dei grafici no — quindi
+   si leggeva come incoerenza invece che come stile.
+3. **Niente ombre, barretta di 4px a sinistra.** Ancora qualcosa non convinceva, e i
+   riquadri dei grafici stavano meglio senza.
+4. **Niente.** Nel tema scuro le card non portano colore: fondo, contorno e assenza di
+   ombra sono uguali per tutte. Il colore resta dove serve a capire qualcosa — le **icone**
+   e i **pulsanti d'azione**.
+
+Nel tema chiaro invece il colore c'e' e sta nel fondo pastello, come prima. Non e' una
+disparita': e' che il chiaro ha spazio per ospitarlo e lo scuro no.
+
+**Cosa e' costato togliere le ombre**, e non era ovvio prima di farlo:
+
+- Il **tocco** era fatto dall'ombra che sparisce mentre l'elemento scende di 4px. Senza
+  ombra restava solo il salto, che senza rilievo sembra un difetto. Ora l'elemento si
+  scurisce e basta (`--tocco`), come fa qualunque pulsante — e nel tema scuro **schiarisce**,
+  se no premere non si vedrebbe.
+- La classe **`card--flat`** voleva dire "questa card non ha l'ombra". Senza ombre non
+  distingueva piu' niente: tolta dal CSS e dai 31 punti che la usavano.
+- Il giorno **oggi** nel calendario **tiene la sua ombra**: li' non decora, e' il segno che
+  lo distingue. E' l'unica rimasta, insieme al battito della serie in corso.
+
+### F10.2-bis Il colore della scheda, che sfuggiva ai temi
+
+Le card che portano il colore scelto per una scheda lo ricevevano **inline** su
+`background`, in cinque punti (elenco schede, dettaglio, avvio, allenamento in corso,
+storico). Inline vuol dire che non passa dai token: nel tema scuro restavano pastello
+accese, ed erano le uniche superfici colorate di tutta l'app. Ora il colore arriva come
+variabile `--tinta` su `.card--tinta`, e a decidere cosa farne e' il CSS — fondo nel
+chiaro, niente nello scuro.
+
+### F10.3 Due difetti trovati misurando, non guardando
+
+**I bordi per variante non funzionavano.** `--border: 3px solid var(--bordo)` dichiarato su
+`:root` sembrava giusto, e a occhio lo screenshot pareva a posto. Misurando i colori
+calcolati venivano tutti uguali: un custom property viene sostituito **dove e' dichiarato**,
+non dove viene usato, quindi `var(--bordo)` si risolveva su `:root` e le ridefinizioni sulle
+varianti non contavano niente. I token composti `--border` e `--shadow` sono stati tolti e
+le regole scrivono `3px solid var(--bordo)` per esteso.
+
+**Il terzo pulsante rompeva la barra.** Con l'interruttore del tema, a 320px "Esci" veniva
+tagliato a meta' — e `scrollWidth` non se ne accorgeva, perche' il testo sbordava dentro il
+pulsante invece che fuori dalla pagina. I tre pulsanti stanno ora in un gruppo che va a capo
+tutto insieme: prima andavano a capo uno alla volta e il tema restava da solo sopra gli altri
+due.
+
+### F10.4 Quello che il CSS non raggiunge da solo
+
+**I grafici.** Chart.js dipinge su un canvas e non legge il CSS: i colori erano fissi al
+caricamento del modulo, e sul tema scuro le scritte restavano nere su fondo blu. Ora si
+leggono dalle variabili e il grafico si rifa' a ogni cambio di tema. L'hook che lo segnala
+legge **l'attributo su `<html>`**, non la scelta salvata: l'attributo e' cio' che il CSS
+guarda davvero, ed e' l'unica fonte che non puo' andare fuori sincrono coi colori calcolati
+(la prima versione leggeva la scelta, e cambiando tema il grafico non si accorgeva di niente).
+
+`HrChart` e `ZoneBars` invece sono SVG: usano `var(--ink)` direttamente e seguono il tema da
+soli.
+
+**Il giallo.** E' chiaro in tutti e due i temi, quindi sopra ci va sempre testo scuro:
+serve un token a parte (`--su-yellow`), se no nel tema scuro il chip del conteggio nello
+Storico aveva scritte crema su giallo. Aggiungendolo si e' rotto il chip *selezionabile*,
+che ha fondo card e non giallo e si portava dietro il testo scuro: sistemato rimettendogli
+`color: var(--ink)`.
+
+Il tema si scrive su `<html>` e non su `<body>`: lo sfondo della pagina lo dipinge `<html>`
+quando si scorre oltre il contenuto, e su `<body>` in fondo comparirebbe una striscia chiara.
+
+Si applica **prima** che React monti (`applicaTema()` in `main.jsx`), se no aprendo l'app col
+tema scuro si vede un lampo di schermata chiara.
+
+La barra del browser non legge il CSS: `meta[name="theme-color"]` va aggiornato a mano. Nel
+chiaro resta l'arancio del marchio (lo stesso del manifest), nello scuro diventa il blu — se
+no sopra una pagina scura resta una striscia arancione accesa.
+
+Lo sfondo con gli attrezzi e' passato da immagine colorata a **maschera** (`mask-image` su un
+`body::before` fisso, colore da `background-color: var(--ink)`): cosi' segue il tema da solo.
+Con un'immagine colorata sarebbero serviti due file, uno per tema, da tenere allineati a mano.
+
 ## Fuori scope v1 (idee registrate)
 
 - **Gruppi di utenti**: condivisione schede, sfide — dopo web app + watch + pagamenti

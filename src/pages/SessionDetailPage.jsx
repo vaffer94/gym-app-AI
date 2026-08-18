@@ -59,7 +59,7 @@ export default function SessionDetailPage() {
           <Icona nome="indietro" />
         </button>
         <div
-          className="card card--flat"
+          className="card"
           style={{ flex: 1, padding: '12px 16px', background: session.planColor || 'var(--card)' }}
         >
           <h2>{session.planName}</h2>
@@ -89,7 +89,7 @@ export default function SessionDetailPage() {
       </div>
 
       {Array.isArray(session.hrT) && session.hrT.length >= 2 && (
-        <div className="card card--flat stack">
+        <div className="card stack">
           <span className="label" style={{ margin: 0 }}><Icona nome="catCardio" /> Battito cardiaco</span>
           <HrChart session={session} zones={zoneInfo?.zones} />
         </div>
@@ -98,14 +98,14 @@ export default function SessionDetailPage() {
       <EnergyBreakdown session={session} />
 
       {zoneData && (
-        <div className="card card--flat stack">
+        <div className="card stack">
           <span className="label" style={{ margin: 0 }}><Icona nome="obiettivi" /> Zone del cuore</span>
           <ZoneBars data={zoneData} thresholdSource={zoneInfo.source} />
         </div>
       )}
 
       {Object.keys(st.byCategory).length > 0 && (
-        <div className="card card--flat stack">
+        <div className="card stack">
           <span className="label" style={{ margin: 0 }}>Serie per categoria</span>
           {Object.entries(st.byCategory).map(([cat, n]) => (
             <Row key={cat} label={<><Icona nome={categoryById(cat).icona} /> {categoryById(cat).label}</>} value={`${n} (${Math.round((n / st.doneSeries) * 100)}%)`} />
@@ -113,7 +113,7 @@ export default function SessionDetailPage() {
         </div>
       )}
 
-      <div className="card card--flat stack">
+      <div className="card stack">
         <span className="label" style={{ margin: 0 }}>Esercizi</span>
         {session.exercises.map((e) => (
           <div key={e.key} className="stack" style={{ gap: 4, paddingBottom: 8, borderBottom: '2px dashed var(--paper)' }}>

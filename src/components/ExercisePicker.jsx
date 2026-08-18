@@ -175,7 +175,7 @@ function ConfigStep({ exercise, onBack, onConfirm }) {
 /** Toggle "esercizio a tempo": solo durata, niente serie/reps/peso (es. tapis roulant) */
 export function DurationToggle({ isDuration, setIsDuration, durationMin, setDurationMin }) {
   return (
-    <div className="card card--flat stack">
+    <div className="card stack">
       <label className="toggle">
         <input type="checkbox" checked={isDuration} onChange={(e) => setIsDuration(e.target.checked)} />
         <span className="label" style={{ margin: 0 }}>
@@ -306,7 +306,7 @@ function CustomForm({ initialName, initialCategory, repo, onBack, onDone }) {
 /** Blocco riusabile serie / ripetizioni / pesi */
 export function SetsRepsWeight({ sets, setSets, reps, setReps, hasWeight, setHasWeight, weightKg, setWeightKg }) {
   return (
-    <div className="card card--flat stack">
+    <div className="card stack">
       <div className="row">
         <span className="label" style={{ margin: 0, flex: 1 }}>Serie</span>
         <Stepper value={sets} onChange={setSets} min={1} max={20} />

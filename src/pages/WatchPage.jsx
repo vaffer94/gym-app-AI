@@ -132,7 +132,7 @@ function VersioneApp() {
   }
 
   return (
-    <div className="card card--flat stack">
+    <div className="card stack">
       <span className="label" style={{ margin: 0 }}>Versione</span>
       <p className="small muted" style={{ margin: 0 }}>
         App web <strong>{__APP_VERSION__}</strong> · build del {__APP_BUILD__}

@@ -28,7 +28,7 @@ export default function EnergyBreakdown({ session }) {
   const max = Math.max(...data.parts.map((p) => p.kcal), data.restKcal || 0, 1)
 
   return (
-    <div className="card card--flat stack">
+    <div className="card stack">
       <span className="label" style={{ margin: 0 }}><Icona nome="energia" /> Energia per esercizio</span>
 
       {data.parts.map((p) => (

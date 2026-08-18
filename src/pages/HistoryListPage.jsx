@@ -24,6 +24,7 @@ import { KcalChip } from '../components/KcalRow'
 import ExerciseStats from '../components/ExerciseStats'
 import { exerciseIndex } from '../data/exerciseStats'
 import Icona from '../icons'
+import { colore, useTemaAttivo } from '../lib/tema'
 
 const PERIODS = [
   { id: 'week', label: 'Settimana' },
@@ -51,6 +52,9 @@ export default function HistoryListPage() {
   // obiettivi e medaglie vanno ricalcolati subito, non al prossimo ingresso
   const [tracked, setTracked] = useState(getTrackedActivityTypes)
   const [, setObiettiviAllineati] = useState(0) // solo per ridisegnare dopo la sincronizzazione
+  // I colori dei punti dei grafici si leggono dalle variabili CSS: vanno
+  // ricalcolati quando cambia il tema, se no restano quelli di prima.
+  const tema = useTemaAttivo()
 
   // Gli obiettivi possono essere stati cambiati da un altro dispositivo: qui si legge
   // l'obiettivo passi, quello di allenamenti e le attivita' scelte, e mostrarli vecchi
@@ -138,10 +142,10 @@ export default function HistoryListPage() {
   const chartLabels = chrono.map((g) => g.label)
   const durationData = useMemo(
     () => [
-      { label: 'Durata media (min)', data: chrono.map((g) => Math.round(g.avgDurationSec / 60)), borderColor: '#2ec4b6', backgroundColor: '#2ec4b6', borderWidth: 3, tension: 0.35, pointRadius: 5, pointBorderColor: '#2b2b3c', pointBorderWidth: 2 },
-      { label: 'Allenamenti', data: chrono.map((g) => g.count), borderColor: '#ffd23f', backgroundColor: '#ffd23f', borderWidth: 3, tension: 0.35, pointRadius: 5, pointBorderColor: '#2b2b3c', pointBorderWidth: 2 },
+      { label: 'Durata media (min)', data: chrono.map((g) => Math.round(g.avgDurationSec / 60)), borderColor: '#2ec4b6', backgroundColor: '#2ec4b6', borderWidth: 3, tension: 0.35, pointRadius: 5, pointBorderColor: colore('--ink'), pointBorderWidth: 2 },
+      { label: 'Allenamenti', data: chrono.map((g) => g.count), borderColor: '#ffd23f', backgroundColor: '#ffd23f', borderWidth: 3, tension: 0.35, pointRadius: 5, pointBorderColor: colore('--ink'), pointBorderWidth: 2 },
     ],
-    [chrono]
+    [chrono, tema]
   )
 
   return (
@@ -262,8 +266,8 @@ export default function HistoryListPage() {
               return (
               <div
                 key={s.id}
-                className="card card--tap"
-                style={s.planColor ? { background: s.planColor } : undefined}
+                className="card card--tap card--tinta"
+                style={s.planColor ? { '--tinta': s.planColor } : undefined}
                 onClick={() => navigate(`/storico/${s.id}`)}
               >
                 <div className="row">
@@ -321,7 +325,7 @@ export default function HistoryListPage() {
           <MonthBreakdown activities={activities} />
 
           {fitbit && (
-            <div className="card card--flat stack">
+            <div className="card stack">
               <div className="row">
                 <span className="label" style={{ margin: 0, flex: 1 }}>
                   Passi giornalieri <span className="small muted">(obiettivo {fitbit.stepsGoal.toLocaleString('it-IT')})</span>
@@ -346,9 +350,9 @@ export default function HistoryListPage() {
                     pointStyle: values.map((v) => (v === 0 ? 'crossRot' : 'circle')),
                     pointRadius: values.map((v) => (v === 0 ? 7 : 4)),
                     pointBackgroundColor: values.map((v) =>
-                      v === 0 ? '#2b2b3c' : v >= fitbit.stepsGoal ? '#2ec4b6' : '#ffd23f'
+                      v === 0 ? colore('--muted') : v >= fitbit.stepsGoal ? '#2ec4b6' : '#ffd23f'
                     ),
-                    pointBorderColor: '#2b2b3c',
+                    pointBorderColor: colore('--ink'),
                     pointBorderWidth: 2,
                   }
                 })()]}
@@ -360,11 +364,11 @@ export default function HistoryListPage() {
           )}
 
           <div className="row">
-            <div className="card card--flat center" style={{ flex: 1, padding: '14px 8px' }}>
+            <div className="card center" style={{ flex: 1, padding: '14px 8px' }}>
               <div className="kpi">{avgPerWeek(sessions)}</div>
               <p className="small muted">allenamenti / settimana</p>
             </div>
-            <div className="card card--flat center" style={{ flex: 1, padding: '14px 8px' }}>
+            <div className="card center" style={{ flex: 1, padding: '14px 8px' }}>
               <div className="kpi">
                 {(() => {
                   const tot = sessions.reduce((a, s) => a + computeStats(s).totalSeries, 0)
@@ -377,17 +381,17 @@ export default function HistoryListPage() {
           </div>
 
           <div className="row">
-            <div className="card card--flat center" style={{ flex: 1, padding: '14px 8px' }}>
+            <div className="card center" style={{ flex: 1, padding: '14px 8px' }}>
               <div className="kpi"><Icona nome="medaglia" style={{ color: 'var(--primary)' }} /> {longestAppDayStreak(sessions)}</div>
               <p className="small muted">record giorni di fila (app)</p>
             </div>
-            <div className="card card--flat center" style={{ flex: 1, padding: '14px 8px' }}>
+            <div className="card center" style={{ flex: 1, padding: '14px 8px' }}>
               <div className="kpi"><Icona nome="trofeo" style={{ color: 'var(--teal)' }} /> {longestActivityStreakThisMonth(sessions, giorniGoogle)}</div>
               <p className="small muted">record del mese{giorniGoogle.length ? ' (app + Google)' : ''}</p>
             </div>
           </div>
 
-          <div className="card card--flat stack">
+          <div className="card stack">
             <span className="label" style={{ margin: 0 }}>Ultimi allenamenti: tutto completato?</span>
             {sessions.slice(0, 5).map((s) => {
               const st = computeStats(s)
@@ -424,7 +428,7 @@ export default function HistoryListPage() {
               produce un numero che non corrisponde a nessuna grandezza reale. Il peso
               sollevato resta dov'e' confrontabile, cioe' dentro il singolo esercizio. */}
           {chrono.length > 0 && (
-            <div className="card card--flat stack">
+            <div className="card stack">
               <span className="label" style={{ margin: 0 }}>Durata media e frequenza</span>
               <TrendChart type="line" labels={chartLabels} datasets={durationData} />
             </div>
@@ -432,7 +436,7 @@ export default function HistoryListPage() {
 
           <div className="stack">
             {trends.map((g) => (
-              <div key={g.key} className="card card--flat stack" style={{ gap: 8 }}>
+              <div key={g.key} className="card stack" style={{ gap: 8 }}>
                 <div className="row">
                   <h3 style={{ flex: 1 }}>{g.label}</h3>
                   <span className="chip">{g.count} allenament{g.count === 1 ? 'o' : 'i'}</span>

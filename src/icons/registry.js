@@ -53,6 +53,8 @@ import { Waves } from 'pixelarticons/react/Waves'
 import { TreePine } from 'pixelarticons/react/TreePine'
 import { Leaf } from 'pixelarticons/react/Leaf'
 import { Flag } from 'pixelarticons/react/Flag'
+import { Sun } from 'pixelarticons/react/Sun'
+import { Moon } from 'pixelarticons/react/Moon'
 
 // Disegnate a mano (nessun vincolo di licenza)
 import Pesi from './mie/Pesi'
@@ -146,6 +148,12 @@ export const ICONE = {
   medaglia: Star,
   trofeo: Trophy,
   passi: Target,
+
+  // --- tema chiaro/scuro ---
+  // Per "come il telefono" non c'e' un disegno ovvio in libreria: si usa
+  // l'orologio, che e' il segno del dispositivo gia' usato altrove nell'app.
+  temaChiaro: Sun,
+  temaScuro: Moon,
 
   // --- stati e messaggi ---
   avviso: WarningDiamond,

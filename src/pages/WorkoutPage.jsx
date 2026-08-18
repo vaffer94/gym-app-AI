@@ -214,7 +214,7 @@ export default function WorkoutPage() {
         />
       ) : curr ? (
         <>
-          <div className="card" style={session.planColor ? { background: session.planColor } : undefined}>
+          <div className="card card--tinta" style={session.planColor ? { '--tinta': session.planColor } : undefined}>
             <p className="small muted" style={{ textTransform: 'uppercase', letterSpacing: 1, fontWeight: 800 }}>
               Esercizio attuale
             </p>
@@ -281,7 +281,7 @@ export default function WorkoutPage() {
           </div>
 
           {(curr.image || curr.description) && (
-            <details className="card card--flat details">
+            <details className="card details">
               <summary className="label details-summary">
                 <span>Come si fa</span>
                 <span className="details-arrow">▾</span>
@@ -452,7 +452,7 @@ function RestView({ rest, session, onPlusMinute, onSkip, onEditActuals }) {
       </div>
 
       {ex.mode !== 'duration' && (
-      <div className="card card--flat stack">
+      <div className="card stack">
         <p className="label" style={{ margin: 0 }}>Serie appena fatta — correggi se hai deviato</p>
         <div className="row">
           <span className="small muted" style={{ flex: 1 }}>Ripetizioni</span>
@@ -538,7 +538,7 @@ function NotesPrompt({ session, onDone }) {
       <p className="small muted">Qualche nota sugli esercizi fatti? (facoltativo)</p>
       <div className="stack">
         {targets.map((e) => (
-          <div key={e.key} className="card card--flat stack">
+          <div key={e.key} className="card stack">
             <span className="label" style={{ margin: 0 }}>{e.name}</span>
             <textarea
               className="textarea"
@@ -589,7 +589,7 @@ function Summary({ stats, prev, planName, session, onHome }) {
       </div>
 
       {Object.keys(stats.byCategory).length > 0 && (
-        <div className="card card--flat stack">
+        <div className="card stack">
           <span className="label" style={{ margin: 0 }}>Serie per categoria</span>
           {Object.entries(stats.byCategory).map(([cat, n]) => (
             <StatRow key={cat} label={<><Icona nome={categoryById(cat).icona} /> {categoryById(cat).label}</>} value={`${Math.round((n / stats.doneSeries) * 100)}%`} />
@@ -606,7 +606,7 @@ function Summary({ stats, prev, planName, session, onHome }) {
         </div>
       )}
 
-      <div className="card card--flat stack">
+      <div className="card stack">
         <span className="label" style={{ margin: 0 }}>Tempi per esercizio</span>
         {stats.perExercise.map((e) => (
           <StatRow
